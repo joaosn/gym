@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* FITWAY Design System - Esportivo, Tecnológico, Minimalista */
+
+@layer base {
+  :root {
+    /* FITWAY Brand Colors - High Contrast */
+    --fitway-green: 150 85% 45%;       /* #00CC66 - Verde vibrante principal */
+    --fitway-neon: 109 100% 60%;       /* #4DFF1A - Neon mais brilhante */
+    --fitway-dark: 220 50% 5%;         /* #050609 - Preto profundo */
+    --fitway-light: 220 25% 12%;       /* #15181E - Cinza muito escuro */
+    --fitway-gray: 220 15% 35%;        /* #4A5568 - Cinza com melhor contraste */
+    
+    /* Semantic tokens - High Contrast */
+    --background: var(--fitway-dark);
+    --foreground: 0 0% 98%;
+    
+    --card: var(--fitway-light);
+    --card-foreground: 0 0% 98%;
+    
+    --primary: var(--fitway-green);
+    --primary-foreground: var(--fitway-dark);
+    
+    --secondary: var(--fitway-gray);
+    --secondary-foreground: 0 0% 98%;
+    
+    --muted: var(--fitway-light);
+    --muted-foreground: 0 0% 85%;
+    
+    --accent: var(--fitway-neon);
+    --accent-foreground: var(--fitway-dark);
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 220 15% 25%;
+    --input: var(--fitway-light);
+    --ring: var(--fitway-green);
+    
+    --radius: 0.75rem;
+    
+    /* Sport Dashboard */
+    --dashboard-bg: var(--fitway-dark);
+    --dashboard-fg: 0 0% 98%;
+    --dashboard-card: var(--fitway-light);
+    --dashboard-border: 220 15% 20%;
+    
+    /* Gradients */
+    --gradient-sport: linear-gradient(135deg, hsl(var(--fitway-green)), hsl(var(--fitway-neon)));
+    --gradient-dark: linear-gradient(135deg, hsl(var(--fitway-dark)), hsl(var(--fitway-light)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--fitway-dark)) 0%, hsl(var(--fitway-light)) 50%, hsl(var(--fitway-green) / 0.1) 100%);
+    
+    /* Shadows */
+    --shadow-glow: 0 0 40px hsl(var(--fitway-green) / 0.4);
+    --shadow-neon: 0 0 20px hsl(var(--fitway-neon) / 0.6);
+    --shadow-card: 0 10px 30px -10px hsl(var(--fitway-dark) / 0.3);
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+  
+  .dark {
+    --background: var(--fitway-dark);
+    --foreground: 0 0% 98%;
+    
+    --card: var(--fitway-light);
+    --card-foreground: 0 0% 98%;
+    
+    --primary: var(--fitway-green);
+    --primary-foreground: var(--fitway-dark);
+    
+    --secondary: var(--fitway-gray);
+    --secondary-foreground: 0 0% 98%;
+    
+    --muted: var(--fitway-light);
+    --muted-foreground: 0 0% 85%;
+    
+    --accent: var(--fitway-neon);
+    --accent-foreground: var(--fitway-dark);
+    
+    --border: var(--dashboard-border);
+    --input: var(--fitway-light);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Sport Card */
+  .sport-card {
+    @apply bg-card rounded-lg p-6 shadow-[var(--shadow-card)] border border-border/50 hover:shadow-[var(--shadow-glow)] transition-[var(--transition-smooth)];
+  }
+  
+  /* Neon Effect */
+  .neon-glow {
+    @apply shadow-[var(--shadow-neon)] transition-[var(--transition-smooth)];
+  }
+  
+  /* Hero Gradient */
+  .hero-gradient {
+    background: var(--gradient-hero);
+  }
+  
+  /* Sport Gradient */
+  .sport-gradient {
+    background: var(--gradient-sport);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
