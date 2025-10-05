@@ -1,24 +1,62 @@
+# Dependências
+node_modules/
+vendor/
+
+# Arquivos de ambiente
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
 # Logs
-logs
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+logs/
+storage/logs/
 
-node_modules
-dist
-dist-ssr
-*.local
+# Cache do Laravel
+bootstrap/cache/
+storage/framework/cache/
+storage/framework/sessions/
+storage/framework/views/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Build do React
+dist/
+build/
+
+# Docker
+.docker/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+
+# Composer
+composer.phar
+composer.lock
+
+# NPM
+package-lock.json
+yarn.lock
+
+# Banco de dados local
+*.sqlite
+*.sqlite3
+
+# Uploads
+storage/app/public/uploads/
+
+# Testes
+coverage/
+.phpunit.result.cache
+
+# Outros
+*.tmp
+*.temp
+.cache/

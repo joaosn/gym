@@ -1,0 +1,14 @@
+# Arquivo para ignorar no Docker
+vendor/
+node_modules/
+.env
+.env.testing
+.phpunit.result.cache
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*
+.DS_Store
+Thumbs.db
+*.log
