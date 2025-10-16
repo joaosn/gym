@@ -21,7 +21,7 @@
 
 ---
 
-## ✅ FASES CONCLUÍDAS (7 fases + 2 refatorações)
+## ✅ FASES CONCLUÍDAS (8 fases + 1 refatoração)
 
 | # | Feature | Backend | Frontend | Doc |
 |---|---------|---------|----------|-----|
@@ -32,50 +32,50 @@
 | **5** | **Admin - Instrutores** | InstrutorController, CRUD, Soft Delete | Instructors.tsx, instructors.service.ts | [📄](./FASE_5.md) |
 | **6** | **Soft Delete** | 3 controllers atualizados | Transparente (DELETE → 204) | [📄](./FASE_6.md) |
 | **7** | **Disponibilidade Instrutor** | updateAvailability endpoint | Modal horários integrado | [📄](./FASE_7.md) |
+| **8** | **Sessões Personal 1:1** | SessaoPersonalController, 4 validações | PersonalSessions.tsx, CRUD completo | [📄](./FASE_8_SESSOES_PERSONAL.md) |
 
 ### 🎯 Achievements
-- ✅ **9 documentos** de fase criados
-- ✅ **5 CRUDs** completos (Quadras, Planos, Usuários, Instrutores + Auth)
+- ✅ **10 documentos** de fase criados
+- ✅ **6 CRUDs** completos (Quadras, Planos, Usuários, Instrutores, Sessões Personal + Auth)
+- ✅ **4 Validações de Conflito**: Instrutor, Disponibilidade Semanal, Quadra, Aluno
 - ✅ **Disponibilidade de Instrutores** funcionando (CRUD dentro do modal)
 - ✅ **Soft Delete** padrão do sistema
 - ✅ **3 papéis** unificados: admin, aluno, instrutor
 - ✅ **23 utilitários UX** criados (formatCurrency, formatDate, etc)
+- ✅ **Estrutura Organizada**: Páginas admin por contexto (cadastros/agendamentos/payments)
 
 ---
 
 ## 🗺️ ROADMAP - PRÓXIMAS FASES (Ordem Lógica)
 
-###  Fase 8: Sessões Personal 1:1 (PRÓXIMA)
+### ✅ Fase 8: Sessões Personal 1:1 (CONCLUÍDA)
 **Objetivo**: Aluno agenda sessão com instrutor (anti-overlap).
 
-**Por quê agora?**
-- Disponibilidade já está pronta (Fase 7 ✅)
-- Usa anti-overlap (TSTZRANGE) - conceito crítico
-- Base para outras reservas
-
 **Backend**:
-- [ ] Model `SessaoPersonal`
-- [ ] `SessaoPersonalController`
-  - Aluno: `store()` criar sessão, `index()` listar minhas, `destroy()` cancelar
-  - Instrutor: `index()` listar minhas sessões
-  - Admin: `index()` listar todas
-- [ ] Service: Validar anti-overlap (constraint GIST por instrutor)
-- [ ] Validações:
-  - Horário dentro da disponibilidade do instrutor
-  - Não sobrepor com outras sessões do instrutor
-  - Calcular preço (instrutor.valor_hora * duração)
-- [ ] Routes:
-  - GET/POST `/sessions` (aluno)
-  - GET `/instrutor/sessions` (instrutor)
-  - GET `/admin/sessions` (admin)
+- ✅ Model `SessaoPersonal` + `ReservaQuadra`
+- ✅ `SessaoPersonalController` (8 endpoints)
+- ✅ Service com **4 validações de conflito**:
+  - Instrutor (anti-overlap)
+  - Disponibilidade semanal do instrutor
+  - Quadra (reservas + outras sessões)
+  - Aluno (anti-overlap)
+- ✅ Form Requests (validação)
+- ✅ Seeder com 12 registros
 
 **Frontend**:
-- [ ] Student: `PersonalTrainers.tsx` (buscar, agendar)
-- [ ] Student: `MySessions.tsx` (listar, cancelar)
-- [ ] Instrutor: `Schedule.tsx` (ver agenda, confirmar)
-- [ ] Types: `PersonalSession`
+- ✅ Admin: `PersonalSessions.tsx` (CRUD completo)
+- ✅ Filtros: status, período, instrutor
+- ✅ Service: `personal-sessions.service.ts`
+- ✅ Fix bug Radix UI Select
+- ✅ Layout com padding
 
-**Tempo Estimado**: 3-4 dias
+**Refactor**:
+- ✅ Estrutura organizada por contexto (cadastros/agendamentos/payments)
+- ✅ Barrel exports (index.ts)
+- ✅ README.md criado
+
+**Tempo Real**: 1 dia (16/10/2025)  
+**Doc**: [📄 FASE_8.md](./FASE_8.md)
 
 ---
 
