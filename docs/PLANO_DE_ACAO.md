@@ -21,7 +21,7 @@
 
 ---
 
-## ✅ FASES CONCLUÍDAS (6 fases + 2 refatorações)
+## ✅ FASES CONCLUÍDAS (7 fases + 2 refatorações)
 
 | # | Feature | Backend | Frontend | Doc |
 |---|---------|---------|----------|-----|
@@ -31,12 +31,14 @@
 | **4** | **Admin - Usuários** | UserController, CRUD, Soft Delete | Users.tsx, users.service.ts | [📄](./FASE_4_CONCLUIDA.md) |
 | **5** | **Admin - Instrutores** | InstrutorController, CRUD, Soft Delete | Instructors.tsx, instructors.service.ts | [📄](./FASE_5_CONCLUIDA.md) |
 | **6** | **Soft Delete** | 3 controllers atualizados | Transparente (DELETE → 204) | [📄](./FASE_6_SOFT_DELETE.md) |
+| **7** | **Disponibilidade Instrutor** | updateAvailability endpoint | Modal horários integrado | ✅ Já estava feito! |
 | **-** | **Unificação Personal→Instrutor** | papel CHECK constraint | Rotas /instrutor/*, Types | [📄](./UNIFICACAO_PERSONAL_INSTRUTOR.md) |
 | **-** | **DDL Atualizado** | CHECK constraints + changelog | - | [📄](./DDL_CHANGELOG.md) |
 
 ### 🎯 Achievements
-- ✅ **8 documentos** de fase criados
+- ✅ **9 documentos** de fase criados
 - ✅ **5 CRUDs** completos (Quadras, Planos, Usuários, Instrutores + Auth)
+- ✅ **Disponibilidade de Instrutores** funcionando (CRUD dentro do modal)
 - ✅ **Soft Delete** padrão do sistema
 - ✅ **3 papéis** unificados: admin, aluno, instrutor
 - ✅ **23 utilitários UX** criados (formatCurrency, formatDate, etc)
@@ -45,46 +47,13 @@
 
 ## 🗺️ ROADMAP - PRÓXIMAS FASES (Ordem Lógica)
 
-### 🚀 Fase 7: Disponibilidade Instrutor (PRÓXIMA)
-**Objetivo**: Instrutor define horários disponíveis na semana.
-
-**Por quê agora?**
-- Base para agendamento de sessões 1:1
-- CRUD simples (não depende de outras entidades)
-
-**Backend**:
-- [ ] Model `DisponibilidadeInstrutor`
-- [ ] `DisponibilidadeController` (CRUD)
-  - `index($id_instrutor)` - Listar disponibilidade de um instrutor
-  - `store()` - Criar novo horário (dia_semana, hora_inicio, hora_fim)
-  - `update($id)` - Editar horário
-  - `destroy($id)` - Excluir horário (soft delete)
-- [ ] Validações:
-  - Não permitir sobreposição no mesmo dia da semana
-  - hora_fim > hora_inicio
-- [ ] Routes:
-  - GET/POST `/instrutor/availability` (instrutor logado)
-  - GET/PUT/DELETE `/instrutor/availability/{id}`
-
-**Frontend**:
-- [ ] `web/src/pages/instrutor/Availability.tsx`
-  - Grid de horários (segunda-domingo)
-  - Modal criar/editar horário
-  - Toggle status (ativa/inativa)
-  - Validação de overlap
-- [ ] `web/src/services/availability.service.ts`
-- [ ] Types: `InstructorAvailability`
-
-**Tempo Estimado**: 1-2 dias
-
----
-
-### 📅 Fase 8: Sessões Personal 1:1
+###  Fase 8: Sessões Personal 1:1 (PRÓXIMA)
 **Objetivo**: Aluno agenda sessão com instrutor (anti-overlap).
 
 **Por quê agora?**
-- Depende de Disponibilidade (Fase 7)
+- Disponibilidade já está pronta (Fase 7 ✅)
 - Usa anti-overlap (TSTZRANGE) - conceito crítico
+- Base para outras reservas
 
 **Backend**:
 - [ ] Model `SessaoPersonal`

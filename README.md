@@ -233,7 +233,7 @@ docker-compose exec api chmod -R 775 storage bootstrap/cache
 
 ---
 
-## 🎯 Status do Projeto (15/10/2025)
+## 🎯 Status do Projeto (16/10/2025)
 
 ### ✅ Concluído
 - **Infraestrutura**: Docker completa (DB, API, Frontend Dev/Prod, pgAdmin)
@@ -246,32 +246,34 @@ docker-compose exec api chmod -R 775 storage bootstrap/cache
 - **Fase 4**: ✅ CRUD de Usuários (admin) + **Soft Delete**
 - **Fase 5**: ✅ CRUD de Instrutores (admin) + **Soft Delete**
 - **Fase 6**: ✅ **Soft Delete** implementado em todos os CRUDs
+- **Fase 7**: ✅ **Disponibilidade de Instrutores** (CRUD de horários dentro do modal)
 
-### 🎉 Novo: Soft Delete (Exclusão Lógica)
-Todos os CRUDs agora usam **soft delete** ao invés de deletar permanentemente:
-- ✅ Registros são marcados com `status = 'excluido'`
-- ✅ Dados preservados no banco (auditoria + recuperação)
-- ✅ Filtro automático nas listagens
-- ✅ API continua retornando `204 No Content` (transparente)
-- 📖 Documentação completa: `docs/FASE_6_SOFT_DELETE.md`
+### 🎉 Novo: Disponibilidade de Instrutores (Fase 7)
+Agora os administradores podem gerenciar os horários disponíveis de cada instrutor:
+- ✅ Modal dedicado com dia da semana + hora início/fim
+- ✅ Adicionar/Editar/Remover horários
+- ✅ Contador visual de horários configurados
+- ✅ Backend com validação e transaction
+- 📖 Documentação completa: `docs/FASE_7_CONCLUIDA.md`
 
 ### 🔄 Em Progresso
-- **Fase 7**: CRUD de Quadras + Reservas (anti-overlap)
-- **Fase 8**: CRUD de Aulas + Ocorrências
+- **Fase 8**: Sessões Personal 1:1 (agendamento com anti-overlap)
+- **Fase 9**: Reservas de Quadra (anti-overlap)
 
 ### 📋 Próximas Fases
-1. ⏳ Reservas de Quadra (3-4 dias)
-2. ⏳ Aulas em Grupo (3-4 dias)
-3. Admin - Planos (1-2 dias)
-4. Aluno - Reservas (3 dias)
-5. Aluno - Assinaturas (2 dias)
-6. Admin - Aulas (3 dias)
-7. Aluno - Aulas (2 dias)
-8. Admin - Personals (2 dias)
-9. Personal - Disponibilidade (2 dias)
-10. Aluno - Sessões Personal (3 dias)
-11. Pagamentos MVP (4 dias)
-12. Refinamentos (3 dias)
+1. ⏳ Sessões Personal (3-4 dias)
+2. ⏳ Reservas de Quadra (3-4 dias)
+3. ⏳ Aulas em Grupo (3-4 dias)
+4. Admin - Planos (1-2 dias)
+5. Aluno - Reservas (3 dias)
+6. Aluno - Assinaturas (2 dias)
+7. Admin - Aulas (3 dias)
+8. Aluno - Aulas (2 dias)
+9. Admin - Personals (2 dias)
+10. Personal - Disponibilidade (2 dias)
+11. Aluno - Sessões Personal (3 dias)
+12. Pagamentos MVP (4 dias)
+13. Refinamentos (3 dias)
 
 **Estimativa Total**: ~6-7 semanas
 
