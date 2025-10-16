@@ -282,4 +282,30 @@ Start-Process "http://localhost:5173/admin/instrutores"
 
 ---
 
+## 🔄 Unificação: Personal → Instrutor
+
+Durante esta fase, também **unificamos o papel** `'personal'` como `'instrutor'` em todo o sistema.
+
+### Database (PostgreSQL)
+```sql
+-- CHECK Constraint atualizado
+ALTER TABLE usuarios DROP CONSTRAINT IF EXISTS usuarios_papel_check;
+ALTER TABLE usuarios ADD CONSTRAINT usuarios_papel_check 
+    CHECK (papel IN ('admin', 'aluno', 'instrutor'));
+```
+
+### Backend (Laravel)
+- ✅ **Seeder atualizado**: `UserSeeder.php`
+  - Removido usuário `personal@fitway.com` com papel `'personal'`
+  - Criado usuário `instrutor@fitway.com` com papel `'instrutor'`
+
+### Frontend (React)
+- ✅ **Types atualizados**: `papel: 'admin' | 'aluno' | 'instrutor'`
+- ✅ **Rotas atualizadas**: `/personal/*` → `/instrutor/*`
+- ✅ **ProtectedRoute**: `allowedRoles={['instrutor']}`
+
+**Motivo**: Simplificar o sistema, evitando confusão entre "personal trainer" e "instrutor". Agora existe apenas um papel unificado.
+
+---
+
 **🎉 FASE 5 100% COMPLETA E FUNCIONAL!**

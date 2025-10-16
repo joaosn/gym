@@ -25,15 +25,13 @@
 
 | # | Feature | Backend | Frontend | Doc |
 |---|---------|---------|----------|-----|
-| **1** | **Autenticação** | AuthController, Sanctum, Middleware | LoginPage, auth.service.ts | [📄](./FASE_1_CONCLUIDA.md) |
-| **2** | **Admin - Quadras** | QuadraController, CRUD | Courts.tsx, courts.service.ts | [📄](./FASE_2_CONCLUIDA.md) |
-| **3** | **Admin - Planos** | PlanoController, CRUD, Seeder | Plans.tsx, plans.service.ts | [📄](./FASE_3_CONCLUIDA.md) |
-| **4** | **Admin - Usuários** | UserController, CRUD, Soft Delete | Users.tsx, users.service.ts | [📄](./FASE_4_CONCLUIDA.md) |
-| **5** | **Admin - Instrutores** | InstrutorController, CRUD, Soft Delete | Instructors.tsx, instructors.service.ts | [📄](./FASE_5_CONCLUIDA.md) |
-| **6** | **Soft Delete** | 3 controllers atualizados | Transparente (DELETE → 204) | [📄](./FASE_6_SOFT_DELETE.md) |
-| **7** | **Disponibilidade Instrutor** | updateAvailability endpoint | Modal horários integrado | ✅ Já estava feito! |
-| **-** | **Unificação Personal→Instrutor** | papel CHECK constraint | Rotas /instrutor/*, Types | [📄](./UNIFICACAO_PERSONAL_INSTRUTOR.md) |
-| **-** | **DDL Atualizado** | CHECK constraints + changelog | - | [📄](./DDL_CHANGELOG.md) |
+| **1** | **Autenticação** | AuthController, Sanctum, Middleware | LoginPage, auth.service.ts | [📄](./FASE_1.md) |
+| **2** | **Admin - Quadras** | QuadraController, CRUD | Courts.tsx, courts.service.ts | [📄](./FASE_2.md) |
+| **3** | **Admin - Planos** | PlanoController, CRUD, Seeder | Plans.tsx, plans.service.ts | [📄](./FASE_3.md) |
+| **4** | **Admin - Usuários** | UserController, CRUD, Soft Delete | Users.tsx, users.service.ts | [📄](./FASE_4.md) |
+| **5** | **Admin - Instrutores** | InstrutorController, CRUD, Soft Delete | Instructors.tsx, instructors.service.ts | [📄](./FASE_5.md) |
+| **6** | **Soft Delete** | 3 controllers atualizados | Transparente (DELETE → 204) | [📄](./FASE_6.md) |
+| **7** | **Disponibilidade Instrutor** | updateAvailability endpoint | Modal horários integrado | [📄](./FASE_7.md) |
 
 ### 🎯 Achievements
 - ✅ **9 documentos** de fase criados

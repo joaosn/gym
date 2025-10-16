@@ -59,17 +59,33 @@ Após rodar seeders, você pode fazer login com:
 
 ## 📚 Documentação Completa
 
-Este projeto está em **desenvolvimento ativo**. Estamos removendo mocks e implementando funcionalidades reais.
-
-### 📖 Guias Disponíveis
+### 📖 Guias Principais
 
 | Documento | Descrição |
 |-----------|-----------|
-| [`.github/copilot-instructions.md`](.github/copilot-instructions.md) | 📘 **Guia completo do projeto** - nomenclaturas, padrões, arquitetura |
-| [`docs/PLANO_DE_ACAO.md`](docs/PLANO_DE_ACAO.md) | 🎯 **Plano de implementação detalhado** - código, fases, cronograma |
-| [`docs/RESUMO_EXECUTIVO.md`](docs/RESUMO_EXECUTIVO.md) | 📊 **Visão geral executiva** - status, marcos, roadmap |
-| [`docs/MAPA_VISUAL.md`](docs/MAPA_VISUAL.md) | 🗺️ **Mapas e fluxos visuais** - arquitetura, endpoints, permissões |
-| [`docs/arquitetura-dados-e-fluxos.md`](docs/arquitetura-dados-e-fluxos.md) | 🏗️ Arquitetura de dados e relacionamentos |
+| [`docs/README.md`](docs/README.md) | 📚 **Índice da documentação** - navegação rápida |
+| [`docs/PLANO_DE_ACAO.md`](docs/PLANO_DE_ACAO.md) | 🎯 **Plano mestre** - roadmap, fases, checklist |
+| [`.github/copilot-instructions.md`](.github/copilot-instructions.md) | 📘 **Guia do desenvolvedor** - padrões, nomenclaturas |
+
+### 📋 Fases Concluídas
+
+| Fase | Feature | Documentação |
+|------|---------|--------------|
+| 1 | Autenticação (Login/Register/Logout) | [`docs/FASE_1.md`](docs/FASE_1.md) |
+| 2 | Admin - Quadras (CRUD) | [`docs/FASE_2.md`](docs/FASE_2.md) |
+| 3 | Admin - Planos (CRUD) | [`docs/FASE_3.md`](docs/FASE_3.md) |
+| 4 | Admin - Usuários (CRUD + Soft Delete) | [`docs/FASE_4.md`](docs/FASE_4.md) |
+| 5 | Admin - Instrutores (CRUD + Unificação) | [`docs/FASE_5.md`](docs/FASE_5.md) |
+| 6 | Soft Delete Unificado | [`docs/FASE_6.md`](docs/FASE_6.md) |
+| 7 | Disponibilidade Instrutor | [`docs/FASE_7.md`](docs/FASE_7.md) |
+
+### �️ Guias Técnicos
+
+| Guia | Descrição |
+|------|-----------|
+| [`docs/MAPA_VISUAL.md`](docs/MAPA_VISUAL.md) | 🗺️ Arquitetura, fluxos, endpoints, permissões |
+| [`docs/UTILS_E_UX.md`](docs/UTILS_E_UX.md) | 🎨 Utilitários UX (formatCurrency, formatDate, etc) |
+| [`docs/arquitetura-dados-e-fluxos.md`](docs/arquitetura-dados-e-fluxos.md) | 🏗️ DDL completo, relacionamentos |
 | [`docs/containers-e-comandos.md`](docs/containers-e-comandos.md) | 🐳 Comandos Docker úteis |
 
 ### 🔧 Stack Tecnológica
