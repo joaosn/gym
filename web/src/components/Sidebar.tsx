@@ -21,7 +21,9 @@ import {
   Target,
   Star,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  FolderOpen,
+  Dumbbell
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -55,11 +57,26 @@ const Sidebar = ({ userRole }: SidebarProps) => {
       case 'admin':
         return [
           { title: 'Dashboard', href: '/admin/dashboard', icon: Home },
-          { title: 'Quadras', href: '/admin/quadras', icon: MapPin },
-          { title: 'Planos', href: '/admin/planos', icon: Target },
-          { title: 'Usuários', href: '/admin/usuarios', icon: Users },
-          { title: 'Aulas', href: '/admin/aulas', icon: BookOpen },
-          { title: 'Instrutores', href: '/admin/instrutores', icon: User },
+          { 
+            title: 'Cadastros', 
+            href: '#', 
+            icon: FolderOpen,
+            children: [
+              { title: 'Quadras', href: '/admin/quadras', icon: MapPin },
+              { title: 'Planos', href: '/admin/planos', icon: Target },
+              { title: 'Usuários', href: '/admin/usuarios', icon: Users },
+              { title: 'Instrutores', href: '/admin/instrutores', icon: User },
+            ]
+          },
+          { 
+            title: 'Agendamentos', 
+            href: '#', 
+            icon: Calendar,
+            children: [
+              { title: 'Sessões Personal', href: '/admin/sessoes-personal', icon: Dumbbell },
+              { title: 'Aulas (Turmas)', href: '/admin/aulas', icon: BookOpen },
+            ]
+          },
           { title: 'Pagamentos', href: '/admin/pagamentos', icon: CreditCard, badge: '8' },
         ];
       case 'instrutor':

@@ -515,7 +515,72 @@ docker-compose down -v
 
 ---
 
-## 🎨 Frontend - Estado Atual
+## 🎨 Frontend - Estrutura e Navegação
+
+### Estrutura do Menu (Sidebar)
+
+O menu lateral (`web/src/components/Sidebar.tsx`) possui suporte a **submenus com collapse**. A estrutura atual é:
+
+**Admin**:
+```
+📊 Dashboard                    → /admin/dashboard
+📋 Cadastros (collapse)
+  ├─ Quadras                    → /admin/quadras
+  ├─ Planos                     → /admin/planos
+  ├─ Usuários                   → /admin/usuarios
+  └─ Instrutores                → /admin/instrutores
+📅 Agendamentos (collapse)
+  ├─ Sessões Personal           → /admin/sessoes-personal
+  └─ Aulas (Turmas)             → /admin/aulas
+💰 Pagamentos                   → /admin/pagamentos
+```
+
+**Instrutor**:
+```
+📊 Dashboard                    → /instrutor/dashboard
+📅 Agenda                       → /instrutor/agenda
+🕐 Horários                     → /instrutor/slots
+📚 Turmas                       → /instrutor/turmas
+```
+
+**Aluno**:
+```
+📊 Dashboard                    → /aluno/dashboard
+🎯 Planos                       → /aluno/planos
+🏟️ Quadras                      → /aluno/quadras
+📚 Aulas                        → /aluno/aulas
+👤 Personal                     → /aluno/personal
+⚙️ Perfil                       → /aluno/perfil
+```
+
+### Como Adicionar Nova Tela no Menu
+
+Ao criar uma nova página, **SEMPRE** adicione no menu apropriado:
+
+1. **Editar**: `web/src/components/Sidebar.tsx`
+2. **Localizar**: função `getNavItems()` → case do role apropriado
+3. **Adicionar**:
+   - Se for CRUD (Cadastro): adicionar em `children` do grupo "Cadastros"
+   - Se for Agendamento: adicionar em `children` do grupo "Agendamentos"
+   - Se for standalone: adicionar na raiz (fora de grupos)
+
+**Exemplo - Adicionar "Reservas de Quadra" em Agendamentos**:
+```typescript
+{ 
+  title: 'Agendamentos', 
+  href: '#', 
+  icon: Calendar,
+  children: [
+    { title: 'Sessões Personal', href: '/admin/sessoes-personal', icon: Dumbbell },
+    { title: 'Aulas (Turmas)', href: '/admin/aulas', icon: BookOpen },
+    { title: 'Reservas Quadra', href: '/admin/reservas', icon: MapPin }, // ← NOVO
+  ]
+},
+```
+
+### Services Implementados
+1. **auth.service.ts** ✅ Conectado à API real
+2. **courts.service.ts** ✅ Conectado à API
 
 ### Services Implementados
 1. **auth.service.ts** ⚠️ **MOCK** - precisa conectar à API real
@@ -732,7 +797,14 @@ npm run test
   - [ ] **Busca**: Debounced search input (500ms)
   - [ ] **Responsividade**: Grid com breakpoints md/lg
 - [ ] **Routing**: Adicionar rota em `web/src/App.tsx` (se nova página)
-- [ ] **Navigation**: Adicionar link no menu/sidebar (se aplicável)
+- [ ] **Navigation**: ⚠️ **OBRIGATÓRIO** - Adicionar item no menu (`web/src/components/Sidebar.tsx`)
+  - [ ] Identificar categoria correta (Cadastros, Agendamentos, ou raiz)
+  - [ ] Adicionar no array de `children` do grupo correspondente
+  - [ ] Usar ícone apropriado do lucide-react
+  - [ ] Exemplo:
+    ```typescript
+    { title: 'Nova Feature', href: '/admin/nova-feature', icon: IconName }
+    ```
 
 ### 🧪 Testes e Validação
 - [ ] **Browser Test**: Abrir `http://localhost:5173/admin/x` e testar CRUD completo
