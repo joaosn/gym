@@ -23,18 +23,19 @@ import InstrutorSchedule from "./pages/personal/Schedule";
 import InstrutorSlots from "./pages/personal/Slots";
 import InstrutorClasses from "./pages/personal/Classes";
 
-import AdminDashboard from "./pages/admin/Dashboard";
-import AdminCourts from "./pages/admin/Courts";
-import AdminPlans from "./pages/admin/Plans";
-import AdminUsers from "./pages/admin/Users";
-import AdminInstructors from "./pages/admin/Instructors";
-import AdminPersonalSessions from "./pages/admin/PersonalSessions";
-import AdminClasses from "./pages/admin/Classes";
-import AdminPayments from "./pages/admin/Payments";
-import EditPlan from "./pages/admin/EditPlan";
-import EditClass from "./pages/admin/EditClass";
-import AddPlan from "./pages/admin/AddPlan";
-import AddClass from "./pages/admin/AddClass";
+// Admin Pages - Organized by context
+import AdminDashboard from "./pages/admin/dashboard/Dashboard";
+import AdminCourts from "./pages/admin/cadastros/courts/Courts";
+import AdminPlans from "./pages/admin/cadastros/plans/Plans";
+import AddPlan from "./pages/admin/cadastros/plans/AddPlan";
+import EditPlan from "./pages/admin/cadastros/plans/EditPlan";
+import AdminUsers from "./pages/admin/cadastros/users/Users";
+import AdminInstructors from "./pages/admin/cadastros/instructors/Instructors";
+import AdminPersonalSessions from "./pages/admin/agendamentos/personal-sessions/PersonalSessions";
+import AdminClasses from "./pages/admin/agendamentos/classes/Classes";
+import AddClass from "./pages/admin/agendamentos/classes/AddClass";
+import EditClass from "./pages/admin/agendamentos/classes/EditClass";
+import AdminPayments from "./pages/admin/payments/Payments";
 
 import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";

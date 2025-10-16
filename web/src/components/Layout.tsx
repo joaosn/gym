@@ -29,7 +29,7 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <div className="flex h-screen bg-dashboard-bg">
       <Sidebar userRole={userRole} />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto p-6">
         {children}
       </main>
     </div>

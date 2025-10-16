@@ -270,6 +270,7 @@ export interface AvailabilityCheckRequest {
   id_instrutor: string;
   inicio: string;
   fim: string;
+  id_quadra?: string; // Opcional: validar conflito de quadra
 }
 
 export interface AvailabilityCheckResponse {

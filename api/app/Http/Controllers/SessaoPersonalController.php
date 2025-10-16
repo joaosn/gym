@@ -137,7 +137,7 @@ class SessaoPersonalController extends Controller
     }
 
     /**
-     * Verificar disponibilidade de um instrutor
+     * Verificar disponibilidade de um instrutor e quadra (se informada)
      * POST /api/personal-sessions/check-availability
      */
     public function checkAvailability(Request $request)
@@ -146,15 +146,18 @@ class SessaoPersonalController extends Controller
             'id_instrutor' => 'required|exists:instrutores,id_instrutor',
             'inicio' => 'required|date',
             'fim' => 'required|date|after:inicio',
+            'id_quadra' => 'nullable|exists:quadras,id_quadra',
         ]);
 
         $inicio = \Carbon\Carbon::parse($request->inicio);
         $fim = \Carbon\Carbon::parse($request->fim);
+        $idQuadra = $request->id_quadra ?? null;
 
         $resultado = $this->service->validarDisponibilidade(
             $request->id_instrutor,
             $inicio,
-            $fim
+            $fim,
+            $idQuadra
         );
 
         if ($resultado['disponivel']) {

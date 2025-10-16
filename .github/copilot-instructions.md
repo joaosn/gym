@@ -13,12 +13,16 @@
 - Documentar cada passo do processo
 - Gerar múltiplos arquivos para a mesma fase
 - Criar documentos de análise temporária
+- **Commitar automaticamente sem confirmar**
+- **Criar documentação sem perguntar antes**
 
 **✅ FAÇA**:
 - **Documente APENAS quando a fase estiver 100% COMPLETA**
 - Crie **1 único arquivo** por fase: `docs/FASE_X.md`
 - Teste tudo antes de documentar
 - Inclua no documento da fase: Backend + Frontend + Como Testar + Lições Aprendidas
+- **SEMPRE PERGUNTE ao usuário antes de commitar**
+- **SEMPRE PERGUNTE ao usuário antes de criar documentação**
 
 ### Estrutura do Documento de Fase
 
@@ -59,6 +63,44 @@ Após criar `docs/FASE_X.md`:
 1. Atualizar `docs/PLANO_DE_ACAO.md` (marcar fase como concluída)
 2. **Commitar tudo junto**: código + documentação
 3. Pronto! Não criar mais nenhum arquivo dessa fase
+
+---
+
+## 🔄 WORKFLOW DE COMMITS E DOCUMENTAÇÃO
+
+### ⚠️ REGRA CRÍTICA: Sempre Perguntar Antes
+
+**Antes de COMMITAR**:
+1. ✅ Mostrar o que será commitado (`git status` ou resumo)
+2. ✅ Mostrar a mensagem do commit proposta
+3. ✅ **PERGUNTAR**: "Posso commitar essas mudanças?"
+4. ✅ Aguardar confirmação do usuário
+5. ❌ **NUNCA** commitar automaticamente
+
+**Antes de DOCUMENTAR**:
+1. ✅ Verificar se a fase está 100% completa e testada
+2. ✅ **PERGUNTAR**: "A fase está completa? Posso criar a documentação?"
+3. ✅ Aguardar confirmação do usuário
+4. ❌ **NUNCA** criar documentação durante desenvolvimento
+
+**Benefícios**:
+- Evita commits duplicados ou desnecessários
+- Permite ao usuário revisar antes de commitar
+- Evita documentação prematura
+- Dá controle ao usuário sobre quando commitar
+
+**Exemplo de Pergunta**:
+```
+📦 Mudanças prontas para commit:
+- api/app/Models/SessaoPersonal.php
+- web/src/pages/admin/PersonalSessions.tsx
+- web/src/services/personal-sessions.service.ts
+
+📝 Mensagem do commit:
+"feat: Implementa CRUD de Sessões Personal"
+
+✅ Posso commitar essas mudanças?
+```
 
 ---
 
@@ -203,7 +245,17 @@ tccFitway/
 │   ├── src/
 │   │   ├── services/       # Chamadas API (auth, courts, plans)
 │   │   ├── pages/          # Componentes de páginas
-│   │   │   ├── admin/      # Área administrativa
+│   │   │   ├── admin/      # Área administrativa (ORGANIZADA!)
+│   │   │   │   ├── dashboard/          # Dashboard principal
+│   │   │   │   ├── cadastros/          # Módulo de Cadastros
+│   │   │   │   │   ├── courts/         # Quadras
+│   │   │   │   │   ├── plans/          # Planos (Plans, AddPlan, EditPlan)
+│   │   │   │   │   ├── users/          # Usuários
+│   │   │   │   │   └── instructors/    # Instrutores
+│   │   │   │   ├── agendamentos/       # Módulo de Agendamentos
+│   │   │   │   │   ├── personal-sessions/  # Sessões Personal 1:1
+│   │   │   │   │   └── classes/            # Aulas (Classes, AddClass, EditClass)
+│   │   │   │   └── payments/           # Pagamentos
 │   │   │   ├── personal/   # Área do personal trainer
 │   │   │   └── student/    # Área do aluno
 │   │   ├── components/     # Componentes reutilizáveis
@@ -551,6 +603,51 @@ O menu lateral (`web/src/components/Sidebar.tsx`) possui suporte a **submenus co
 📚 Aulas                        → /aluno/aulas
 👤 Personal                     → /aluno/personal
 ⚙️ Perfil                       → /aluno/perfil
+```
+
+### ⚠️ Organização de Arquivos (IMPORTANTE!)
+
+**REGRA**: Páginas admin devem estar organizadas por contexto em subpastas:
+
+```
+pages/admin/
+  ├── dashboard/           # Dashboard principal
+  ├── cadastros/           # Módulo de Cadastros (CRUD)
+  │   ├── courts/
+  │   ├── plans/
+  │   ├── users/
+  │   └── instructors/
+  ├── agendamentos/        # Módulo de Agendamentos
+  │   ├── personal-sessions/
+  │   └── classes/
+  └── payments/            # Pagamentos
+```
+
+**Ao criar nova página**:
+1. ✅ Crie dentro da subpasta apropriada (cadastros, agendamentos, etc)
+2. ✅ Crie arquivo `index.ts` para barrel export
+3. ✅ Atualize imports no `App.tsx`
+4. ✅ Adicione rota no `App.tsx`
+5. ✅ Adicione item no menu (`Sidebar.tsx`)
+
+**Exemplo completo**:
+```bash
+# 1. Criar estrutura
+pages/admin/cadastros/nova-entidade/
+  ├── NovaEntidade.tsx
+  └── index.ts
+
+# 2. index.ts (barrel export)
+export { default } from './NovaEntidade';
+
+# 3. App.tsx (import simplificado)
+import NovaEntidade from './pages/admin/cadastros/nova-entidade';
+
+# 4. App.tsx (rota)
+<Route path="nova-entidade" element={<NovaEntidade />} />
+
+# 5. Sidebar.tsx (menu)
+{ title: 'Nova Entidade', href: '/admin/nova-entidade', icon: Icon }
 ```
 
 ### Como Adicionar Nova Tela no Menu

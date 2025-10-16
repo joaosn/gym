@@ -81,6 +81,8 @@ export default function PersonalSessionsPage() {
   }, [statusFilter, periodoFilter, instructorFilter]);
 
   const loadInitialData = async () => {
+    console.log('🔑 Token:', localStorage.getItem('access_token') ? 'Presente ✅' : 'Ausente ❌');
+    
     try {
       const [sessionsData, instructorsData, studentsData, courtsData] = await Promise.all([
         personalSessionsService.list({ per_page: 100 }),
@@ -89,11 +91,21 @@ export default function PersonalSessionsPage() {
         courtsService.getAdminCourts({ status: 'ativa' }),
       ]);
 
-      setSessions(sessionsData.data);
+      console.log('📊 Sessions Data:', sessionsData);
+      console.log('👨‍🏫 Instructors Data:', instructorsData);
+      console.log('🎓 Students Data:', studentsData);
+      console.log('🏟️ Courts Data:', courtsData);
+
+      setSessions(sessionsData.data || []);
       setInstructors(instructorsData.data || []);
       setStudents(studentsData.data || []);
       setCourts(courtsData.data || []);
     } catch (error: any) {
+      console.error('Erro ao carregar dados:', error);
+      setSessions([]);
+      setInstructors([]);
+      setStudents([]);
+      setCourts([]);
       toast({
         title: 'Erro ao carregar dados',
         description: error.message,
@@ -114,8 +126,10 @@ export default function PersonalSessionsPage() {
       if (instructorFilter !== 'all') filters.id_instrutor = instructorFilter;
 
       const data = await personalSessionsService.list(filters);
-      setSessions(data.data);
+      setSessions(data.data || []);
     } catch (error: any) {
+      console.error('Erro ao carregar sessões:', error);
+      setSessions([]);
       toast({
         title: 'Erro ao carregar sessões',
         description: error.message,
@@ -146,13 +160,14 @@ export default function PersonalSessionsPage() {
       return;
     }
 
-    // Verificar disponibilidade primeiro
+    // Verificar disponibilidade primeiro (instrutor + quadra se informada)
     try {
       setSubmitting(true);
       const availability = await personalSessionsService.checkAvailability({
         id_instrutor: formData.id_instrutor,
         inicio: formData.inicio,
         fim: formData.fim,
+        id_quadra: formData.id_quadra || undefined, // Enviar quadra se selecionada
       });
 
       if (!availability.disponivel) {
@@ -283,7 +298,7 @@ export default function PersonalSessionsPage() {
   };
 
   // Filtrar sessões por busca
-  const filteredSessions = sessions.filter((session) => {
+  const filteredSessions = (sessions || []).filter((session) => {
     const searchLower = searchTerm.toLowerCase();
     const instructorName = session.instrutor?.nome || '';
     const studentName = session.usuario?.nome || '';
@@ -572,14 +587,14 @@ export default function PersonalSessionsPage() {
             <div className="space-y-2 col-span-2">
               <Label htmlFor="quadra">Quadra (Opcional)</Label>
               <Select
-                value={formData.id_quadra}
-                onValueChange={(value) => setFormData({ ...formData, id_quadra: value })}
+                value={formData.id_quadra || 'none'}
+                onValueChange={(value) => setFormData({ ...formData, id_quadra: value === 'none' ? '' : value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a quadra (opcional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhuma</SelectItem>
+                  <SelectItem value="none">Nenhuma</SelectItem>
                   {courts.map((court) => (
                     <SelectItem key={court.id_quadra} value={court.id_quadra}>
                       {court.nome} - {court.esporte}
@@ -625,16 +640,16 @@ export default function PersonalSessionsPage() {
           <div className="space-y-4">
             {/* Quadra */}
             <div className="space-y-2">
-              <Label htmlFor="edit-quadra">Quadra</Label>
+              <Label htmlFor="edit-quadra">Quadra (Opcional)</Label>
               <Select
-                value={formData.id_quadra}
-                onValueChange={(value) => setFormData({ ...formData, id_quadra: value })}
+                value={formData.id_quadra || 'none'}
+                onValueChange={(value) => setFormData({ ...formData, id_quadra: value === 'none' ? '' : value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a quadra" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhuma</SelectItem>
+                  <SelectItem value="none">Nenhuma</SelectItem>
                   {courts.map((court) => (
                     <SelectItem key={court.id_quadra} value={court.id_quadra}>
                       {court.nome}

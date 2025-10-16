@@ -18,7 +18,13 @@ class PersonalSessionsService {
     status?: string;
     periodo?: 'futuras' | 'passadas';
     per_page?: number;
-  }) {
+  }): Promise<{
+    data: PersonalSession[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  }> {
     const params = new URLSearchParams();
     if (filters?.id_instrutor) params.append('id_instrutor', filters.id_instrutor);
     if (filters?.id_usuario) params.append('id_usuario', filters.id_usuario);
@@ -29,15 +35,13 @@ class PersonalSessionsService {
     const queryString = params.toString();
     const url = queryString ? `${this.baseUrl}?${queryString}` : this.baseUrl;
 
-    const response = await apiClient.get<{
+    return await apiClient.get<{
       data: PersonalSession[];
       current_page: number;
       last_page: number;
       per_page: number;
       total: number;
     }>(url);
-
-    return response.data;
   }
 
   /**
