@@ -8,10 +8,15 @@ Este projeto roda quatro serviços com Docker Compose, permitindo usar o fronten
   - Porta: 5432 (host -> container)
   - Volume: `postgres_data`
   - Healthcheck: `pg_isready`
+- pgadmin (pgAdmin 4)
+  - Porta: 5050 (host -> container)
+  - Volume: `pgadmin_data`
+  - Login: `admin@fitway.com` / `admin123`
+  - Acesso: <http://localhost:5050>
 - api (Laravel 10 em PHP 8.4, Nginx + PHP-FPM + Supervisor)
   - Porta: 8000 (host -> container)
   - Bind mounts: `./api` (código), Nginx conf e scripts
-  - Volumes: `api_storage`, `api_bootstrap_cache`
+  - Volumes: `api_vendor`, `api_storage`, `api_bootstrap_cache`
   - start.sh: espera DB, gera APP_KEY, cacheia config/rotas, aplica DDL (se `api/database/ddl.sql` existir), roda migrations/seeders e inicia Supervisor
   - Hot reload: sim (código montado via bind)
 - frontend (produção – Nginx servindo build estático)
@@ -46,11 +51,11 @@ Observação: use na raiz do projeto (`C:\\laragon\\www\\tccFitway`). Separei po
 ### Subir/derrubar serviços
 
 ```powershell
-# Subir tudo (db, api, frontend prod e frontend dev)
-docker-compose up -d db api frontend frontend-dev
+# Subir tudo (db, pgadmin, api, frontend prod e frontend dev)
+docker-compose up -d db pgadmin api frontend frontend-dev
 
-# Subir apenas API e DB
-docker-compose up -d db api
+# Subir apenas API, DB e pgAdmin
+docker-compose up -d db pgadmin api
 
 # Derrubar tudo (mantendo volumes)
 docker-compose down
@@ -115,6 +120,35 @@ docker-compose exec db psql -U fitway_user -d fitway_db
 # \l  (lista bancos)
 # \dt (lista tabelas)
 ```
+
+### pgAdmin - Interface Gráfica do PostgreSQL
+
+Para acessar o pgAdmin:
+
+1. Abra <http://localhost:5050> no navegador
+2. Faça login com:
+   - Email: `admin@fitway.com`
+   - Senha: `admin123`
+
+🎉 **O servidor PostgreSQL já vem pré-configurado automaticamente!**
+
+Você verá o servidor "Fitway PostgreSQL" na árvore à esquerda, já conectado e pronto para usar.
+
+**Configuração automática** (via arquivos em `pgadmin/`):
+
+- `servers.json`: Define o servidor PostgreSQL pré-configurado
+- `pgpass`: Armazena a senha para conexão automática
+
+**Conexão manual** (se necessário):
+
+- Nome: `Fitway Local`
+- Host: `db` (nome do container do PostgreSQL)
+- Port: `5432`
+- Database: `fitway_db`
+- Username: `fitway_user`
+- Password: `fitway_password`
+
+O DDL em `api/database/ddl.sql` é executado automaticamente na primeira vez que o container da API sobe.
 
 ### Build do frontend de produção
 

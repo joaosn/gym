@@ -1,6 +1,12 @@
 -- =====================================================================
--- BANCO INICIAL FITGAMES / POSTGRESQL
+-- BANCO FITWAY / POSTGRESQL 16
 -- Tabelas em pt-BR, snake_case, ids explícitos, constraints e índices.
+-- 
+-- ÚLTIMAS ATUALIZAÇÕES (15/10/2025):
+-- - Soft Delete implementado nas tabelas: usuarios, planos, instrutores
+--   Status agora aceita: 'ativo', 'inativo', 'excluido'
+-- - Papel 'personal' removido, unificado como 'instrutor'
+--   usuarios.papel aceita: 'admin', 'aluno', 'instrutor'
 -- =====================================================================
 
 -- EXTENSÕES NECESSÁRIAS
@@ -46,8 +52,8 @@ CREATE TABLE usuarios (
   telefone          TEXT,
   documento         TEXT,           -- CPF/Documento
   data_nascimento   DATE,
-  papel             TEXT NOT NULL CHECK (papel IN ('admin','aluno','personal','instrutor')),
-  status            TEXT NOT NULL DEFAULT 'ativo' CHECK (status IN ('ativo','inativo')),
+  papel             TEXT NOT NULL CHECK (papel IN ('admin','aluno','instrutor')),
+  status            TEXT NOT NULL DEFAULT 'ativo' CHECK (status IN ('ativo','inativo','excluido')),
   criado_em         TIMESTAMPTZ NOT NULL DEFAULT now(),
   atualizado_em     TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -59,7 +65,7 @@ CREATE TABLE planos (
   ciclo_cobranca           TEXT NOT NULL CHECK (ciclo_cobranca IN ('mensal','trimestral','anual')),
   max_reservas_futuras     INTEGER NOT NULL DEFAULT 0,
   beneficios_json          JSONB,
-  status                   TEXT NOT NULL DEFAULT 'ativo' CHECK (status IN ('ativo','inativo')),
+  status                   TEXT NOT NULL DEFAULT 'ativo' CHECK (status IN ('ativo','inativo','excluido')),
   criado_em                TIMESTAMPTZ NOT NULL DEFAULT now(),
   atualizado_em            TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -150,7 +156,7 @@ CREATE TABLE instrutores (
   valor_hora           NUMERIC(12,2),
   especialidades_json  JSONB,
   bio                  TEXT,
-  status               TEXT NOT NULL DEFAULT 'ativo' CHECK (status IN ('ativo','inativo')),
+  status               TEXT NOT NULL DEFAULT 'ativo' CHECK (status IN ('ativo','inativo','excluido')),
   criado_em            TIMESTAMPTZ NOT NULL DEFAULT now(),
   atualizado_em        TIMESTAMPTZ NOT NULL DEFAULT now()
 );

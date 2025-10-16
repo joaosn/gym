@@ -14,7 +14,7 @@ const RegisterPage = () => {
     name: '',
     email: '',
     password: '',
-    confirmPassword: '',
+    password_confirmation: '',
     phone: ''
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -28,15 +28,14 @@ const RegisterPage = () => {
     setIsLoading(true);
     setError('');
 
-    if (formData.password !== formData.confirmPassword) {
+    if (formData.password !== formData.password_confirmation) {
       setError('As senhas não coincidem');
       setIsLoading(false);
       return;
     }
 
     try {
-      const { confirmPassword, ...registerData } = formData;
-      const response = await authService.register(registerData);
+      const response = await authService.register(formData);
       
       toast({
         title: 'Conta criada com sucesso!',
@@ -158,13 +157,13 @@ const RegisterPage = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-white">Confirmar senha</Label>
+                <Label htmlFor="password_confirmation" className="text-white">Confirmar senha</Label>
                 <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
+                  id="password_confirmation"
+                  name="password_confirmation"
                   type="password"
                   placeholder="Digite a senha novamente"
-                  value={formData.confirmPassword}
+                  value={formData.password_confirmation}
                   onChange={handleChange}
                   required
                   className="h-11 bg-fitway-light border-fitway-green/30 text-white placeholder:text-white/50"

@@ -9,6 +9,12 @@ storage/framework/cache/*
 storage/framework/sessions/*
 storage/framework/views/*
 bootstrap/cache/*
+public/storage
 .DS_Store
 Thumbs.db
 *.log
+.git/
+.gitignore
+.editorconfig
+tests/
+phpunit.xml

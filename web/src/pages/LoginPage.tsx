@@ -35,8 +35,8 @@ const LoginPage = () => {
         case 'aluno':
           navigate('/aluno/dashboard');
           break;
-        case 'personal':
-          navigate('/personal/dashboard');
+        case 'instrutor':
+          navigate('/instrutor/dashboard');
           break;
         case 'admin':
           navigate('/admin/dashboard');

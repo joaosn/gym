@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 
 interface SidebarProps {
-  userRole: 'admin' | 'personal' | 'aluno';
+  userRole: 'admin' | 'instrutor' | 'aluno';
 }
 
 interface NavItem {
@@ -55,19 +55,19 @@ const Sidebar = ({ userRole }: SidebarProps) => {
       case 'admin':
         return [
           { title: 'Dashboard', href: '/admin/dashboard', icon: Home },
-          { title: 'Planos', href: '/admin/planos', icon: Target },
           { title: 'Quadras', href: '/admin/quadras', icon: MapPin },
+          { title: 'Planos', href: '/admin/planos', icon: Target },
+          { title: 'Usuários', href: '/admin/usuarios', icon: Users },
           { title: 'Aulas', href: '/admin/aulas', icon: BookOpen },
-          { title: 'Personal Trainers', href: '/admin/personais', icon: Users },
-          { title: 'Alunos', href: '/admin/alunos', icon: User },
+          { title: 'Instrutores', href: '/admin/instrutores', icon: User },
           { title: 'Pagamentos', href: '/admin/pagamentos', icon: CreditCard, badge: '8' },
         ];
-      case 'personal':
+      case 'instrutor':
         return [
-          { title: 'Dashboard', href: '/personal/dashboard', icon: Home },
-          { title: 'Agenda', href: '/personal/agenda', icon: Calendar },
-          { title: 'Horários', href: '/personal/slots', icon: Clock },
-          { title: 'Turmas', href: '/personal/turmas', icon: BookOpen },
+          { title: 'Dashboard', href: '/instrutor/dashboard', icon: Home },
+          { title: 'Agenda', href: '/instrutor/agenda', icon: Calendar },
+          { title: 'Horários', href: '/instrutor/slots', icon: Clock },
+          { title: 'Turmas', href: '/instrutor/turmas', icon: BookOpen },
         ];
       case 'aluno':
         return [
@@ -97,7 +97,7 @@ const Sidebar = ({ userRole }: SidebarProps) => {
   const getRoleTitle = () => {
     switch (userRole) {
       case 'admin': return 'Administrador';
-      case 'personal': return 'Personal Trainer';
+      case 'instrutor': return 'Instrutor';
       case 'aluno': return 'Aluno';
       default: return '';
     }
@@ -106,7 +106,7 @@ const Sidebar = ({ userRole }: SidebarProps) => {
   const getRoleColor = () => {
     switch (userRole) {
       case 'admin': return 'bg-red-500';
-      case 'personal': return 'bg-blue-500';
+      case 'instrutor': return 'bg-blue-500';
       case 'aluno': return 'bg-green-500';
       default: return 'bg-gray-500';
     }

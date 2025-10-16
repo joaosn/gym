@@ -306,8 +306,8 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               ))}
-              <Button variant="sport" className="w-full" onClick={() => navigate('/admin/personais')}>
-                Gerenciar Personal Trainers
+              <Button variant="sport" className="w-full" onClick={() => navigate('/admin/instrutores')}>
+                Gerenciar Instrutores
               </Button>
             </div>
           </CardContent>

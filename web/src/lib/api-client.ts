@@ -45,6 +45,11 @@ class ApiClient {
         throw new Error(errorData.message || `HTTP ${response.status}`);
       }
 
+      // Se for 204 No Content, não tentar parsear JSON
+      if (response.status === 204) {
+        return undefined as T;
+      }
+
       return await response.json();
     } catch (error) {
       if (error instanceof Error) {
@@ -68,6 +73,13 @@ class ApiClient {
   async patch<T>(endpoint: string, data: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async put<T>(endpoint: string, data: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PUT',
       body: JSON.stringify(data),
     });
   }

@@ -1,0 +1,4 @@
+# Arquivos de configuração do pgAdmin são versionados
+# Este .gitignore é apenas para futuras extensões
+*.log
+*.tmp

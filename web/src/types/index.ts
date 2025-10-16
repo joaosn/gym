@@ -1,17 +1,57 @@
+// User type for authentication (English - matches AuthController response)
 export interface User {
   id: string;
-  email: string;
   name: string;
+  email: string;
   phone?: string;
-  role: 'aluno' | 'personal' | 'admin';
+  role: 'admin' | 'aluno' | 'instrutor';
   createdAt: string;
 }
 
+// AdminUser type for user management (Portuguese - matches UserController response)
+export interface AdminUser {
+  id_usuario: string;
+  nome: string;
+  email: string;
+  telefone?: string;
+  documento?: string;
+  data_nascimento?: string;
+  papel: 'admin' | 'aluno' | 'instrutor';
+  status: 'ativo' | 'inativo';
+  criado_em: string;
+  atualizado_em: string;
+}
+
+export interface UserFormData {
+  nome: string;
+  email: string;
+  senha?: string;
+  telefone?: string;
+  documento?: string;
+  data_nascimento?: string;
+  papel: 'admin' | 'aluno' | 'instrutor';
+  status?: 'ativo' | 'inativo';
+}
+
 export interface Court {
-  id: string;
-  name: string;
-  location: string;
-  isActive: boolean;
+  id_quadra: string;
+  nome: string;
+  localizacao: string;
+  esporte: string;
+  preco_hora: number;
+  caracteristicas_json: Record<string, any>;
+  status: 'ativa' | 'inativa';
+  criado_em: string;
+  atualizado_em: string;
+}
+
+export interface CourtFormData {
+  nome: string;
+  localizacao?: string;
+  esporte: string;
+  preco_hora: number;
+  caracteristicas_json?: Record<string, any>;
+  status?: 'ativa' | 'inativa';
 }
 
 export interface CourtAvailability {
@@ -36,13 +76,24 @@ export interface CourtBooking {
 }
 
 export interface Plan {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  benefits: string[];
-  futureBookingsLimit: number;
-  includedClasses: number;
+  id_plano: string;
+  nome: string;
+  preco: number;
+  ciclo_cobranca: 'mensal' | 'trimestral' | 'anual';
+  max_reservas_futuras: number;
+  beneficios_json: string[];
+  status: 'ativo' | 'inativo';
+  criado_em: string;
+  atualizado_em: string;
+}
+
+export interface PlanFormData {
+  nome: string;
+  preco: number;
+  ciclo_cobranca: 'mensal' | 'trimestral' | 'anual';
+  max_reservas_futuras?: number;
+  beneficios_json?: string[];
+  status?: 'ativo' | 'inativo';
 }
 
 export interface Subscription {
@@ -93,6 +144,53 @@ export interface Trainer {
   pricePerSession: number;
   rating?: number;
 }
+
+// =====================================================================
+// INSTRUTORES/PERSONAL TRAINERS (Fase 5)
+// =====================================================================
+
+export interface Availability {
+  id_disponibilidade: string;
+  dia_semana: number; // 1-7 (Segunda-Domingo)
+  dia_semana_texto: string; // "Segunda", "Terça", etc
+  hora_inicio: string; // "HH:MM"
+  hora_fim: string; // "HH:MM"
+  disponivel: boolean;
+}
+
+export interface Instructor {
+  id_instrutor: string;
+  id_usuario?: string;
+  nome: string;
+  email: string;
+  telefone: string;
+  cref: string;
+  valor_hora: number;
+  especialidades: string[];
+  bio: string;
+  status: 'ativo' | 'inativo';
+  criado_em: string;
+  atualizado_em: string;
+  disponibilidades: Availability[];
+}
+
+export interface InstructorFormData {
+  nome: string;
+  email: string;
+  telefone: string;
+  cref: string;
+  valor_hora: number;
+  especialidades: string[];
+  bio?: string;
+  status?: 'ativo' | 'inativo';
+  criar_usuario?: boolean;
+  id_usuario?: string;
+  senha?: string;
+}
+
+// =====================================================================
+// LEGACY (a refatorar)
+// =====================================================================
 
 export interface TrainerSlot {
   id: string;

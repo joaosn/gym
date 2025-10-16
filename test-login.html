@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Login API - Fitway</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .quick-select {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .quick-btn {
+            flex: 1;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .quick-btn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste de Login - API Fitway</h1>
+        
+        <div class="quick-select">
+            <button class="quick-btn" onclick="fillForm('admin')">Admin</button>
+            <button class="quick-btn" onclick="fillForm('personal')">Personal</button>
+            <button class="quick-btn" onclick="fillForm('aluno')">Aluno</button>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="email" value="admin@fitway.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Senha:</label>
+                <input type="password" id="password" value="admin123" required>
+            </div>
+            
+            <button type="submit">🔐 Testar Login</button>
+        </form>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api';
+
+        const users = {
+            admin: { email: 'admin@fitway.com', password: 'admin123' },
+            personal: { email: 'personal@fitway.com', password: 'personal123' },
+            aluno: { email: 'aluno@fitway.com', password: 'aluno123' }
+        };
+
+        function fillForm(type) {
+            document.getElementById('email').value = users[type].email;
+            document.getElementById('password').value = users[type].password;
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('result');
+            
+            resultDiv.style.display = 'none';
+            resultDiv.className = 'result';
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Login realizado com sucesso!</h3>
+                        <p><strong>Nome:</strong> ${data.user.name}</p>
+                        <p><strong>Email:</strong> ${data.user.email}</p>
+                        <p><strong>Papel:</strong> ${data.user.role}</p>
+                        <p><strong>Token:</strong></p>
+                        <pre>${data.access_token.substring(0, 50)}...</pre>
+                        <h4>Dados completos do usuário:</h4>
+                        <pre>${JSON.stringify(data.user, null, 2)}</pre>
+                    `;
+                    
+                    // Salvar token para teste do /me
+                    localStorage.setItem('access_token', data.access_token);
+                    
+                    // Testar endpoint /me
+                    testMe(data.access_token);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ Erro no login</h3>
+                        <p>${data.message || 'Credenciais inválidas'}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+                
+                resultDiv.style.display = 'block';
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Erro de conexão</h3>
+                    <p>${error.message}</p>
+                    <p><strong>Certifique-se de que:</strong></p>
+                    <ul>
+                        <li>A API está rodando: <code>docker-compose ps api</code></li>
+                        <li>A porta 8000 está acessível</li>
+                        <li>CORS está configurado corretamente</li>
+                    </ul>
+                `;
+                resultDiv.style.display = 'block';
+            }
+        });
+
+        async function testMe(token) {
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML += `
+                    <hr>
+                    <h3>✅ Teste /auth/me</h3>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                console.error('Erro ao testar /me:', error);
+            }
+        }
+    </script>
+</body>
+</html>

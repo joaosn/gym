@@ -1,7 +1,11 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Admin\QuadraController;
+use App\Http\Controllers\Admin\PlanoController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\InstrutorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,16 +18,71 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-// Health check simples
+// =====================================================================
+// HEALTH CHECK
+// =====================================================================
 Route::get('/healthz', function () {
     return response()->json([
         'status' => 'ok',
         'app' => config('app.name'),
         'env' => config('app.env'),
         'time' => now()->toIso8601String(),
+        'database' => 'connected', // TODO: adicionar DB check
     ]);
+});
+
+// =====================================================================
+// AUTENTICAÇÃO (PÚBLICO)
+// =====================================================================
+Route::prefix('auth')->group(function () {
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register']);
+});
+
+// =====================================================================
+// ROTAS AUTENTICADAS (SANCTUM)
+// =====================================================================
+Route::middleware('auth:sanctum')->group(function () {
+    
+    // Autenticação (usuário logado)
+    Route::prefix('auth')->group(function () {
+        Route::get('/me', [AuthController::class, 'me']);
+        Route::post('/logout', [AuthController::class, 'logout']);
+    });
+
+    // =====================================================================
+    // ADMIN: QUADRAS (CRUD)
+    // =====================================================================
+    Route::middleware('role:admin')->prefix('admin')->group(function () {
+        Route::apiResource('courts', QuadraController::class)->parameters([
+            'courts' => 'id'
+        ]);
+        Route::patch('/courts/{id}/status', [QuadraController::class, 'updateStatus']);
+        
+        // PLANOS (CRUD)
+        Route::apiResource('plans', PlanoController::class)->parameters([
+            'plans' => 'id'
+        ]);
+        Route::patch('/plans/{id}/status', [PlanoController::class, 'updateStatus']);
+        
+        // USUÁRIOS (CRUD) - Registrando rotas manualmente para debug
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::get('/users/{id}', [UserController::class, 'show'])->name('users.show');
+        Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
+        Route::patch('/users/{id}', [UserController::class, 'update'])->name('users.patch');
+        Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::patch('/users/{id}/status', [UserController::class, 'updateStatus'])->name('users.status');
+        
+        // INSTRUTORES/PERSONAL TRAINERS (CRUD)
+        Route::get('/instructors', [InstrutorController::class, 'index'])->name('instructors.index');
+        Route::post('/instructors', [InstrutorController::class, 'store'])->name('instructors.store');
+        Route::get('/instructors/{id}', [InstrutorController::class, 'show'])->name('instructors.show');
+        Route::put('/instructors/{id}', [InstrutorController::class, 'update'])->name('instructors.update');
+        Route::patch('/instructors/{id}', [InstrutorController::class, 'update'])->name('instructors.patch');
+        Route::delete('/instructors/{id}', [InstrutorController::class, 'destroy'])->name('instructors.destroy');
+        Route::patch('/instructors/{id}/status', [InstrutorController::class, 'updateStatus'])->name('instructors.status');
+        Route::put('/instructors/{id}/availability', [InstrutorController::class, 'updateAvailability'])->name('instructors.availability');
+    });
+    
 });

@@ -14,23 +14,27 @@ class UserSeeder extends Seeder
         User::updateOrCreate(
             ['email' => 'admin@fitway.com'],
             [
-                'name' => 'Administrador Fitway',
+                'nome' => 'Admin Fitway',
                 'email' => 'admin@fitway.com',
-                'password' => Hash::make('password'),
-                'role' => 'admin',
-                'email_verified_at' => now(),
+                'senha_hash' => Hash::make('admin123'),
+                'telefone' => '11999999999',
+                'documento' => '123.456.789-00',
+                'papel' => 'admin',
+                'status' => 'ativo',
             ]
         );
 
-        // Criar usuário personal trainer
+        // Criar usuário instrutor
         User::updateOrCreate(
-            ['email' => 'personal@fitway.com'],
+            ['email' => 'instrutor@fitway.com'],
             [
-                'name' => 'Personal Trainer',
-                'email' => 'personal@fitway.com',
-                'password' => Hash::make('password'),
-                'role' => 'personal',
-                'email_verified_at' => now(),
+                'nome' => 'Instrutor João Silva',
+                'email' => 'instrutor@fitway.com',
+                'senha_hash' => Hash::make('instrutor123'),
+                'telefone' => '11988887777',
+                'documento' => '987.654.321-00',
+                'papel' => 'instrutor',
+                'status' => 'ativo',
             ]
         );
 
@@ -38,14 +42,44 @@ class UserSeeder extends Seeder
         User::updateOrCreate(
             ['email' => 'aluno@fitway.com'],
             [
-                'name' => 'Aluno Teste',
+                'nome' => 'Aluno Maria Santos',
                 'email' => 'aluno@fitway.com',
-                'password' => Hash::make('password'),
-                'role' => 'aluno',
-                'email_verified_at' => now(),
+                'senha_hash' => Hash::make('aluno123'),
+                'telefone' => '11977776666',
+                'documento' => '111.222.333-44',
+                'papel' => 'aluno',
+                'status' => 'ativo',
             ]
         );
 
-        $this->command->info('Usuários de teste criados com sucesso!');
+        // Criar usuário instrutor adicional
+        User::updateOrCreate(
+            ['email' => 'instrutor2@fitway.com'],
+            [
+                'nome' => 'Instrutor Carlos',
+                'email' => 'instrutor2@fitway.com',
+                'senha_hash' => Hash::make('instrutor123'),
+                'telefone' => '11966665555',
+                'documento' => '222.333.444-55',
+                'papel' => 'instrutor',
+                'status' => 'ativo',
+            ]
+        );
+
+        // Criar usuário inativo para testes
+        User::updateOrCreate(
+            ['email' => 'inativo@fitway.com'],
+            [
+                'nome' => 'Teste Aluno Inativo',
+                'email' => 'inativo@fitway.com',
+                'senha_hash' => Hash::make('inativo123'),
+                'telefone' => '11955554444',
+                'documento' => '333.444.555-66',
+                'papel' => 'aluno',
+                'status' => 'inativo',
+            ]
+        );
+
+        $this->command->info('✅ 5 usuários criados com sucesso!');
     }
 }

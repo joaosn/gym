@@ -1,0 +1,2 @@
+db:5432:fitway_db:fitway_user:fitway_password
+db:5432:*:fitway_user:fitway_password

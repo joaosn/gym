@@ -1,4 +1,5 @@
 import { User } from '@/types';
+import { apiClient } from '@/lib/api-client';
 
 export interface LoginRequest {
   email: string;
@@ -9,6 +10,7 @@ export interface RegisterRequest {
   name: string;
   email: string;
   password: string;
+  password_confirmation: string;
   phone?: string;
 }
 
@@ -18,79 +20,72 @@ export interface AuthResponse {
 }
 
 class AuthService {
-  // Mock login - simula diferentes tipos de usuário baseado no email
+  /**
+   * Login com API real
+   */
   async login(credentials: LoginRequest): Promise<AuthResponse> {
-    // Simula delay da API
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
     
-    // Determina o tipo de usuário baseado no email
-    let role: 'aluno' | 'personal' | 'admin' = 'aluno';
-    if (credentials.email.toLowerCase().includes('admin')) {
-      role = 'admin';
-    } else if (credentials.email.toLowerCase().includes('personal')) {
-      role = 'personal';
-    }
-
-    // Simula resposta da API
-    const mockResponse: AuthResponse = {
-      user: {
-        id: '1',
-        name: credentials.email.split('@')[0],
-        email: credentials.email,
-        role: role,
-        createdAt: new Date().toISOString()
-      },
-      access_token: `mock_token_${Date.now()}`
-    };
-
-    localStorage.setItem('access_token', mockResponse.access_token);
-    localStorage.setItem('user_data', JSON.stringify(mockResponse.user));
+    localStorage.setItem('access_token', response.access_token);
+    localStorage.setItem('user_data', JSON.stringify(response.user));
     
-    return mockResponse;
+    return response;
   }
 
+  /**
+   * Registro de novo usuário
+   */
   async register(data: RegisterRequest): Promise<AuthResponse> {
-    // Simula delay da API
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const response = await apiClient.post<AuthResponse>('/auth/register', data);
     
-    // Novos usuários são sempre alunos por padrão
-    const mockResponse: AuthResponse = {
-      user: {
-        id: '1',
-        name: data.name,
-        email: data.email,
-        role: 'aluno',
-        createdAt: new Date().toISOString()
-      },
-      access_token: `mock_token_${Date.now()}`
-    };
-
-    localStorage.setItem('access_token', mockResponse.access_token);
-    localStorage.setItem('user_data', JSON.stringify(mockResponse.user));
+    localStorage.setItem('access_token', response.access_token);
+    localStorage.setItem('user_data', JSON.stringify(response.user));
     
-    return mockResponse;
+    return response;
   }
 
+  /**
+   * Obter dados do usuário autenticado
+   */
   async getCurrentUser(): Promise<User> {
-    const userData = localStorage.getItem('user_data');
-    if (!userData) {
-      throw new Error('User not found');
+    const response = await apiClient.get<{ user: User }>('/auth/me');
+    localStorage.setItem('user_data', JSON.stringify(response.user));
+    return response.user;
+  }
+
+  /**
+   * Logout
+   */
+  async logout(): Promise<void> {
+    try {
+      await apiClient.post('/auth/logout');
+    } finally {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user_data');
+      window.location.href = '/';
     }
-    return JSON.parse(userData);
   }
 
-  logout(): void {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user_data');
-    window.location.href = '/';
-  }
-
+  /**
+   * Obter token do localStorage
+   */
   getToken(): string | null {
     return localStorage.getItem('access_token');
   }
 
+  /**
+   * Verificar se está autenticado
+   */
   isAuthenticated(): boolean {
     return this.getToken() !== null;
+  }
+
+  /**
+   * Obter usuário do localStorage
+   */
+  getUserFromStorage(): User | null {
+    const userData = localStorage.getItem('user_data');
+    return userData ? JSON.parse(userData) : null;
   }
 }
 

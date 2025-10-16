@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Fitway PostgreSQL",
+      "Group": "Servers",
+      "Host": "db",
+      "Port": 5432,
+      "MaintenanceDB": "fitway_db",
+      "Username": "fitway_user",
+      "Password": "fitway_password",
+      "SSLMode": "prefer",
+      "SavePassword": true
+    }
+  }
+}
