@@ -1,10 +1,72 @@
 # Copilot Instructions - Fitway Project
 
+> **Atualizado**: 16 de outubro de 2025 | **Fases Concluídas**: 7/13
+
+---
+
+## 📚 DOCUMENTAÇÃO: Quando e Como Criar
+
+### ⚠️ REGRA IMPORTANTE: Não Documentar Durante o Desenvolvimento
+
+**❌ NÃO FAÇA**:
+- Criar arquivos de documentação intermediários (RESUMO_X, TESTE_X, ANTES_DEPOIS_X)
+- Documentar cada passo do processo
+- Gerar múltiplos arquivos para a mesma fase
+- Criar documentos de análise temporária
+
+**✅ FAÇA**:
+- **Documente APENAS quando a fase estiver 100% COMPLETA**
+- Crie **1 único arquivo** por fase: `docs/FASE_X.md`
+- Teste tudo antes de documentar
+- Inclua no documento da fase: Backend + Frontend + Como Testar + Lições Aprendidas
+
+### Estrutura do Documento de Fase
+
+Quando uma fase estiver completa, crie `docs/FASE_X.md` com:
+
+```markdown
+# ✅ FASE X: Nome da Feature
+
+**Data**: DD/MM/AAAA  
+**Status**: ✅ CONCLUÍDO
+
+## 🎯 Objetivo
+[O que foi implementado]
+
+## ✅ Implementado
+
+### Backend
+- Models criados
+- Controllers implementados
+- Rotas registradas
+- Seeders executados
+
+### Frontend
+- Pages criadas
+- Services implementados
+- Types definidos
+
+## 🧪 Como Testar
+[Passo a passo para testar]
+
+## 📝 Lições Aprendidas
+[Problemas encontrados, soluções aplicadas]
+```
+
+### Atualizar Após Documentar
+
+Após criar `docs/FASE_X.md`:
+1. Atualizar `docs/PLANO_DE_ACAO.md` (marcar fase como concluída)
+2. **Commitar tudo junto**: código + documentação
+3. Pronto! Não criar mais nenhum arquivo dessa fase
+
+---
+
 ## 🎯 REGRA DE OURO: EXPERIÊNCIA DO USUÁRIO EM PRIMEIRO LUGAR
 
 > **Os detalhes fazem a diferença!** Sempre pense na experiência do usuário ao implementar qualquer funcionalidade.
 
-### ✨ Princípios de UX/UI
+### ✨ Princípios de UX/UI (SEMPRE APLICAR)
 
 1. **Formatação Visual**
    - ✅ Sempre use `formatCurrency()` para valores monetários → "R$ 150,00"
@@ -90,13 +152,26 @@ downloadFile(blob, "filename.csv") // Download de arquivo
 
 ## 📋 Visão Geral do Projeto
 
-**Fitway** é um sistema completo de gestão de academia/centro esportivo com foco em quadras de beach tennis, aulas em grupo, personal trainers e assinaturas.
+**Fitway** é um sistema completo de gestão de academia/centro esportivo com foco em quadras de beach tennis, aulas em grupo, instrutores e assinaturas.
 
 ### Stack Tecnológica
 - **Backend**: Laravel 10 + PHP 8.4 + PostgreSQL 16 (Docker)
-- **Frontend**: React + TypeScript + Vite + TailwindCSS + shadcn/ui
+- **Frontend**: React 18 + TypeScript + Vite + TailwindCSS + shadcn/ui
 - **Autenticação**: Laravel Sanctum (Bearer Token)
 - **Infraestrutura**: Docker Compose (4 serviços)
+- **Padrão**: Soft Delete (status='excluido')
+
+### Fases Concluídas (7/13)
+1. ✅ **Autenticação** - Login/Register/Logout (Sanctum)
+2. ✅ **Admin - Quadras** - CRUD completo
+3. ✅ **Admin - Planos** - CRUD completo
+4. ✅ **Admin - Usuários** - CRUD + Soft Delete
+5. ✅ **Admin - Instrutores** - CRUD + Soft Delete + Unificação Personal→Instrutor
+6. ✅ **Soft Delete Unificado** - Padrão aplicado em todo sistema
+7. ✅ **Disponibilidade Instrutor** - CRUD de horários semanais
+
+### Próxima Fase
+🎯 **Fase 8**: Sessões Personal 1:1 (agendamento com anti-overlap)
 
 ### Portas e URLs
 - API (Laravel): `http://localhost:8000`
