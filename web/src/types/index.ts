@@ -234,3 +234,46 @@ export interface KPIs {
   monthlyRevenue: number;
   newMembersThisMonth: number;
 }
+
+// =====================================================================
+// SESSÕES PERSONAL 1:1
+// =====================================================================
+
+export interface PersonalSession {
+  id_sessao_personal: string;
+  id_instrutor: string;
+  id_usuario: string;
+  id_quadra?: string;
+  inicio: string; // ISO datetime
+  fim: string; // ISO datetime
+  preco_total: number;
+  status: 'pendente' | 'confirmada' | 'cancelada' | 'concluida' | 'no_show';
+  observacoes?: string;
+  criado_em: string;
+  atualizado_em: string;
+  // Relationships (loaded with "with")
+  instrutor?: Instructor;
+  usuario?: AdminUser;
+  quadra?: Court;
+}
+
+export interface PersonalSessionFormData {
+  id_instrutor: string;
+  id_usuario: string;
+  id_quadra?: string;
+  inicio: string; // ISO datetime
+  fim: string; // ISO datetime
+  observacoes?: string;
+}
+
+export interface AvailabilityCheckRequest {
+  id_instrutor: string;
+  inicio: string;
+  fim: string;
+}
+
+export interface AvailabilityCheckResponse {
+  disponivel: boolean;
+  motivo?: string;
+  preco_total?: number;
+}

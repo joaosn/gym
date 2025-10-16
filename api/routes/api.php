@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\QuadraController;
 use App\Http\Controllers\Admin\PlanoController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\InstrutorController;
+use App\Http\Controllers\SessaoPersonalController;
 
 /*
 |--------------------------------------------------------------------------
@@ -83,6 +84,20 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/instructors/{id}', [InstrutorController::class, 'destroy'])->name('instructors.destroy');
         Route::patch('/instructors/{id}/status', [InstrutorController::class, 'updateStatus'])->name('instructors.status');
         Route::put('/instructors/{id}/availability', [InstrutorController::class, 'updateAvailability'])->name('instructors.availability');
+    });
+
+    // =====================================================================
+    // SESSÕES PERSONAL 1:1 (Aluno e Instrutor)
+    // =====================================================================
+    Route::prefix('personal-sessions')->group(function () {
+        Route::get('/', [SessaoPersonalController::class, 'index']);
+        Route::get('/{id}', [SessaoPersonalController::class, 'show']);
+        Route::post('/', [SessaoPersonalController::class, 'store']);
+        Route::put('/{id}', [SessaoPersonalController::class, 'update']);
+        Route::patch('/{id}', [SessaoPersonalController::class, 'update']);
+        Route::delete('/{id}', [SessaoPersonalController::class, 'destroy']);
+        Route::patch('/{id}/confirm', [SessaoPersonalController::class, 'confirm']);
+        Route::post('/check-availability', [SessaoPersonalController::class, 'checkAvailability']);
     });
     
 });

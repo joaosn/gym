@@ -28,6 +28,7 @@ import AdminCourts from "./pages/admin/Courts";
 import AdminPlans from "./pages/admin/Plans";
 import AdminUsers from "./pages/admin/Users";
 import AdminInstructors from "./pages/admin/Instructors";
+import AdminPersonalSessions from "./pages/admin/PersonalSessions";
 import AdminClasses from "./pages/admin/Classes";
 import AdminPayments from "./pages/admin/Payments";
 import EditPlan from "./pages/admin/EditPlan";
@@ -86,6 +87,7 @@ const App = () => (
             <Route path="planos/editar/:id" element={<EditPlan />} />
             <Route path="usuarios" element={<AdminUsers />} />
             <Route path="instrutores" element={<AdminInstructors />} />
+            <Route path="sessoes-personal" element={<AdminPersonalSessions />} />
             <Route path="aulas" element={<AdminClasses />} />
             <Route path="aulas/novo" element={<AddClass />} />
             <Route path="aulas/editar/:id" element={<EditClass />} />
