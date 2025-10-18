@@ -7,6 +7,41 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id_instrutor
+ * @property int|null $id_usuario
+ * @property string $nome
+ * @property string|null $email
+ * @property string|null $telefone
+ * @property string|null $cref
+ * @property string|null $valor_hora
+ * @property array|null $especialidades_json
+ * @property string|null $bio
+ * @property string $status
+ * @property \Illuminate\Support\Carbon $criado_em
+ * @property \Illuminate\Support\Carbon $atualizado_em
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DisponibilidadeInstrutor> $disponibilidades
+ * @property-read int|null $disponibilidades_count
+ * @property-read \App\Models\User|null $usuario
+ * @method static \Illuminate\Database\Eloquent\Builder|Instrutor ativos()
+ * @method static \Illuminate\Database\Eloquent\Builder|Instrutor comEspecialidade(string $especialidade)
+ * @method static \Illuminate\Database\Eloquent\Builder|Instrutor newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Instrutor newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Instrutor query()
+ * @method static \Illuminate\Database\Eloquent\Builder|Instrutor whereAtualizadoEm($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Instrutor whereBio($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Instrutor whereCref($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Instrutor whereCriadoEm($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Instrutor whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Instrutor whereEspecialidadesJson($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Instrutor whereIdInstrutor($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Instrutor whereIdUsuario($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Instrutor whereNome($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Instrutor whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Instrutor whereTelefone($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Instrutor whereValorHora($value)
+ * @mixin \Eloquent
+ */
 class Instrutor extends Model
 {
     use HasFactory;

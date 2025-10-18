@@ -4,6 +4,37 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int $id_quadra
+ * @property string $nome
+ * @property string $localizacao
+ * @property string $esporte
+ * @property string $preco_hora
+ * @property array|null $caracteristicas_json
+ * @property string $status
+ * @property \Illuminate\Support\Carbon $criado_em
+ * @property \Illuminate\Support\Carbon $atualizado_em
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\BloqueioQuadra> $bloqueios
+ * @property-read int|null $bloqueios_count
+ * @property-read mixed $caracteristicas
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ReservaQuadra> $reservas
+ * @property-read int|null $reservas_count
+ * @method static \Illuminate\Database\Eloquent\Builder|Quadra disponiveis()
+ * @method static \Illuminate\Database\Eloquent\Builder|Quadra newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Quadra newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Quadra porEsporte($esporte)
+ * @method static \Illuminate\Database\Eloquent\Builder|Quadra query()
+ * @method static \Illuminate\Database\Eloquent\Builder|Quadra whereAtualizadoEm($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Quadra whereCaracteristicasJson($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Quadra whereCriadoEm($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Quadra whereEsporte($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Quadra whereIdQuadra($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Quadra whereLocalizacao($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Quadra whereNome($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Quadra wherePrecoHora($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Quadra whereStatus($value)
+ * @mixin \Eloquent
+ */
 class Quadra extends Model
 {
     /**

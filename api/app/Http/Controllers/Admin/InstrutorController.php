@@ -17,6 +17,9 @@ class InstrutorController extends Controller
 {
     /**
      * Listar instrutores com filtros
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function index(Request $request): JsonResponse
     {

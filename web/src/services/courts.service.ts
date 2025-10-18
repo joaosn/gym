@@ -27,6 +27,7 @@ export interface PaginatedResponse<T> {
 // Helper para normalizar dados da API
 const normalizeCourt = (court: any): Court => ({
   ...court,
+  id_quadra: String(court.id_quadra), // ← Converter ID para string
   preco_hora: typeof court.preco_hora === 'string' 
     ? parseFloat(court.preco_hora) 
     : court.preco_hora,

@@ -155,9 +155,10 @@ class SessaoPersonalService
      */
     private function verificarDisponibilidadeSemanal(int $idInstrutor, Carbon $inicio, Carbon $fim): bool
     {
-        // Mapear dia da semana do Carbon (0=Sunday) para nosso padrão (0=Segunda)
+        // Mapear dia da semana do Carbon (0=Sunday, 1=Monday, ..., 6=Saturday)
+        // para nosso padrão ISO 8601 (1=Segunda, 2=Terça, ..., 7=Domingo)
         $diaSemanaCarbon = $inicio->dayOfWeek; // 0=Sunday, 1=Monday, ..., 6=Saturday
-        $diaSemana = $diaSemanaCarbon === 0 ? 6 : $diaSemanaCarbon - 1; // 0=Segunda, 6=Domingo
+        $diaSemana = $diaSemanaCarbon === 0 ? 7 : $diaSemanaCarbon; // 1=Segunda, 7=Domingo
 
         // Buscar disponibilidade do instrutor neste dia
         $disponibilidades = DisponibilidadeInstrutor::where('id_instrutor', $idInstrutor)
@@ -198,6 +199,7 @@ class SessaoPersonalService
 
     /**
      * Criar nova sessão personal
+     * Se tiver quadra, cria automaticamente uma reserva de quadra vinculada
      */
     public function criarSessao(array $dados): SessaoPersonal
     {
@@ -222,21 +224,32 @@ class SessaoPersonalService
         // Calcular preço
         $preco = $this->calcularPreco($dados['id_instrutor'], $inicio, $fim);
 
-        // Criar sessão
-        return SessaoPersonal::create([
-            'id_instrutor' => $dados['id_instrutor'],
-            'id_usuario' => $idUsuario,
-            'id_quadra' => $idQuadra,
-            'inicio' => $inicio,
-            'fim' => $fim,
-            'preco_total' => $preco,
-            'status' => 'pendente',
-            'observacoes' => $dados['observacoes'] ?? null,
-        ]);
+        // Criar sessão dentro de uma transação (para garantir atomicidade)
+        return DB::transaction(function () use ($dados, $inicio, $fim, $preco, $idQuadra, $idUsuario) {
+            // 1. Criar sessão
+            $sessao = SessaoPersonal::create([
+                'id_instrutor' => $dados['id_instrutor'],
+                'id_usuario' => $idUsuario,
+                'id_quadra' => $idQuadra,
+                'inicio' => $inicio,
+                'fim' => $fim,
+                'preco_total' => $preco,
+                'status' => 'pendente',
+                'observacoes' => $dados['observacoes'] ?? null,
+            ]);
+
+            // 2. Se tem quadra, criar reserva automática
+            if ($idQuadra) {
+                $this->criarReservaAutomatica($sessao);
+            }
+
+            return $sessao;
+        });
     }
 
     /**
      * Atualizar sessão existente
+     * Se alterar quadra, atualiza/cria/deleta reserva automaticamente
      */
     public function atualizarSessao(SessaoPersonal $sessao, array $dados): SessaoPersonal
     {
@@ -268,7 +281,83 @@ class SessaoPersonalService
             }
         }
 
-        $sessao->update($dados);
-        return $sessao->fresh();
+        return DB::transaction(function () use ($sessao, $dados) {
+            $idQuadraAntiga = $sessao->id_quadra;
+            $idQuadraNova = $dados['id_quadra'] ?? $idQuadraAntiga;
+
+            // 1. Atualizar sessão
+            $sessao->update($dados);
+            $sessao = $sessao->fresh();
+
+            // 2. Gerenciar reserva de quadra automaticamente
+            // Caso 1: Tinha quadra, removeu quadra → deletar reserva
+            if ($idQuadraAntiga && !$idQuadraNova) {
+                $this->deletarReservaAutomatica($sessao);
+            }
+            // Caso 2: Não tinha quadra, adicionou quadra → criar reserva
+            elseif (!$idQuadraAntiga && $idQuadraNova) {
+                $this->criarReservaAutomatica($sessao);
+            }
+            // Caso 3: Mudou quadra OU horário → atualizar reserva
+            elseif ($idQuadraAntiga && $idQuadraNova) {
+                $this->atualizarReservaAutomatica($sessao);
+            }
+
+            return $sessao;
+        });
+    }
+
+    /**
+     * Criar reserva de quadra automaticamente vinculada à sessão
+     */
+    private function criarReservaAutomatica(SessaoPersonal $sessao): void
+    {
+        if (!$sessao->id_quadra) {
+            return; // Não tem quadra, não cria reserva
+        }
+
+        ReservaQuadra::create([
+            'id_quadra' => $sessao->id_quadra,
+            'id_usuario' => $sessao->id_usuario,
+            'id_sessao_personal' => $sessao->id_sessao_personal,
+            'inicio' => $sessao->inicio,
+            'fim' => $sessao->fim,
+            'preco_total' => 0, // Preço é da sessão, não da reserva
+            'origem' => 'admin', // Origem: criada automaticamente pelo sistema
+            'status' => $sessao->status, // Mesma status da sessão
+            'observacoes' => "Reserva automática para sessão personal #{$sessao->id_sessao_personal}",
+        ]);
+    }
+
+    /**
+     * Atualizar reserva de quadra existente
+     */
+    private function atualizarReservaAutomatica(SessaoPersonal $sessao): void
+    {
+        $reserva = ReservaQuadra::where('id_sessao_personal', $sessao->id_sessao_personal)->first();
+
+        if ($reserva && $sessao->id_quadra) {
+            // Atualizar apenas se sessão ainda tem quadra
+            $reserva->update([
+                'id_quadra' => $sessao->id_quadra,
+                'inicio' => $sessao->inicio,
+                'fim' => $sessao->fim,
+                'status' => $sessao->status,
+            ]);
+        } elseif (!$sessao->id_quadra && $reserva) {
+            // Se não tem mais quadra, deletar reserva
+            $reserva->delete();
+        } elseif ($sessao->id_quadra && !$reserva) {
+            // Se não existe reserva mas deveria existir, criar
+            $this->criarReservaAutomatica($sessao);
+        }
+    }
+
+    /**
+     * Deletar reserva de quadra automática
+     */
+    private function deletarReservaAutomatica(SessaoPersonal $sessao): void
+    {
+        ReservaQuadra::where('id_sessao_personal', $sessao->id_sessao_personal)->delete();
     }
 }

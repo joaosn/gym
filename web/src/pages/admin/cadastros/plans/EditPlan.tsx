@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getErrorMessage } from '@/lib/utils';
 
 const EditPlan = () => {
   const navigate = useNavigate();
@@ -84,10 +85,10 @@ const EditPlan = () => {
       });
       
       navigate('/admin/planos');
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao salvar as alterações.",
+        title: "Erro ao atualizar plano",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     } finally {

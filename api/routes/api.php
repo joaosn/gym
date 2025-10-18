@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\QuadraController;
 use App\Http\Controllers\Admin\PlanoController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\InstrutorController;
+use App\Http\Controllers\Admin\ReservaQuadraController;
 use App\Http\Controllers\SessaoPersonalController;
 
 /*
@@ -84,6 +85,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/instructors/{id}', [InstrutorController::class, 'destroy'])->name('instructors.destroy');
         Route::patch('/instructors/{id}/status', [InstrutorController::class, 'updateStatus'])->name('instructors.status');
         Route::put('/instructors/{id}/availability', [InstrutorController::class, 'updateAvailability'])->name('instructors.availability');
+        
+        // RESERVAS DE QUADRAS (CRUD)
+        // ⚠️ IMPORTANTE: Rotas específicas ANTES das genéricas!
+        Route::post('/court-bookings/check-availability', [ReservaQuadraController::class, 'checkAvailability'])->name('court-bookings.check');
+        Route::patch('/court-bookings/{id}/confirm', [ReservaQuadraController::class, 'confirm'])->name('court-bookings.confirm');
+        
+        // Rotas CRUD normais
+        Route::get('/court-bookings', [ReservaQuadraController::class, 'index'])->name('court-bookings.index');
+        Route::post('/court-bookings', [ReservaQuadraController::class, 'store'])->name('court-bookings.store');
+        Route::get('/court-bookings/{id}', [ReservaQuadraController::class, 'show'])->name('court-bookings.show');
+        Route::put('/court-bookings/{id}', [ReservaQuadraController::class, 'update'])->name('court-bookings.update');
+        Route::patch('/court-bookings/{id}', [ReservaQuadraController::class, 'update'])->name('court-bookings.patch');
+        Route::delete('/court-bookings/{id}', [ReservaQuadraController::class, 'destroy'])->name('court-bookings.destroy');
     });
 
     // =====================================================================

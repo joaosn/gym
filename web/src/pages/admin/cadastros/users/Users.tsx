@@ -23,7 +23,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { usersService } from '@/services/users.service';
 import { AdminUser, UserFormData } from '@/types';
-import { formatCPF, formatPhone, formatDate } from '@/lib/utils';
+import { formatCPF, formatPhone, formatDate, getErrorMessage } from '@/lib/utils';
 import { 
   Plus, 
   Search, 
@@ -90,10 +90,10 @@ const AdminUsers = () => {
         search: searchTerm || undefined,
       });
       setUsers(response.data);
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro ao carregar usuários',
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -148,10 +148,10 @@ const AdminUsers = () => {
       
       setIsCreateModalOpen(false);
       loadUsers();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro ao criar usuário',
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -180,10 +180,10 @@ const AdminUsers = () => {
       
       setIsEditModalOpen(false);
       loadUsers();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro ao atualizar usuário',
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -211,10 +211,10 @@ const AdminUsers = () => {
       setDeleteDialogOpen(false);
       setUserToDelete(null);
       loadUsers();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro ao excluir usuário',
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -232,10 +232,10 @@ const AdminUsers = () => {
       });
       
       loadUsers();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro ao alterar status',
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     }

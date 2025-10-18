@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { getErrorMessage } from '@/lib/utils';
 import { 
   Plus, 
   Search, 
@@ -31,10 +32,10 @@ const AdminClasses = () => {
         title: "Aula removida!",
         description: `${className} foi removida com sucesso.`,
       });
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao remover a aula.",
+        title: "Erro ao remover aula",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     }

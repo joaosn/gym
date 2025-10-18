@@ -24,7 +24,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { plansService } from '@/services/plans.service';
 import { Plan, PlanFormData } from '@/types';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, getErrorMessage } from '@/lib/utils';
 import { 
   Plus, 
   Search, 
@@ -90,10 +90,10 @@ const AdminPlans = () => {
         search: searchTerm || undefined,
       });
       setPlans(response.data);
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro ao carregar planos',
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -155,10 +155,10 @@ const AdminPlans = () => {
       
       setIsCreateModalOpen(false);
       loadPlans();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro ao criar plano',
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -190,10 +190,10 @@ const AdminPlans = () => {
       
       setIsEditModalOpen(false);
       loadPlans();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro ao atualizar plano',
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -221,10 +221,10 @@ const AdminPlans = () => {
       setDeleteDialogOpen(false);
       setPlanToDelete(null);
       loadPlans();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro ao excluir plano',
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -242,10 +242,10 @@ const AdminPlans = () => {
       });
       
       loadPlans();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro ao alterar status',
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     }

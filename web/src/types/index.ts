@@ -59,20 +59,38 @@ export interface CourtAvailability {
   availableSlots: string[];
 }
 
+// NOVO: Reserva de Quadra (Admin)
 export interface CourtBooking {
-  id: string;
-  courtId: string;
-  userId?: string;
-  guestName?: string;
-  guestEmail?: string;
-  guestPhone?: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  sport: string;
-  price: number;
-  status: 'pending' | 'confirmed' | 'cancelled';
-  paymentStatus: 'pending' | 'paid' | 'failed';
+  id_reserva_quadra: string;
+  id_quadra: string;
+  id_usuario: string;
+  inicio: string; // ISO datetime
+  fim: string; // ISO datetime
+  preco_total: number;
+  status: 'pendente' | 'confirmada' | 'cancelada' | 'no_show' | 'concluida';
+  observacoes?: string;
+  criado_em: string;
+  atualizado_em: string;
+  // Relationships
+  quadra?: {
+    id_quadra: string;
+    nome: string;
+    preco_hora?: number;
+  };
+  usuario?: {
+    id_usuario: string;
+    nome: string;
+    email: string;
+    telefone?: string;
+  };
+}
+
+export interface CourtBookingFormData {
+  id_quadra: string | number; // Backend espera number, frontend usa string
+  id_usuario: string | number; // Backend espera number, frontend usa string
+  inicio: string; // ISO datetime
+  fim: string; // ISO datetime
+  observacoes?: string;
 }
 
 export interface Plan {

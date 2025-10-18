@@ -14,6 +14,7 @@ import PublicReservePage from "./pages/PublicReservePage";
 import StudentDashboard from "./pages/student/Dashboard";
 import StudentPlans from "./pages/student/Plans";
 import StudentCourts from "./pages/student/Courts";
+import StudentCourtBookings from "./pages/student/CourtBookings";
 import StudentClasses from "./pages/student/Classes";
 import StudentPersonal from "./pages/student/Personal";
 import StudentProfile from "./pages/student/Profile";
@@ -22,6 +23,7 @@ import InstrutorDashboard from "./pages/personal/Dashboard";
 import InstrutorSchedule from "./pages/personal/Schedule";
 import InstrutorSlots from "./pages/personal/Slots";
 import InstrutorClasses from "./pages/personal/Classes";
+import InstrutorCourtBookings from "./pages/personal/CourtBookings";
 
 // Admin Pages - Organized by context
 import AdminDashboard from "./pages/admin/dashboard/Dashboard";
@@ -32,6 +34,7 @@ import EditPlan from "./pages/admin/cadastros/plans/EditPlan";
 import AdminUsers from "./pages/admin/cadastros/users/Users";
 import AdminInstructors from "./pages/admin/cadastros/instructors/Instructors";
 import AdminPersonalSessions from "./pages/admin/agendamentos/personal-sessions/PersonalSessions";
+import AdminCourtBookings from "./pages/admin/agendamentos/court-bookings";
 import AdminClasses from "./pages/admin/agendamentos/classes/Classes";
 import AddClass from "./pages/admin/agendamentos/classes/AddClass";
 import EditClass from "./pages/admin/agendamentos/classes/EditClass";
@@ -64,6 +67,7 @@ const App = () => (
             <Route path="dashboard" element={<StudentDashboard />} />
             <Route path="planos" element={<StudentPlans />} />
             <Route path="quadras" element={<StudentCourts />} />
+            <Route path="reservas" element={<StudentCourtBookings />} />
             <Route path="aulas" element={<StudentClasses />} />
             <Route path="personal" element={<StudentPersonal />} />
             <Route path="perfil" element={<StudentProfile />} />
@@ -76,6 +80,7 @@ const App = () => (
             <Route path="agenda" element={<InstrutorSchedule />} />
             <Route path="slots" element={<InstrutorSlots />} />
             <Route path="turmas" element={<InstrutorClasses />} />
+            <Route path="reservas" element={<InstrutorCourtBookings />} />
           </Route>
           
           {/* Admin Routes */}
@@ -89,6 +94,7 @@ const App = () => (
             <Route path="usuarios" element={<AdminUsers />} />
             <Route path="instrutores" element={<AdminInstructors />} />
             <Route path="sessoes-personal" element={<AdminPersonalSessions />} />
+            <Route path="reservas-quadra" element={<AdminCourtBookings />} />
             <Route path="aulas" element={<AdminClasses />} />
             <Route path="aulas/novo" element={<AddClass />} />
             <Route path="aulas/editar/:id" element={<EditClass />} />

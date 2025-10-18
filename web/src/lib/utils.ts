@@ -343,3 +343,139 @@ export function downloadFile(data: Blob | string, filename: string, type: string
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+
+// =====================================================================
+// FORMATAÇÃO DE ERROS DE VALIDAÇÃO
+// =====================================================================
+
+/**
+ * Formata erros de validação do backend para exibição amigável
+ * Mapeia nomes de campos técnicos para labels em português
+ * 
+ * @param error - Objeto de erro (ApiError ou any)
+ * @returns String formatada com bullets (• Campo: Mensagem)
+ * 
+ * @example
+ * formatValidationErrors(error)
+ * // "• Data/Hora de início: A reserva deve ser futura
+ * //  • Quadra: Campo obrigatório"
+ */
+export function formatValidationErrors(error: any): string {
+  // Se não tem errors, retorna mensagem padrão
+  if (!error.errors || typeof error.errors !== 'object') {
+    return error.message || 'Erro ao processar requisição';
+  }
+
+  // Mapeamento de campos técnicos → labels amigáveis
+  const fieldLabels: Record<string, string> = {
+    // Campos gerais
+    id: 'ID',
+    nome: 'Nome',
+    email: 'E-mail',
+    telefone: 'Telefone',
+    documento: 'CPF',
+    data_nascimento: 'Data de nascimento',
+    senha: 'Senha',
+    senha_atual: 'Senha atual',
+    nova_senha: 'Nova senha',
+    confirmar_senha: 'Confirmar senha',
+    
+    // Quadras
+    id_quadra: 'Quadra',
+    localizacao: 'Localização',
+    esporte: 'Esporte',
+    preco_hora: 'Preço por hora',
+    caracteristicas: 'Características',
+    
+    // Usuários
+    id_usuario: 'Usuário',
+    papel: 'Papel',
+    status: 'Status',
+    
+    // Planos
+    id_plano: 'Plano',
+    preco: 'Preço',
+    ciclo_cobranca: 'Ciclo de cobrança',
+    max_reservas_futuras: 'Máximo de reservas futuras',
+    beneficios: 'Benefícios',
+    
+    // Instrutores
+    id_instrutor: 'Instrutor',
+    cref: 'CREF',
+    valor_hora: 'Valor por hora',
+    especialidades: 'Especialidades',
+    
+    // Reservas de Quadra
+    id_reserva_quadra: 'Reserva',
+    inicio: 'Data/Hora de início',
+    fim: 'Data/Hora de término',
+    preco_total: 'Preço total',
+    observacoes: 'Observações',
+    
+    // Sessões Personal
+    id_sessao_personal: 'Sessão Personal',
+    id_aluno: 'Aluno',
+    observacoes_instrutor: 'Observações do instrutor',
+    
+    // Disponibilidade
+    id_disponibilidade: 'Disponibilidade',
+    dia_semana: 'Dia da semana',
+    hora_inicio: 'Hora de início',
+    hora_fim: 'Hora de término',
+    
+    // Aulas
+    id_aula: 'Aula',
+    nivel: 'Nível',
+    duracao_min: 'Duração (minutos)',
+    capacidade_max: 'Capacidade máxima',
+    preco_unitario: 'Preço unitário',
+    
+    // Assinaturas
+    id_assinatura: 'Assinatura',
+    data_inicio: 'Data de início',
+    data_fim: 'Data de término',
+    proximo_vencimento: 'Próximo vencimento',
+    
+    // Pagamentos
+    id_pagamento: 'Pagamento',
+    valor_total: 'Valor total',
+    moeda: 'Moeda',
+    provedor: 'Provedor',
+    metodo_pagamento: 'Método de pagamento',
+  };
+
+  // Formata cada erro como bullet point
+  return Object.entries(error.errors)
+    .map(([field, messages]) => {
+      const label = fieldLabels[field] || field;
+      const messageArray = Array.isArray(messages) ? messages : [messages];
+      return `• ${label}: ${messageArray[0]}`;
+    })
+    .join('\n');
+}
+
+/**
+ * Verifica se o erro é uma instância de ApiError com erros de validação
+ * @param error - Objeto de erro
+ * @returns true se tem errors object
+ */
+export function hasValidationErrors(error: any): boolean {
+  return error && typeof error === 'object' && 'errors' in error && error.errors !== null;
+}
+
+/**
+ * Extrai mensagem de erro apropriada de qualquer tipo de erro
+ * @param error - Objeto de erro
+ * @returns Mensagem formatada
+ */
+export function getErrorMessage(error: any): string {
+  if (hasValidationErrors(error)) {
+    return formatValidationErrors(error);
+  }
+  
+  if (error.message) {
+    return error.message;
+  }
+  
+  return 'Erro inesperado. Tente novamente.';
+}

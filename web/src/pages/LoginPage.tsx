@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Zap, Eye, EyeOff } from 'lucide-react';
 import { authService } from '@/services/auth.service';
 import { useToast } from '@/hooks/use-toast';
+import { getErrorMessage } from '@/lib/utils';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -44,12 +45,9 @@ const LoginPage = () => {
         default:
           navigate('/');
       }
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message === 'Unauthorized' ? 'Email ou senha incorretos' : error.message);
-      } else {
-        setError('Erro ao fazer login. Tente novamente.');
-      }
+    } catch (error: any) {
+      const errorMsg = getErrorMessage(error);
+      setError(errorMsg === 'Unauthorized' ? 'Email ou senha incorretos' : errorMsg);
     } finally {
       setIsLoading(false);
     }

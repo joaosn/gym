@@ -1,5 +1,18 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
+// 🎯 Classe de erro customizada para preservar errors de validação
+class ApiError extends Error {
+  public errors?: Record<string, string[]>;
+  public statusCode?: number;
+
+  constructor(message: string, errors?: Record<string, string[]>, statusCode?: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.errors = errors;
+    this.statusCode = statusCode;
+  }
+}
+
 class ApiClient {
   private baseURL: string;
 
@@ -42,7 +55,13 @@ class ApiClient {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP ${response.status}`);
+        
+        // 🎯 Lançar erro customizado com errors preservados
+        throw new ApiError(
+          errorData.message || `HTTP ${response.status}`,
+          errorData.errors, // ← Preservar errors de validação
+          response.status
+        );
       }
 
       // Se for 204 No Content, não tentar parsear JSON
@@ -52,6 +71,9 @@ class ApiClient {
 
       return await response.json();
     } catch (error) {
+      if (error instanceof ApiError) {
+        throw error; // ← Re-throw ApiError preservando dados
+      }
       if (error instanceof Error) {
         throw error;
       }
@@ -89,4 +111,6 @@ class ApiClient {
   }
 }
 
+// Exportar classe de erro para uso externo
+export { ApiError };
 export const apiClient = new ApiClient();

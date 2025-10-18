@@ -4,6 +4,41 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int $id_reserva_quadra
+ * @property int $id_quadra
+ * @property int $id_usuario
+ * @property \Illuminate\Support\Carbon $inicio
+ * @property \Illuminate\Support\Carbon $fim
+ * @property string|null $periodo
+ * @property string $preco_total
+ * @property string $origem
+ * @property string $status
+ * @property string|null $observacoes
+ * @property \Illuminate\Support\Carbon $criado_em
+ * @property \Illuminate\Support\Carbon $atualizado_em
+ * @property-read \App\Models\Quadra $quadra
+ * @property-read \App\Models\User $usuario
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra ativas()
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra futuras()
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra passadas()
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra query()
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra whereAtualizadoEm($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra whereCriadoEm($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra whereFim($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra whereIdQuadra($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra whereIdReservaQuadra($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra whereIdUsuario($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra whereInicio($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra whereObservacoes($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra whereOrigem($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra wherePeriodo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra wherePrecoTotal($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReservaQuadra whereStatus($value)
+ * @mixin \Eloquent
+ */
 class ReservaQuadra extends Model
 {
     protected $table = 'reservas_quadra';
@@ -16,9 +51,11 @@ class ReservaQuadra extends Model
     protected $fillable = [
         'id_quadra',
         'id_usuario',
+        'id_sessao_personal', // ← NOVO: FK para sessão personal
         'inicio',
         'fim',
         'preco_total',
+        'origem',
         'status',
         'observacoes',
     ];
@@ -40,6 +77,11 @@ class ReservaQuadra extends Model
     public function usuario()
     {
         return $this->belongsTo(User::class, 'id_usuario', 'id_usuario');
+    }
+
+    public function sessaoPersonal()
+    {
+        return $this->belongsTo(SessaoPersonal::class, 'id_sessao_personal', 'id_sessao_personal');
     }
 
     // Scopes

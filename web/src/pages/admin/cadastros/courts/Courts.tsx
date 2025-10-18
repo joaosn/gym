@@ -23,7 +23,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { courtsService } from '@/services/courts.service';
 import { Court, CourtFormData } from '@/types';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, getErrorMessage } from '@/lib/utils';
 import { 
   Plus, 
   Search, 
@@ -88,10 +88,10 @@ const AdminCourts = () => {
         search: searchTerm || undefined,
       });
       setCourts(response.data);
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro ao carregar quadras',
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -115,10 +115,10 @@ const AdminCourts = () => {
       setIsCreateModalOpen(false);
       resetForm();
       loadCourts();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro ao criar quadra',
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -141,10 +141,10 @@ const AdminCourts = () => {
       setSelectedCourt(null);
       resetForm();
       loadCourts();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro ao atualizar quadra',
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -165,10 +165,10 @@ const AdminCourts = () => {
       setDeleteDialogOpen(false);
       setCourtToDelete(null);
       loadCourts();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro ao remover quadra',
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -185,10 +185,10 @@ const AdminCourts = () => {
         description: `${court.nome} está agora ${newStatus}.`,
       });
       loadCourts();
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Erro ao atualizar status',
-        description: error instanceof Error ? error.message : 'Erro desconhecido',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     }

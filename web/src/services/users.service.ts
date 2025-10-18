@@ -1,6 +1,17 @@
 import { apiClient } from '@/lib/api-client';
 import { AdminUser, UserFormData } from '@/types';
 
+/**
+ * Normaliza dados de usuário vindos da API
+ * Converte IDs numéricos para strings
+ */
+function normalizeUser(user: any): AdminUser {
+  return {
+    ...user,
+    id_usuario: String(user.id_usuario),
+  };
+}
+
 class UsersService {
   // ========================================
   // ADMIN ENDPOINTS
@@ -25,33 +36,36 @@ class UsersService {
     const queryString = queryParams.toString();
     const endpoint = `/admin/users${queryString ? `?${queryString}` : ''}`;
     
-    const response = await apiClient.get<{ data: AdminUser[], total?: number }>(endpoint);
+    const response = await apiClient.get<{ data: any[], total?: number }>(endpoint);
     
-    return { data: response.data, total: response.total };
+    return { 
+      data: response.data.map(normalizeUser), 
+      total: response.total 
+    };
   }
 
   /**
    * Buscar um usuário por ID
    */
   async getUser(id: string): Promise<AdminUser> {
-    const response = await apiClient.get<{ data: AdminUser }>(`/admin/users/${id}`);
-    return response.data;
+    const response = await apiClient.get<{ data: any }>(`/admin/users/${id}`);
+    return normalizeUser(response.data);
   }
 
   /**
    * Criar um novo usuário
    */
   async createUser(data: UserFormData): Promise<AdminUser> {
-    const response = await apiClient.post<{ data: AdminUser }>('/admin/users', data);
-    return response.data;
+    const response = await apiClient.post<{ data: any }>('/admin/users', data);
+    return normalizeUser(response.data);
   }
 
   /**
    * Atualizar um usuário existente
    */
   async updateUser(id: string, data: Partial<UserFormData>): Promise<AdminUser> {
-    const response = await apiClient.put<{ data: AdminUser }>(`/admin/users/${id}`, data);
-    return response.data;
+    const response = await apiClient.put<{ data: any }>(`/admin/users/${id}`, data);
+    return normalizeUser(response.data);
   }
 
   /**

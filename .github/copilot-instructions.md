@@ -1,6 +1,6 @@
 # Copilot Instructions - Fitway Project
 
-> **Atualizado**: 16 de outubro de 2025 | **Fases Concluídas**: 7/13
+> **Atualizado**: 18 de outubro de 2025 | **Fases Concluídas**: 9/13
 
 ---
 
@@ -203,7 +203,7 @@ downloadFile(blob, "filename.csv") // Download de arquivo
 - **Infraestrutura**: Docker Compose (4 serviços)
 - **Padrão**: Soft Delete (status='excluido')
 
-### Fases Concluídas (7/13)
+### Fases Concluídas (9/13)
 1. ✅ **Autenticação** - Login/Register/Logout (Sanctum)
 2. ✅ **Admin - Quadras** - CRUD completo
 3. ✅ **Admin - Planos** - CRUD completo
@@ -211,9 +211,11 @@ downloadFile(blob, "filename.csv") // Download de arquivo
 5. ✅ **Admin - Instrutores** - CRUD + Soft Delete + Unificação Personal→Instrutor
 6. ✅ **Soft Delete Unificado** - Padrão aplicado em todo sistema
 7. ✅ **Disponibilidade Instrutor** - CRUD de horários semanais
+8. ✅ **Sessões Personal 1:1** - Agendamento com anti-overlap (4 validações)
+9. ✅ **Reservas de Quadras** - 3 páginas role-based + ApiError pattern
 
 ### Próxima Fase
-🎯 **Fase 8**: Sessões Personal 1:1 (agendamento com anti-overlap)
+🎯 **Fase 10**: Aulas (Turmas em Grupo) - Recorrência semanal + ocorrências
 
 ### Portas e URLs
 - API (Laravel): `http://localhost:8000`
@@ -475,7 +477,94 @@ public function restore($id) {
 
 ---
 
-## �📡 Contrato API ↔ Frontend
+## 🔒 Anti-Overlap Validation Pattern
+
+### Quando Usar
+
+Use validação de sobreposição (anti-overlap) quando dois eventos não podem acontecer ao mesmo tempo no mesmo recurso:
+
+- ✅ Reservas de quadra (mesma quadra, horário conflitante)
+- ✅ Sessões personal (mesmo instrutor, horário conflitante)
+- ✅ Aulas em grupo (mesma quadra OU mesmo instrutor, horário conflitante)
+- ✅ Disponibilidade semanal (mesmo instrutor, mesmo dia/horário)
+
+### Abordagens de Implementação
+
+**1. PostgreSQL GIST + TSTZRANGE (Ideal para produção)**
+
+```sql
+-- Constraint na tabela
+ALTER TABLE reservas_quadra 
+ADD CONSTRAINT no_overlap_quadra 
+EXCLUDE USING gist (
+  id_quadra WITH =, 
+  tstzrange(inicio, fim) WITH &&
+) WHERE (status IN ('pendente', 'confirmada'));
+```
+
+**Vantagens**:
+- ✅ Validação no banco (mais seguro)
+- ✅ Performance otimizada (GIST index)
+- ✅ Garante integridade mesmo fora da aplicação
+
+**2. Eloquent Query (Usado atualmente)**
+
+```php
+// Service method
+$conflitos = ReservaQuadra::where('id_quadra', $idQuadra)
+    ->whereIn('status', ['pendente', 'confirmada'])
+    ->where(function ($query) use ($inicio, $fim) {
+        $query->where(function ($q) use ($inicio, $fim) {
+            // Início da nova reserva está dentro de uma existente
+            $q->where('inicio', '<=', $inicio)
+              ->where('fim', '>', $inicio);
+        })->orWhere(function ($q) use ($inicio, $fim) {
+            // Fim da nova reserva está dentro de uma existente
+            $q->where('inicio', '<', $fim)
+              ->where('fim', '>=', $fim);
+        })->orWhere(function ($q) use ($inicio, $fim) {
+            // Nova reserva engloba uma existente
+            $q->where('inicio', '>=', $inicio)
+              ->where('fim', '<=', $fim);
+        });
+    });
+
+if ($idIgnorar) {
+    $conflitos->where('id', '!=', $idIgnorar);
+}
+
+if ($conflitos->exists()) {
+    throw new \Exception("Horário já reservado");
+}
+```
+
+**Vantagens**:
+- ✅ Mais flexível (mensagens customizadas)
+- ✅ Mais fácil de debugar
+- ✅ Funciona em qualquer banco SQL
+
+### Cross-Entity Validation
+
+**Problema**: Reserva de quadra deve validar contra sessões personal (e vice-versa)
+
+**Solução**: Service valida múltiplas tabelas
+
+```php
+// ReservaQuadraService
+public function validarDisponibilidade($idQuadra, $inicio, $fim) {
+    // 1. Valida contra outras reservas
+    $this->validarSobreposicaoReservas(...);
+    
+    // 2. Valida contra sessões personal que usam a mesma quadra
+    $this->validarSobreposicaoSessoes(...);
+}
+```
+
+**Importante**: Quando sessão personal tem quadra, deveria criar automaticamente uma reserva (TODO Fase 8).
+
+---
+
+## 📡 Contrato API ↔ Frontend
 
 ### Headers Padrão
 ```typescript
@@ -486,12 +575,292 @@ public function restore($id) {
 }
 ```
 
+### ⚠️ IMPORTANTE: FormRequest SEMPRE deve retornar JSON (não redirect!)
+
+**PROBLEMA**: Por padrão, Laravel FormRequest redireciona (302) quando validação falha. Isso quebra APIs REST!
+
+**SOLUÇÃO**: **SEMPRE** sobrescrever `failedValidation()` em **TODOS** os FormRequests:
+
+```php
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+
+class CreateXRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'campo' => 'required|string|after:now',
+            // ...
+        ];
+    }
+
+    /**
+     * ⚠️ OBRIGATÓRIO em APIs REST!
+     * Força retorno JSON 422 em vez de redirect 302
+     */
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(
+            response()->json([
+                'message' => 'Dados inválidos',
+                'errors' => $validator->errors()
+            ], 422)
+        );
+    }
+}
+```
+
+**Por que isso é crítico**:
+- ❌ **Sem** `failedValidation()`: Laravel faz 302 redirect → CORS error no frontend
+- ✅ **Com** `failedValidation()`: Laravel retorna 422 JSON → Toast de erro no frontend
+
+**Regra**: Se criar FormRequest para API, **COPIE/COLE** o método `failedValidation()` acima!
+
+---
+
+## 🎨 Padrões de Frontend (Fase 9+)
+
+### ApiError Class - Preservar Erros de Validação
+
+**Problema**: `Error` padrão só tem `message`, descarta objeto `errors` do backend.
+
+**Solução**: Criar classe customizada em `lib/api-client.ts`:
+
+```typescript
+class ApiError extends Error {
+  public errors?: Record<string, string[]>;
+  public statusCode?: number;
+
+  constructor(message: string, errors?: Record<string, string[]>, statusCode?: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.errors = errors;
+    this.statusCode = statusCode;
+  }
+}
+
+// No catch block do api-client:
+if (error.response?.status === 422) {
+  throw new ApiError(
+    errorData.message || 'Erro de validação',
+    errorData.errors,
+    422
+  );
+}
+```
+
+**Benefício**: Componentes podem acessar `error.errors` para exibir mensagens específicas de cada campo!
+
+### formatValidationErrors() - i18n de Erros
+
+**Problema**: Backend envia nomes de campos em português, mas precisamos labels amigáveis.
+
+**Solução**: Helper function nos componentes:
+
+```typescript
+const formatValidationErrors = (errors: Record<string, string[]>): string => {
+  const fieldLabels: Record<string, string> = {
+    id_quadra: 'Quadra',
+    id_usuario: 'Usuário',
+    inicio: 'Data/Hora de início',
+    fim: 'Data/Hora de término',
+    // ... adicionar conforme necessário
+  };
+
+  return Object.entries(errors)
+    .map(([field, messages]) => {
+      const label = fieldLabels[field] || field;
+      return `• ${label}: ${messages[0]}`;
+    })
+    .join('\n');
+};
+
+// Uso:
+toast({
+  title: 'Erro ao criar reserva',
+  description: formatValidationErrors(error.errors),
+  variant: 'destructive'
+});
+```
+
+**Resultado**: Toast exibe "• Data/Hora de início: A reserva deve ser futura" em vez de "inicio: The inicio must be a date after now"
+
+### ID Normalization Pattern
+
+**Problema**: Backend retorna IDs como `number`, shadcn/ui Select precisa de `string`.
+
+**Solução**: Funções `normalize*()` nos services:
+
+```typescript
+// services/court-bookings.service.ts
+const normalizeBooking = (booking: any): CourtBooking => ({
+  ...booking,
+  id: String(booking.id_reserva_quadra),
+  quadraId: String(booking.id_quadra),
+  usuarioId: String(booking.id_usuario),
+  // ... resto dos campos
+});
+
+// Aplicar em TODOS os métodos do service:
+async list() {
+  const response = await apiClient.get('/court-bookings');
+  return {
+    data: response.data.data.map(normalizeBooking) // ← IMPORTANTE!
+  };
+}
+```
+
+**Regra**: Sempre criar `normalize*()` ao integrar com shadcn/ui Select/ComboBox!
+
+### UX Pattern: Date + Time Inputs (Mobile-Friendly)
+
+**Problema**: `<input type="datetime-local">` tem UX ruim no mobile.
+
+**Solução**: Separar em 3 campos (1 date + 2 time):
+
+```tsx
+// Estado
+const [formData, setFormData] = useState({
+  data: new Date().toISOString().split('T')[0], // "2025-10-18"
+  horaInicio: '08:00',
+  horaFim: '09:00',
+  // ...
+});
+
+// Inputs
+<Input type="date" name="data" />
+<Input type="time" name="horaInicio" step="1800" /> {/* 30min intervals */}
+<Input type="time" name="horaFim" step="1800" />
+
+// Ao submeter: combinar em datetime ISO
+const inicio = `${formData.data}T${formData.horaInicio}:00`;
+const fim = `${formData.data}T${formData.horaFim}:00`;
+```
+
+**Benefício**: Melhor UX, especialmente em mobile!
+
+### Route Ordering Pattern
+
+**Problema**: Routes específicas são capturadas por genéricas primeiro.
+
+**Solução**: Em `api.php`, SEMPRE colocar rotas específicas ANTES de `apiResource()`:
+
+```php
+// ✅ CORRETO
+Route::post('/court-bookings/check-availability', [Controller::class, 'checkAvailability']);
+Route::patch('/court-bookings/{id}/confirm', [Controller::class, 'confirm']);
+Route::apiResource('court-bookings', ReservaQuadraController::class);
+
+// ❌ ERRADO (check-availability vai cair no show() com id="check-availability")
+Route::apiResource('court-bookings', ReservaQuadraController::class);
+Route::post('/court-bookings/check-availability', [Controller::class, 'checkAvailability']);
+```
+
+---
+
+## 🔧 Service Layer Pattern (Backend)
+
+### Quando Criar Services?
+
+**Crie um Service quando**:
+- ✅ Precisa validar **regras de negócio complexas** (anti-overlap, capacidade)
+- ✅ Precisa fazer **cálculos** (preço baseado em duração, descontos)
+- ✅ Precisa **reutilizar lógica** em múltiplos controllers
+- ✅ Precisa **integrar múltiplos models** (reserva + quadra + sessão)
+
+**NÃO crie Service para**:
+- ❌ CRUD simples sem regras de negócio
+- ❌ Apenas buscar dados (use Model diretamente)
+- ❌ Validações simples (use FormRequest)
+
+### Estrutura de um Service
+
+```php
+<?php
+namespace App\Services;
+
+use App\Models\ReservaQuadra;
+use Carbon\Carbon;
+
+class ReservaQuadraService
+{
+    /**
+     * Método principal de validação
+     * Consolida múltiplas validações em uma só
+     */
+    public function validarDisponibilidade(
+        int $idQuadra,
+        Carbon $inicio,
+        Carbon $fim,
+        ?int $idReservaIgnorar = null
+    ): void {
+        // 1. Validar quadra ativa
+        $this->validarQuadraAtiva($idQuadra);
+        
+        // 2. Validar anti-overlap com reservas
+        $this->validarSobreposicaoReservas(...);
+        
+        // 3. Validar anti-overlap com sessões
+        $this->validarSobreposicaoSessoes(...);
+    }
+    
+    /**
+     * Cálculo de preço baseado em duração
+     */
+    public function calcularPreco(int $idQuadra, Carbon $inicio, Carbon $fim): float
+    {
+        $quadra = Quadra::findOrFail($idQuadra);
+        $duracaoHoras = $inicio->floatDiffInHours($fim);
+        return round($quadra->preco_hora * $duracaoHoras, 2);
+    }
+    
+    /**
+     * Método orquestrador (usa validações + cálculos)
+     */
+    public function criarReserva(array $dados): ReservaQuadra
+    {
+        $this->validarDisponibilidade(...);
+        $precoTotal = $this->calcularPreco(...);
+        
+        return ReservaQuadra::create([
+            'preco_total' => $precoTotal,
+            // ...
+        ]);
+    }
+}
+```
+
+**No Controller**:
+```php
+public function store(CreateReservaRequest $request, ReservaQuadraService $service)
+{
+    $reserva = $service->criarReserva($request->validated());
+    return response()->json(['data' => $reserva], 201);
+}
+```
+
+**Benefícios**:
+- 🧹 Controller limpo (só orquestra, não tem lógica)
+- 🔄 Service reutilizável (pode ser usado em jobs, commands, etc)
+- 🧪 Testável (mock do service em testes)
+- 📖 Autoexplicativo (métodos com nomes claros)
+
+---
+
 ### Respostas de Erro (Padronização)
 ```json
 {
   "message": "Mensagem amigável do erro",
   "code": "VALIDATION_ERROR",
-  "details": { ... } // opcional
+  "errors": { 
+    "campo": ["Mensagem de erro específica"]
+  }
 }
 ```
 
@@ -504,7 +873,7 @@ public function restore($id) {
 - `403 Forbidden`: autenticado mas sem permissão
 - `404 Not Found`: recurso não existe
 - `409 Conflict`: conflito de horário (anti-overlap)
-- `422 Unprocessable Entity`: validação de negócio falhou
+- `422 Unprocessable Entity`: validação de negócio falhou (FormRequest com failedValidation)
 - `500 Internal Server Error`: erro do servidor
 
 ---

@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Zap, Eye, EyeOff } from 'lucide-react';
 import { authService } from '@/services/auth.service';
 import { useToast } from '@/hooks/use-toast';
+import { getErrorMessage } from '@/lib/utils';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -44,12 +45,8 @@ const RegisterPage = () => {
 
       // New users are typically students
       navigate('/aluno/dashboard');
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError('Erro ao criar conta. Tente novamente.');
-      }
+    } catch (error: any) {
+      setError(getErrorMessage(error));
     } finally {
       setIsLoading(false);
     }

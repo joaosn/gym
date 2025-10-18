@@ -6,14 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CreatePlanoRequest;
 use App\Http\Requests\UpdatePlanoRequest;
 use App\Models\Plano;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class PlanoController extends Controller
 {
     /**
      * Listar todos os planos (com filtros e paginação)
      * GET /api/admin/plans
+     * 
+     * @param \Illuminate\Http\Request $request
      */
     public function index(Request $request): JsonResponse
     {

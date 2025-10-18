@@ -1,7 +1,7 @@
 # 🎯 Plano de Ação: Fitway - Desenvolvimento Full Stack
 
-**Última Atualização**: 15 de outubro de 2025  
-**Versão**: 2.0 (Revisado e Enxuto)
+**Última Atualização**: 18 de outubro de 2025  
+**Versão**: 2.2 (Fase 9 Concluída + Integração Fase 8)
 
 ---
 
@@ -21,7 +21,7 @@
 
 ---
 
-## ✅ FASES CONCLUÍDAS (8 fases + 1 refatoração)
+## ✅ FASES CONCLUÍDAS (9 fases + 2 refatorações)
 
 | # | Feature | Backend | Frontend | Doc |
 |---|---------|---------|----------|-----|
@@ -32,17 +32,24 @@
 | **5** | **Admin - Instrutores** | InstrutorController, CRUD, Soft Delete | Instructors.tsx, instructors.service.ts | [📄](./FASE_5.md) |
 | **6** | **Soft Delete** | 3 controllers atualizados | Transparente (DELETE → 204) | [📄](./FASE_6.md) |
 | **7** | **Disponibilidade Instrutor** | updateAvailability endpoint | Modal horários integrado | [📄](./FASE_7.md) |
-| **8** | **Sessões Personal 1:1** | SessaoPersonalController, 4 validações | PersonalSessions.tsx, CRUD completo | [📄](./FASE_8_SESSOES_PERSONAL.md) |
+| **8** | **Sessões Personal 1:1** | SessaoPersonalController, 4 validações | PersonalSessions.tsx, CRUD completo | [📄](./FASE_8.md) |
+| **8.1** | **Integração Sessão→Quadra** | Auto-criação de ReservaQuadra, FK id_sessao_personal, Bug fix dia_semana | Transparente (backend) | [📄](./FASE_8.md#integração-sessão-personal-auto-cria-reserva-de-quadra) |
+| **9** | **Reservas de Quadras** | ReservaQuadraController, 8 endpoints, 3 validações | CourtBookings.tsx (3 páginas), ApiError pattern | [📄](./FASE_9.md) |
 
 ### 🎯 Achievements
-- ✅ **10 documentos** de fase criados
-- ✅ **6 CRUDs** completos (Quadras, Planos, Usuários, Instrutores, Sessões Personal + Auth)
-- ✅ **4 Validações de Conflito**: Instrutor, Disponibilidade Semanal, Quadra, Aluno
+- ✅ **12 documentos** de fase criados
+- ✅ **7 CRUDs** completos (Quadras, Planos, Usuários, Instrutores, Sessões Personal, Reservas + Auth)
+- ✅ **7 Validações Anti-Overlap**: Instrutor (2), Disponibilidade Semanal (1), Quadra vs Reservas (1), Quadra vs Sessões (1), Aluno (2)
+- ✅ **Integração Sessão↔Quadra**: Auto-criação de reservas quando sessão usa quadra
+- ✅ **ApiError Pattern**: Preserva erros de validação do backend (422)
+- ✅ **formatValidationErrors()**: Helper i18n para exibição de erros
 - ✅ **Disponibilidade de Instrutores** funcionando (CRUD dentro do modal)
 - ✅ **Soft Delete** padrão do sistema
 - ✅ **3 papéis** unificados: admin, aluno, instrutor
 - ✅ **23 utilitários UX** criados (formatCurrency, formatDate, etc)
 - ✅ **Estrutura Organizada**: Páginas admin por contexto (cadastros/agendamentos/payments)
+- ✅ **failedValidation() Pattern**: Todos FormRequests retornam JSON 422 em vez de redirect 302
+- ✅ **DB Transactions**: Service usa transações para garantir atomicidade (sessão + reserva)
 
 ---
 
@@ -79,35 +86,47 @@
 
 ---
 
-### 📅 Fase 9: Reservas de Quadras
+### ✅ Fase 9: Reservas de Quadras (CONCLUÍDA)
 **Objetivo**: Aluno reserva quadras (anti-overlap).
 
-**Por quê agora?**
-- Quadras CRUD já existe (Fase 2)
-- Aplica anti-overlap (aprendido na Fase 8)
+**Implementado**:
+- ✅ Backend (8 REST endpoints):
+  - Model `ReservaQuadra` com relacionamentos
+  - `ReservaQuadraController`: index, show, store, update, destroy, confirm, checkAvailability, myBookings
+  - `ReservaQuadraService`: 3 validações (quadra ativa, anti-overlap reservas, anti-overlap sessões)
+  - FormRequests com `failedValidation()` override (CreateReservaQuadraRequest, UpdateReservaQuadraRequest)
+  - Routes registradas (específicas antes de apiResource)
+  - Seeder com 12 reservas de exemplo
 
-**Backend**:
-- [ ] Model `ReservaQuadra`
-- [ ] `ReservaQuadraController`
-  - Aluno: `store()` criar, `index()` minhas reservas, `destroy()` cancelar
-  - Admin: `index()` todas reservas
-- [ ] Service: Validar anti-overlap (constraint GIST por quadra)
-- [ ] Validações:
-  - Quadra ativa
-  - Não sobrepor com outras reservas
-  - Calcular preço (quadra.preco_hora * duração)
-  - Verificar limite de reservas do plano (se tiver assinatura)
-- [ ] Routes:
-  - GET/POST `/court-bookings` (aluno)
-  - GET `/admin/court-bookings` (admin)
+- ✅ Frontend (3 páginas role-based):
+  - Admin: CRUD completo com seleção de usuário
+  - Student: Criar/cancelar apenas para si mesmo
+  - Personal: Visualização read-only
+  - `ApiError` class para preservar erros de validação
+  - `formatValidationErrors()` helper para i18n
+  - UX: 1 campo data + 2 campos hora (em vez de datetime-local)
+  - Normalização de IDs (number → string) para shadcn/ui Select
 
-**Frontend**:
-- [ ] Student: `Courts.tsx` (ver disponibilidade, reservar)
-- [ ] Student: `MyBookings.tsx` (listar, cancelar)
-- [ ] Admin: `CourtBookings.tsx` (listar todas)
-- [ ] Types: `CourtBooking`
+- ✅ Bugs corrigidos (5):
+  - CORS/302 redirect → JSON 422 com failedValidation()
+  - Edit modal não pré-selecionava → normalização de IDs
+  - Route ordering → específicas antes de genéricas
+  - Erros de validação não exibiam → ApiError class
+  - Admin sem campo usuario → adicionado Select
 
-**Tempo Estimado**: 2-3 dias
+**TODO Crítico (integração com Fase 8)**:
+- ✅ Sessões Personal com quadra devem auto-criar ReservaQuadra (CONCLUÍDO!)
+- ✅ Adicionar FK `id_sessao_personal` em `reservas_quadra` (MIGRATION EXECUTADA!)
+- ✅ Atualizar `SessaoPersonalController`: store(), update(), destroy() (SINCRONIZADO!)
+- ✅ Validar disponibilidade da quadra antes de criar sessão (SERVICE ATUALIZADO!)
+- ✅ Cascade delete: sessão deletada = reserva deletada (FK CASCADE!)
+- ✅ Bug fix: mapeamento `dia_semana` (Carbon 0-6 → ISO 1-7)
+- ✅ 5 testes de integração passando (criar, remover quadra, re-adicionar, atualizar, cancelar)
+
+**Doc**: [📄 FASE_8.md](./FASE_8.md#integração-sessão-personal-auto-cria-reserva-de-quadra)
+
+**Tempo Real**: 3 dias (17-19/10/2025)  
+**Doc**: [📄 FASE_9.md](./FASE_9.md)
 
 ---
 

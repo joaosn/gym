@@ -35,7 +35,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { instructorsService } from "@/services/instructors.service";
 import type { Instructor, InstructorFormData, Availability } from "@/types";
-import { formatCurrency, formatPhone, formatDate, debounce } from "@/lib/utils";
+import { formatCurrency, formatPhone, formatDate, debounce, getErrorMessage } from "@/lib/utils";
 
 const ESPECIALIDADES_OPTIONS = [
   "Musculação",

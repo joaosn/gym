@@ -74,6 +74,7 @@ const Sidebar = ({ userRole }: SidebarProps) => {
             icon: Calendar,
             children: [
               { title: 'Sessões Personal', href: '/admin/sessoes-personal', icon: Dumbbell },
+              { title: 'Reservas Quadra', href: '/admin/reservas-quadra', icon: MapPin },
               { title: 'Aulas (Turmas)', href: '/admin/aulas', icon: BookOpen },
             ]
           },
@@ -85,12 +86,14 @@ const Sidebar = ({ userRole }: SidebarProps) => {
           { title: 'Agenda', href: '/instrutor/agenda', icon: Calendar },
           { title: 'Horários', href: '/instrutor/slots', icon: Clock },
           { title: 'Turmas', href: '/instrutor/turmas', icon: BookOpen },
+          { title: 'Reservas Quadra', href: '/instrutor/reservas', icon: MapPin },
         ];
       case 'aluno':
         return [
           { title: 'Dashboard', href: '/aluno/dashboard', icon: Home },
           { title: 'Planos', href: '/aluno/planos', icon: Target },
           { title: 'Quadras', href: '/aluno/quadras', icon: MapPin },
+          { title: 'Minhas Reservas', href: '/aluno/reservas', icon: Calendar },
           { title: 'Aulas', href: '/aluno/aulas', icon: BookOpen },
           { title: 'Personal', href: '/aluno/personal', icon: User },
           { title: 'Perfil', href: '/aluno/perfil', icon: Settings },

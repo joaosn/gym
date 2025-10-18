@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getErrorMessage } from '@/lib/utils';
 
 const EditClass = () => {
   const navigate = useNavigate();
@@ -91,10 +92,10 @@ const EditClass = () => {
       });
       
       navigate('/admin/aulas');
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao salvar as alterações.",
+        title: "Erro ao atualizar aula",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     } finally {

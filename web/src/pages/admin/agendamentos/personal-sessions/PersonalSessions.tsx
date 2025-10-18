@@ -36,7 +36,7 @@ import { instructorsService } from '@/services/instructors.service';
 import { usersService } from '@/services/users.service';
 import { courtsService } from '@/services/courts.service';
 import type { PersonalSession, PersonalSessionFormData, Instructor, AdminUser, Court } from '@/types';
-import { formatCurrency, formatDate, formatTime, debounce } from '@/lib/utils';
+import { formatCurrency, formatDate, formatTime, debounce, getErrorMessage } from '@/lib/utils';
 
 export default function PersonalSessionsPage() {
   const { toast } = useToast();

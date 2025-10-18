@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { getErrorMessage } from '@/lib/utils';
 import { ArrowLeft, Save, X } from 'lucide-react';
 
 const AddClass = () => {
@@ -87,10 +88,10 @@ const AddClass = () => {
       });
       
       navigate('/admin/aulas');
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao criar a aula.",
+        title: "Erro ao criar aula",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     } finally {

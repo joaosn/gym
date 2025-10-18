@@ -112,6 +112,9 @@ class SessaoPersonalController extends Controller
     /**
      * Cancelar sessão
      * DELETE /api/personal-sessions/{id}
+     * 
+     * Atualiza status para 'cancelada' (soft delete)
+     * A reserva de quadra vinculada também é cancelada automaticamente via Service
      */
     public function destroy($id)
     {
@@ -119,6 +122,11 @@ class SessaoPersonalController extends Controller
         
         // Atualizar status para cancelada (soft delete)
         $sessao->update(['status' => 'cancelada']);
+
+        // Se tem reserva vinculada, cancelar também
+        if ($sessao->reservaQuadra) {
+            $sessao->reservaQuadra->update(['status' => 'cancelada']);
+        }
 
         return response()->json(null, 204);
     }

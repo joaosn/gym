@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
+import { getErrorMessage } from '@/lib/utils';
 import { ArrowLeft, Save, X, Plus, Trash2 } from 'lucide-react';
 
 const AddPlan = () => {
@@ -39,10 +40,10 @@ const AddPlan = () => {
       });
       
       navigate('/admin/planos');
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao criar o plano.",
+        title: "Erro ao criar plano",
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     } finally {
