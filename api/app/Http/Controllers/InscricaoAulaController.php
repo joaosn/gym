@@ -283,27 +283,27 @@ class InscricaoAulaController extends Controller
 
     /**
      * ADMIN: Listar alunos disponíveis para inscrição
+     * Se occurrence_id for fornecido: exclui alunos já inscritos nessa ocorrência
+     * Se occurrence_id NÃO for fornecido: retorna todos os alunos ativos (para inscrição em lote)
      */
     public function alunosDisponiveis(Request $request)
     {
         $occurrenceId = $request->query('occurrence_id');
 
-        if (!$occurrenceId) {
-            return response()->json([
-                'message' => 'occurrence_id é obrigatório',
-            ], 400);
+        // Buscar apenas usuários com papel=aluno e status=ativo
+        $query = \App\Models\Usuario::where('papel', 'aluno')
+            ->where('status', 'ativo');
+
+        // Se occurrence_id fornecido, excluir alunos já inscritos nessa ocorrência específica
+        if ($occurrenceId) {
+            $inscritosIds = InscricaoAula::where('id_ocorrencia_aula', $occurrenceId)
+                ->where('status', 'inscrito')
+                ->pluck('id_usuario');
+            
+            $query->whereNotIn('id_usuario', $inscritosIds);
         }
 
-        // IDs de alunos já inscritos nesta ocorrência
-        $inscritosIds = InscricaoAula::where('id_ocorrencia_aula', $occurrenceId)
-            ->where('status', 'inscrito')
-            ->pluck('id_usuario');
-
-        // Buscar apenas usuários com papel=aluno e status=ativo
-        $alunosDisponiveis = \App\Models\Usuario::where('papel', 'aluno')
-            ->where('status', 'ativo')
-            ->whereNotIn('id_usuario', $inscritosIds)
-            ->orderBy('nome')
+        $alunosDisponiveis = $query->orderBy('nome')
             ->get(['id_usuario', 'nome', 'email']);
 
         return response()->json(['data' => $alunosDisponiveis], 200);

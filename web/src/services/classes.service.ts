@@ -199,6 +199,13 @@ class ClassOccurrencesService {
     const response = await apiClient.patch<{ data: any }>(`/admin/class-occurrences/${id}/cancel`, {});
     return normalizeOcorrenciaAula(response.data);
   }
+
+  /**
+   * Remover ocorrência (admin) - Soft delete
+   */
+  async delete(id: string): Promise<void> {
+    await apiClient.delete(`/admin/class-occurrences/${id}`);
+  }
 }
 
 // =====================================================================

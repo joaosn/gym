@@ -391,27 +391,11 @@ const GenerateOccurrences = () => {
                 
                 {result.criadas > 0 && (
                   <Button
-                    onClick={async () => {
-                      // Buscar ocorrências e navegar para a primeira com inscrições
-                      try {
-                        const occurrences = await classOccurrencesService.list({ id_aula: id! });
-                        if (occurrences.data.length > 0) {
-                          // Navegar para a primeira ocorrência
-                          const firstOccurrence = occurrences.data[0];
-                          navigate(`/admin/aulas/ocorrencias/${firstOccurrence.id_ocorrencia_aula}/inscricoes`);
-                        }
-                      } catch (error) {
-                        toast({
-                          title: 'Erro',
-                          description: 'Não foi possível carregar as ocorrências',
-                          variant: 'destructive'
-                        });
-                      }
-                    }}
-                    className="bg-fitway-green hover:bg-fitway-green/90 text-white"
+                    onClick={() => navigate(`/admin/aulas/${id}/ocorrencias`)}
+                    className="bg-purple-500 hover:bg-purple-600 text-white"
                   >
                     <Users className="mr-2 h-4 w-4" />
-                    Ver e Gerenciar Inscrições
+                    Ver Todas as Ocorrências
                   </Button>
                 )}
               </div>

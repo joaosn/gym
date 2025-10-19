@@ -138,5 +138,34 @@ class OcorrenciaAulaController extends Controller
 
         return response()->json(['data' => $ocorrencia], 200);
     }
+
+    /**
+     * ADMIN: Remover ocorrência (soft delete via status)
+     * Remove a ocorrência e todas as inscrições associadas
+     */
+    public function destroy(int $id)
+    {
+        $ocorrencia = OcorrenciaAula::findOrFail($id);
+
+        // Verificar se já está cancelada
+        if ($ocorrencia->status === 'cancelada') {
+            return response()->json([
+                'message' => 'Ocorrência já está cancelada',
+            ], 400);
+        }
+
+        // Soft delete: marcar como cancelada
+        $ocorrencia->update(['status' => 'cancelada']);
+
+        // Cancelar todas as inscrições dessa ocorrência
+        $inscricoesRemovidas = $ocorrencia->inscricoes()
+            ->where('status', 'inscrito')
+            ->update(['status' => 'cancelado']);
+
+        return response()->json([
+            'message' => 'Ocorrência removida com sucesso',
+            'inscricoes_removidas' => $inscricoesRemovidas,
+        ], 200);
+    }
 }
 

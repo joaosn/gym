@@ -118,6 +118,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::prefix('class-occurrences')->group(function () {
             Route::post('/generate', [App\Http\Controllers\OcorrenciaAulaController::class, 'gerar']);
             Route::patch('/{id}/cancel', [App\Http\Controllers\OcorrenciaAulaController::class, 'cancelar']);
+            Route::delete('/{id}', [App\Http\Controllers\OcorrenciaAulaController::class, 'destroy']);
             Route::get('/', [App\Http\Controllers\OcorrenciaAulaController::class, 'index']);
             Route::get('/{id}', [App\Http\Controllers\OcorrenciaAulaController::class, 'show']);
             

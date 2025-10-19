@@ -50,11 +50,18 @@ class EnrollmentsService {
 
   /**
    * Listar alunos disponíveis para inscrição
+   * Se occurrenceId for fornecido: exclui já inscritos nessa ocorrência
+   * Se occurrenceId não fornecido (ou '0'): retorna todos os alunos ativos
    */
-  async getAvailableStudents(occurrenceId: string): Promise<AdminUser[]> {
-    const response = await apiClient.get<{ data: AdminUser[] }>(
-      `/admin/available-students?occurrence_id=${occurrenceId}`
-    );
+  async getAvailableStudents(occurrenceId?: string): Promise<AdminUser[]> {
+    let url = '/admin/available-students';
+    
+    // Só adiciona occurrence_id se for um ID real (não '0' ou undefined)
+    if (occurrenceId && occurrenceId !== '0') {
+      url += `?occurrence_id=${occurrenceId}`;
+    }
+
+    const response = await apiClient.get<{ data: AdminUser[] }>(url);
     // ✅ apiClient já extrai, backend retorna { data: [...] }, então acessamos .data
     return response.data || [];
   }

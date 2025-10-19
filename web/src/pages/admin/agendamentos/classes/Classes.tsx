@@ -26,8 +26,7 @@ import {
   ArrowRight,
   AlertCircle,
   Sparkles,
-  Zap,
-  UserPlus
+  Zap
 } from 'lucide-react';
 
 const AdminClasses = () => {
@@ -216,32 +215,110 @@ const AdminClasses = () => {
                 {/* Seção 3: Botões e Ações */}
                 <div className="space-y-3">
                   <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                    🎨 Botões e Ações
+                    🎨 Botões e Ações (Grid 2×2)
                   </h3>
+                  <p className="text-sm text-white/70 mb-3">
+                    Os botões estão organizados em um <strong>grid 2×2</strong> para melhor visualização:
+                  </p>
                   <div className="space-y-2 text-sm">
-                    <div className="flex items-center gap-3 p-2 bg-white/5 rounded">
-                      <Calendar className="h-4 w-4 text-green-400" />
-                      <div>
-                        <strong className="text-green-400">Horários (Verde)</strong> - Configurar horários semanais recorrentes
+                    <div className="grid grid-cols-2 gap-2 mb-3 p-3 bg-white/5 rounded-lg border border-white/10">
+                      <div className="text-center p-2 border border-green-500/30 rounded bg-green-500/5">
+                        <Calendar className="h-4 w-4 text-green-400 mx-auto mb-1" />
+                        <div className="text-xs font-semibold text-green-400">Horários</div>
+                      </div>
+                      <div className="text-center p-2 border border-blue-500/30 rounded bg-blue-500/5">
+                        <Zap className="h-4 w-4 text-blue-400 mx-auto mb-1" />
+                        <div className="text-xs font-semibold text-blue-400">Gerar</div>
+                      </div>
+                      <div className="text-center p-2 border border-purple-500/30 rounded bg-purple-500/5">
+                        <Users className="h-4 w-4 text-purple-400 mx-auto mb-1" />
+                        <div className="text-xs font-semibold text-purple-400">Ocorrências</div>
+                      </div>
+                      <div className="text-center p-2 border border-white/30 rounded bg-white/5">
+                        <Edit className="h-4 w-4 text-white/60 mx-auto mb-1" />
+                        <div className="text-xs font-semibold text-white/80">Editar</div>
+                      </div>
+                      <div className="col-span-2 text-center p-2 border border-red-500/30 rounded bg-red-500/5">
+                        <Trash2 className="h-4 w-4 text-red-400 mx-auto mb-1" />
+                        <div className="text-xs font-semibold text-red-400">Remover Aula</div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 p-2 bg-white/5 rounded">
-                      <Zap className="h-4 w-4 text-blue-400" />
-                      <div>
-                        <strong className="text-blue-400">Gerar (Azul)</strong> - Gerar ocorrências no calendário (datas específicas)
+                    
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-3 p-2 bg-white/5 rounded">
+                        <Calendar className="h-4 w-4 text-green-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <strong className="text-green-400">Horários (Verde)</strong> - Configurar horários semanais recorrentes
+                          <p className="text-xs text-white/60 mt-1">Ex: Segunda 7h, Terça 19h</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 p-2 bg-white/5 rounded">
+                        <Zap className="h-4 w-4 text-blue-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <strong className="text-blue-400">Gerar (Azul)</strong> - Gerar ocorrências no calendário
+                          <p className="text-xs text-white/60 mt-1">Cria datas específicas (ex: 05/11, 12/11, 19/11...)</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 p-2 bg-white/5 rounded">
+                        <Users className="h-4 w-4 text-purple-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <strong className="text-purple-400">Ocorrências (Roxo)</strong> - Ver todas as datas geradas e gerenciar inscrições
+                          <p className="text-xs text-white/60 mt-1">
+                            ✨ <strong>NOVO!</strong> Acesso a gerenciamento individual por data OU inscrição em lote
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 p-2 bg-white/5 rounded">
+                        <Edit className="h-4 w-4 text-white/60 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <strong className="text-white/80">Editar (Cinza)</strong> - Alterar informações da aula
+                          <p className="text-xs text-white/60 mt-1">Nome, duração, capacidade, preço, etc</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3 p-2 bg-white/5 rounded">
+                        <Trash2 className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <strong className="text-red-400">Remover Aula (Vermelho)</strong> - Marcar como excluída
+                          <p className="text-xs text-white/60 mt-1">Soft delete: dados são preservados no histórico</p>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 p-2 bg-white/5 rounded">
-                      <Edit className="h-4 w-4 text-white/60" />
-                      <div>
-                        <strong className="text-white/80">Editar (Cinza)</strong> - Alterar informações da aula (nome, duração, etc)
-                      </div>
+                  </div>
+                </div>
+
+                {/* Seção 3.5: Novo - Gerenciamento de Inscrições */}
+                <div className="space-y-3 bg-purple-500/10 border border-purple-500/20 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                    ✨ NOVO: Gerenciamento de Inscrições (2 Formas)
+                  </h3>
+                  <p className="text-sm text-white/80 leading-relaxed">
+                    Após clicar no botão <strong className="text-purple-400">Ocorrências</strong>, você terá acesso a:
+                  </p>
+                  
+                  <div className="space-y-3 mt-3">
+                    <div className="bg-white/5 rounded-lg p-3 border-l-4 border-purple-500">
+                      <strong className="text-purple-300">📅 Gerenciamento Individual</strong>
+                      <p className="text-sm text-white/70 mt-1">
+                        Lista de todas as datas geradas (ex: 27 ocorrências). Clique em "Gerenciar Inscrições" em cada data 
+                        para adicionar/remover alunos <strong>naquela data específica</strong>.
+                      </p>
+                      <p className="text-xs text-purple-300 mt-2">
+                        💡 Use quando: Turmas variam de semana a semana (alunos diferentes por data)
+                      </p>
                     </div>
-                    <div className="flex items-center gap-3 p-2 bg-white/5 rounded">
-                      <Trash2 className="h-4 w-4 text-red-400" />
-                      <div>
-                        <strong className="text-red-400">Excluir (Vermelho)</strong> - Marcar aula como excluída (soft delete)
-                      </div>
+                    
+                    <div className="bg-white/5 rounded-lg p-3 border-l-4 border-orange-500">
+                      <strong className="text-orange-300">🚀 Inscrição em Lote</strong>
+                      <p className="text-sm text-white/70 mt-1">
+                        Selecione <strong>múltiplas datas</strong> + <strong>múltiplos alunos</strong> de uma vez. 
+                        Exemplo: Inscrever 5 alunos em 10 datas diferentes = 50 inscrições em 1 clique!
+                      </p>
+                      <p className="text-xs text-orange-300 mt-2">
+                        💡 Use quando: Mesmos alunos frequentam várias/todas as datas (turma fixa)
+                      </p>
+                      <p className="text-xs text-yellow-400 mt-2">
+                        ⚠️ Validação automática: Datas sem vagas suficientes ficam desabilitadas
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -497,55 +574,43 @@ const AdminClasses = () => {
                     <p className="text-white/60 text-sm line-clamp-2">{aula.descricao}</p>
                   )}
 
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-2">
+                  {/* Actions - Grid responsivo 2x2 */}
+                  <div className="grid grid-cols-2 gap-2 pt-2">
+                    {/* Linha 1: Horários + Gerar */}
                     <Button 
                       size="sm" 
                       variant="outline" 
-                      className="flex-1 border-fitway-green text-fitway-green hover:bg-fitway-green/10"
+                      className="border-fitway-green text-fitway-green hover:bg-fitway-green/10"
                       onClick={() => navigate(`/admin/aulas/${aula.id_aula}/horarios`)}
                     >
-                      <Calendar className="mr-1 h-3 w-3" />
+                      <Calendar className="mr-1.5 h-3.5 w-3.5" />
                       Horários
                     </Button>
                     
                     <Button 
                       size="sm" 
                       variant="outline" 
-                      className="flex-1 border-blue-500 text-blue-400 hover:bg-blue-500/10"
+                      className="border-blue-500 text-blue-400 hover:bg-blue-500/10"
                       onClick={() => navigate(`/admin/aulas/${aula.id_aula}/gerar-ocorrencias`)}
                       title="Gerar ocorrências no calendário"
                     >
-                      <Calendar className="mr-1 h-3 w-3" />
+                      <Calendar className="mr-1.5 h-3.5 w-3.5" />
                       Gerar
                     </Button>
                     
+                    {/* Linha 2: Ocorrências + Editar */}
                     <Button 
                       size="sm" 
                       variant="outline" 
-                      className="flex-1 border-purple-500 text-purple-400 hover:bg-purple-500/10"
+                      className="border-purple-500 text-purple-400 hover:bg-purple-500/10"
                       onClick={() => {
-                        // Navega para página de listagem de ocorrências (gerenciar individualmente)
+                        // Navega para página de listagem de ocorrências (gerenciar individualmente OU em lote)
                         navigate(`/admin/aulas/${aula.id_aula}/ocorrencias`);
                       }}
-                      title="Ver todas as ocorrências e gerenciar inscrições"
+                      title="Ver todas as datas geradas e gerenciar inscrições"
                     >
-                      <Users className="mr-1 h-3 w-3" />
+                      <Users className="mr-1.5 h-3.5 w-3.5" />
                       Ocorrências
-                    </Button>
-                    
-                    <Button 
-                      size="sm" 
-                      variant="outline" 
-                      className="flex-1 border-orange-500 text-orange-400 hover:bg-orange-500/10"
-                      onClick={() => {
-                        // Navega para inscrição em lote (múltiplas datas de uma vez)
-                        navigate(`/admin/aulas/${aula.id_aula}/inscricao-lote`);
-                      }}
-                      title="Inscrever alunos em múltiplas datas de uma vez"
-                    >
-                      <UserPlus className="mr-1 h-3 w-3" />
-                      Inscrição Lote
                     </Button>
                     
                     <Button 
@@ -554,17 +619,20 @@ const AdminClasses = () => {
                       className="border-dashboard-border text-white hover:bg-dashboard-border"
                       onClick={() => navigate(`/admin/aulas/editar/${aula.id_aula}`)}
                     >
-                      <Edit className="h-3 w-3" />
+                      <Edit className="mr-1.5 h-3.5 w-3.5" />
+                      Editar
                     </Button>
                     
+                    {/* Linha 3: Remover (span 2 colunas) */}
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="border-red-500 text-red-500 hover:bg-red-500/10"
+                          className="col-span-2 border-red-500 text-red-500 hover:bg-red-500/10"
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                          Remover Aula
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent className="bg-dashboard-card border-dashboard-border">

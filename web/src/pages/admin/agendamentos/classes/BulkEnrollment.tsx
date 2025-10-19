@@ -94,6 +94,44 @@ const BulkEnrollment = () => {
       return;
     }
 
+    // ✅ VALIDAÇÃO LAYER 2 (JS): Verificar capacidade de cada ocorrência selecionada
+    if (!aula) return;
+    
+    const capacidadeMaxima = aula.capacidade_max;
+    const ocorrenciasInvalidas: string[] = [];
+    
+    selectedOccurrences.forEach(occurrenceId => {
+      const occurrence = occurrences.find(o => String(o.id_ocorrencia_aula) === occurrenceId);
+      if (!occurrence) return;
+      
+      const capacidadeAtual = occurrence.inscricoes_count || 0;
+      const vagasDisponiveis = capacidadeMaxima - capacidadeAtual;
+      
+      if (selectedStudents.length > vagasDisponiveis) {
+        const dataFormatada = formatDate(occurrence.inicio);
+        ocorrenciasInvalidas.push(
+          `${dataFormatada}: ${vagasDisponiveis} vaga(s) disponível(is), tentando inscrever ${selectedStudents.length}`
+        );
+      }
+    });
+
+    if (ocorrenciasInvalidas.length > 0) {
+      toast({
+        title: 'Limite de vagas excedido!',
+        description: (
+          <div className="space-y-1">
+            <p>As seguintes datas não têm vagas suficientes:</p>
+            {ocorrenciasInvalidas.map((msg, idx) => (
+              <p key={idx} className="text-sm">• {msg}</p>
+            ))}
+          </div>
+        ),
+        variant: 'destructive',
+        duration: 8000 // Toast mais longo para mensagens múltiplas
+      });
+      return;
+    }
+
     try {
       setSubmitting(true);
 
@@ -215,6 +253,24 @@ const BulkEnrollment = () => {
         </Button>
       </div>
 
+      {/* Alerta de capacidade */}
+      {selectedStudents.length > 0 && (
+        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-blue-100">
+              <p className="font-medium mb-1">
+                {selectedStudents.length} aluno(s) selecionado(s)
+              </p>
+              <p className="text-blue-200/80">
+                Apenas datas com {selectedStudents.length}+ vagas disponíveis podem ser selecionadas.
+                Datas sem vagas suficientes aparecerão desabilitadas.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Grid 2 colunas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Coluna 1: Selecionar Ocorrências */}
@@ -266,16 +322,27 @@ const BulkEnrollment = () => {
               ) : (
                 filteredOccurrences.map((occ) => {
                   const isSelected = selectedOccurrences.includes(occ.id_ocorrencia_aula);
-                  const capacidade = occ.inscricoes_count || 0;
-                  const isFull = capacidade >= (aula.capacidade_max || 0);
+                  const capacidadeAtual = occ.inscricoes_count || 0;
+                  const capacidadeMaxima = aula.capacidade_max || 0;
+                  const vagasDisponiveis = capacidadeMaxima - capacidadeAtual;
+                  const isFull = capacidadeAtual >= capacidadeMaxima;
+                  
+                  // ✅ VALIDAÇÃO LAYER 1 (UI): Desabilitar se não houver vagas suficientes para os alunos selecionados
+                  const isDisabled = !isSelected && selectedStudents.length > vagasDisponiveis;
 
                   return (
                     <div
                       key={occ.id_ocorrencia_aula}
-                      className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
-                        isSelected ? 'bg-fitway-green/10 border border-fitway-green' : 'bg-white/5 hover:bg-white/10'
+                      className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                        isDisabled 
+                          ? 'opacity-50 cursor-not-allowed bg-white/5' 
+                          : isSelected 
+                            ? 'bg-fitway-green/10 border border-fitway-green cursor-pointer' 
+                            : 'bg-white/5 hover:bg-white/10 cursor-pointer'
                       }`}
                       onClick={() => {
+                        if (isDisabled) return;
+                        
                         if (isSelected) {
                           setSelectedOccurrences(prev => prev.filter(id => id !== occ.id_ocorrencia_aula));
                         } else {
@@ -283,7 +350,11 @@ const BulkEnrollment = () => {
                         }
                       }}
                     >
-                      <Checkbox checked={isSelected} className="border-white/20" />
+                      <Checkbox 
+                        checked={isSelected} 
+                        disabled={isDisabled}
+                        className="border-white/20" 
+                      />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-fitway-green" />
@@ -295,9 +366,14 @@ const BulkEnrollment = () => {
                               Lotada
                             </Badge>
                           )}
+                          {isDisabled && !isFull && (
+                            <Badge variant="outline" className="text-xs border-yellow-500/50 text-yellow-500">
+                              {vagasDisponiveis} vaga(s)
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-white/60 text-sm">
-                          {formatTime(occ.inicio)} - {formatTime(occ.fim)} • {capacidade}/{aula.capacidade_max} alunos
+                          {formatTime(occ.inicio)} - {formatTime(occ.fim)} • {capacidadeAtual}/{capacidadeMaxima} alunos
                         </p>
                       </div>
                     </div>
