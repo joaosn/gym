@@ -296,3 +296,117 @@ export interface AvailabilityCheckResponse {
   motivo?: string;
   preco_total?: number;
 }
+
+// =====================================================================
+// AULAS (TURMAS EM GRUPO) - Fase 10
+// =====================================================================
+
+export interface Aula {
+  id_aula: string;
+  nome: string;
+  esporte: string;
+  nivel?: 'iniciante' | 'intermediario' | 'avancado';
+  duracao_min: number;
+  capacidade_max: number;
+  preco_unitario?: number; // null = incluso no plano
+  descricao?: string;
+  requisitos?: string;
+  status: 'ativa' | 'inativa';
+  criado_em: string;
+  atualizado_em: string;
+  // Contadores (quando incluídos)
+  horarios_count?: number;
+  ocorrencias_count?: number;
+  inscricoes_count?: number;
+  // Relacionamentos (quando incluídos)
+  horarios?: HorarioAula[];
+  ocorrencias?: OcorrenciaAula[];
+}
+
+export interface HorarioAula {
+  id_horario_aula: string;
+  id_aula: string;
+  id_instrutor: string;
+  id_quadra: string;
+  dia_semana: number; // 1-7 (Segunda-Domingo ISO 8601)
+  dia_semana_texto?: string; // Helper frontend "Segunda", "Terça", etc
+  hora_inicio: string; // "HH:MM"
+  criado_em: string;
+  atualizado_em: string;
+  // Relacionamentos
+  aula?: Aula;
+  instrutor?: Instructor;
+  quadra?: Court;
+}
+
+export interface OcorrenciaAula {
+  id_ocorrencia_aula: string;
+  id_aula: string;
+  id_instrutor: string;
+  id_quadra: string;
+  inicio: string; // ISO datetime
+  fim: string; // ISO datetime
+  status: 'agendada' | 'cancelada' | 'realizada';
+  criado_em: string;
+  atualizado_em: string;
+  // Contadores
+  inscricoes_count?: number;
+  numero_inscritos?: number;
+  // Relacionamentos
+  aula?: Aula;
+  instrutor?: Instructor;
+  quadra?: Court;
+  inscricoes?: InscricaoAula[];
+}
+
+export interface InscricaoAula {
+  id_inscricao_aula: string;
+  id_ocorrencia_aula?: string;
+  id_aula: string;
+  id_usuario: string;
+  status: 'inscrito' | 'cancelado' | 'presente' | 'falta';
+  criado_em: string;
+  atualizado_em: string;
+  // Relacionamentos
+  ocorrencia?: OcorrenciaAula;
+  aula?: Aula;
+  usuario?: User;
+}
+
+// Form Data Types
+export interface AulaFormData {
+  nome: string;
+  esporte: string;
+  nivel?: 'iniciante' | 'intermediario' | 'avancado';
+  duracao_min: number;
+  capacidade_max: number;
+  preco_unitario?: number;
+  descricao?: string;
+  requisitos?: string;
+  status?: 'ativa' | 'inativa';
+}
+
+export interface HorarioAulaFormData {
+  id_aula: string;
+  id_instrutor: string;
+  id_quadra: string;
+  dia_semana: number;
+  hora_inicio: string;
+}
+
+export interface GerarOcorrenciasRequest {
+  id_aula: string;
+  data_inicio: string; // ISO date
+  data_fim: string; // ISO date
+}
+
+export interface GerarOcorrenciasResponse {
+  message: string;
+  criadas: number;
+  puladas: number;
+  data: OcorrenciaAula[];
+}
+
+export interface InscricaoAulaRequest {
+  id_ocorrencia_aula: string;
+}

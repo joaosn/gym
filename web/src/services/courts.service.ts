@@ -150,8 +150,8 @@ class CourtsService {
   // =====================================================================
   
   async getCourts(): Promise<Court[]> {
-    // TODO: Implementar na Fase 3
-    return apiClient.get<Court[]>('/courts');
+    const response = await apiClient.get<{ data: Court[] }>('/admin/courts');
+    return response.data;
   }
 
   async getCourtAvailability(courtId: string, date: string): Promise<CourtAvailability> {

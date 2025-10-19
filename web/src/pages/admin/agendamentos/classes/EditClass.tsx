@@ -4,279 +4,290 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Save } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { getErrorMessage } from '@/lib/utils';
+import { classesService } from '@/services/classes.service';
+import { ApiError } from '@/lib/api-client';
+import type { AulaFormData } from '@/types';
+import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 
 const EditClass = () => {
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
-
-  // Mock data
-  const mockClasses = [
-    {
-      id: '1',
-      name: 'Beach Tennis Iniciante',
-      sport: 'beach-tennis',
-      level: 'Iniciante',
-      price: 80,
-      instructor: 'João Silva',
-      maxCapacity: 6,
-      duration: 60,
-      schedule: 'Terças e Quintas - 19:00',
-      status: 'active',
-      description: 'Aula para iniciantes no Beach Tennis'
-    },
-    {
-      id: '2',
-      name: 'FTV Avançado',
-      sport: 'ftv',
-      level: 'Avançado',  
-      price: 100,
-      instructor: 'Maria Santos',
-      maxCapacity: 8,
-      duration: 90,
-      schedule: 'Segundas e Quartas - 20:00',
-      status: 'active',
-      description: 'Aula avançada de Futvôlei'
-    }
-  ];
-
-  const [formData, setFormData] = useState({
-    name: '',
-    sport: '',
-    level: '',
-    price: 0,
-    instructor: '',
-    maxCapacity: 6,
-    duration: 60,
-    schedule: '',
-    status: true,
-    description: ''
+  
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  
+  const [formData, setFormData] = useState<AulaFormData>({
+    nome: '',
+    esporte: '',
+    nivel: undefined,
+    duracao_min: 60,
+    capacidade_max: 10,
+    preco_unitario: undefined,
+    descricao: '',
+    requisitos: '',
+    status: 'ativa',
   });
 
-  const [loading, setLoading] = useState(false);
-
   useEffect(() => {
-    const classItem = mockClasses.find(c => c.id === id);
-    if (classItem) {
-      setFormData({
-        name: classItem.name,
-        sport: classItem.sport,
-        level: classItem.level,
-        price: classItem.price,
-        instructor: classItem.instructor,
-        maxCapacity: classItem.maxCapacity,
-        duration: classItem.duration,
-        schedule: classItem.schedule,
-        status: classItem.status === 'active',
-        description: classItem.description
-      });
+    if (id) {
+      loadAula();
     }
   }, [id]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
+  const loadAula = async () => {
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setLoading(true);
+      const aula = await classesService.get(id!);
       
-      toast({
-        title: "Aula atualizada!",
-        description: "As alterações foram salvas com sucesso.",
+      setFormData({
+        nome: aula.nome,
+        esporte: aula.esporte,
+        nivel: aula.nivel || undefined,
+        duracao_min: aula.duracao_min,
+        capacidade_max: aula.capacidade_max,
+        preco_unitario: aula.preco_unitario || undefined,
+        descricao: aula.descricao || '',
+        requisitos: aula.requisitos || '',
+        status: aula.status,
       });
-      
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast({
+          title: 'Erro ao carregar aula',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
       navigate('/admin/aulas');
-    } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar aula",
-        description: getErrorMessage(error),
-        variant: "destructive",
-      });
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.nome || !formData.esporte) {
+      toast({
+        title: 'Erro de validação',
+        description: 'Nome e esporte são obrigatórios',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      setSaving(true);
+      await classesService.update(id!, formData);
+      
+      toast({
+        title: 'Aula atualizada!',
+        description: `${formData.nome} foi atualizada com sucesso.`,
+      });
+      
+      navigate('/admin/aulas');
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast({
+          title: 'Erro ao atualizar aula',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-fitway-green" />
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <Button 
-          variant="ghost" 
+      <div className="flex items-center gap-4 mb-8">
+        <Button
+          variant="outline"
           onClick={() => navigate('/admin/aulas')}
-          className="text-white hover:bg-dashboard-border mb-4"
+          className="border-dashboard-border text-white hover:bg-dashboard-border"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar para Aulas
+          <ArrowLeft className="h-4 w-4" />
         </Button>
-        <h1 className="text-3xl font-bold text-white mb-2">Editar Aula</h1>
-        <p className="text-white/80">Modificar informações da aula</p>
+        <div>
+          <h1 className="text-3xl font-bold text-white">Editar Aula</h1>
+          <p className="text-white/80">Atualize as informações da aula</p>
+        </div>
       </div>
 
-      <Card className="bg-dashboard-card border-dashboard-border max-w-2xl">
-        <CardHeader>
-          <CardTitle className="text-white">Informações da Aula</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-white">Nome da Aula</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="bg-dashboard-bg border-dashboard-border text-white"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="instructor" className="text-white">Instrutor</Label>
-                <Input
-                  id="instructor"
-                  value={formData.instructor}
-                  onChange={(e) => setFormData(prev => ({ ...prev, instructor: e.target.value }))}
-                  className="bg-dashboard-bg border-dashboard-border text-white"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="sport" className="text-white">Modalidade</Label>
-                <Select 
-                  value={formData.sport} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, sport: value }))}
-                >
-                  <SelectTrigger className="bg-dashboard-bg border-dashboard-border text-white">
-                    <SelectValue placeholder="Selecione a modalidade" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-dashboard-card border-dashboard-border">
-                    <SelectItem value="beach-tennis" className="text-white">Beach Tennis</SelectItem>
-                    <SelectItem value="ftv" className="text-white">FTV (Futvôlei)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="level" className="text-white">Nível</Label>
-                <Select 
-                  value={formData.level} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, level: value }))}
-                >
-                  <SelectTrigger className="bg-dashboard-bg border-dashboard-border text-white">
-                    <SelectValue placeholder="Selecione o nível" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-dashboard-card border-dashboard-border">
-                    <SelectItem value="Iniciante" className="text-white">Iniciante</SelectItem>
-                    <SelectItem value="Intermediário" className="text-white">Intermediário</SelectItem>
-                    <SelectItem value="Avançado" className="text-white">Avançado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="price" className="text-white">Preço (R$)</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
-                  className="bg-dashboard-bg border-dashboard-border text-white"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="maxCapacity" className="text-white">Capacidade Máxima</Label>
-                <Input
-                  id="maxCapacity"
-                  type="number"
-                  value={formData.maxCapacity}
-                  onChange={(e) => setFormData(prev => ({ ...prev, maxCapacity: parseInt(e.target.value) }))}
-                  className="bg-dashboard-bg border-dashboard-border text-white"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="duration" className="text-white">Duração (min)</Label>
-                <Input
-                  id="duration"
-                  type="number"
-                  value={formData.duration}
-                  onChange={(e) => setFormData(prev => ({ ...prev, duration: parseInt(e.target.value) }))}
-                  className="bg-dashboard-bg border-dashboard-border text-white"
-                  required
-                />
-              </div>
-            </div>
-
+      <form onSubmit={handleSubmit}>
+        <Card className="bg-dashboard-card border-dashboard-border">
+          <CardHeader>
+            <CardTitle className="text-white">Informações Básicas</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="schedule" className="text-white">Horário</Label>
+              <Label htmlFor="nome" className="text-white">Nome da Aula *</Label>
               <Input
-                id="schedule"
-                value={formData.schedule}
-                onChange={(e) => setFormData(prev => ({ ...prev, schedule: e.target.value }))}
+                id="nome"
+                value={formData.nome}
+                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
                 className="bg-dashboard-bg border-dashboard-border text-white"
-                placeholder="Ex: Terças e Quintas - 19:00"
+                placeholder="Ex: Beach Tennis Iniciante"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-white">Descrição</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              <Label htmlFor="esporte" className="text-white">Esporte *</Label>
+              <Input
+                id="esporte"
+                value={formData.esporte}
+                onChange={(e) => setFormData({ ...formData, esporte: e.target.value })}
                 className="bg-dashboard-bg border-dashboard-border text-white"
+                placeholder="Ex: beach_tennis, funcional, tenis"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="nivel" className="text-white">Nível</Label>
+              <Select 
+                value={formData.nivel || 'livre'} 
+                onValueChange={(value) => setFormData({ ...formData, nivel: value === 'livre' ? undefined : value as any })}
+              >
+                <SelectTrigger className="bg-dashboard-bg border-dashboard-border text-white">
+                  <SelectValue placeholder="Selecione o nível" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="livre">Livre</SelectItem>
+                  <SelectItem value="iniciante">Iniciante</SelectItem>
+                  <SelectItem value="intermediario">Intermediário</SelectItem>
+                  <SelectItem value="avancado">Avançado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="duracao_min" className="text-white">Duração (min) *</Label>
+                <Input
+                  id="duracao_min"
+                  type="number"
+                  value={formData.duracao_min}
+                  onChange={(e) => setFormData({ ...formData, duracao_min: Number(e.target.value) })}
+                  className="bg-dashboard-bg border-dashboard-border text-white"
+                  min="15"
+                  max="240"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="capacidade_max" className="text-white">Capacidade Máxima *</Label>
+                <Input
+                  id="capacidade_max"
+                  type="number"
+                  value={formData.capacidade_max}
+                  onChange={(e) => setFormData({ ...formData, capacidade_max: Number(e.target.value) })}
+                  className="bg-dashboard-bg border-dashboard-border text-white"
+                  min="1"
+                  max="50"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="preco_unitario" className="text-white">Preço Unitário (R$)</Label>
+              <Input
+                id="preco_unitario"
+                type="number"
+                step="0.01"
+                value={formData.preco_unitario || ''}
+                onChange={(e) => setFormData({ ...formData, preco_unitario: e.target.value ? Number(e.target.value) : undefined })}
+                className="bg-dashboard-bg border-dashboard-border text-white"
+                placeholder="Deixe vazio se incluso no plano"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="descricao" className="text-white">Descrição</Label>
+              <Textarea
+                id="descricao"
+                value={formData.descricao || ''}
+                onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
+                className="bg-dashboard-bg border-dashboard-border text-white"
+                placeholder="Descreva a aula, objetivos, metodologia..."
+                rows={4}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="requisitos" className="text-white">Requisitos</Label>
+              <Textarea
+                id="requisitos"
+                value={formData.requisitos || ''}
+                onChange={(e) => setFormData({ ...formData, requisitos: e.target.value })}
+                className="bg-dashboard-bg border-dashboard-border text-white"
+                placeholder="Pré-requisitos, materiais necessários..."
                 rows={3}
               />
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="status"
-                checked={formData.status}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, status: checked }))}
-              />
-              <Label htmlFor="status" className="text-white">Aula ativa</Label>
+            <div className="space-y-2">
+              <Label htmlFor="status" className="text-white">Status</Label>
+              <Select 
+                value={formData.status} 
+                onValueChange={(value) => setFormData({ ...formData, status: value as any })}
+              >
+                <SelectTrigger className="bg-dashboard-bg border-dashboard-border text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ativa">Ativa</SelectItem>
+                  <SelectItem value="inativa">Inativa</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="flex gap-4 pt-6">
-              <Button
-                type="submit"
-                variant="sport"
-                disabled={loading}
-                className="flex-1"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {loading ? 'Salvando...' : 'Salvar Alterações'}
-              </Button>
-              
+            <div className="flex justify-end gap-4 pt-4">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => navigate('/admin/aulas')}
                 className="border-dashboard-border text-white hover:bg-dashboard-border"
+                disabled={saving}
               >
                 Cancelar
               </Button>
+              <Button
+                type="submit"
+                className="bg-fitway-green hover:bg-fitway-green/90 text-white"
+                disabled={saving}
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    Salvar Alterações
+                  </>
+                )}
+              </Button>
             </div>
-          </form>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </form>
     </div>
   );
 };

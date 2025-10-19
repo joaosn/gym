@@ -98,6 +98,45 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/court-bookings/{id}', [ReservaQuadraController::class, 'update'])->name('court-bookings.update');
         Route::patch('/court-bookings/{id}', [ReservaQuadraController::class, 'update'])->name('court-bookings.patch');
         Route::delete('/court-bookings/{id}', [ReservaQuadraController::class, 'destroy'])->name('court-bookings.destroy');
+
+        // =====================================================================
+        // AULAS (TURMAS EM GRUPO) - Admin CRUD
+        // =====================================================================
+        
+        // ⚠️ IMPORTANTE: Rotas específicas ANTES do apiResource para evitar conflitos!
+        
+        // Horários de Aula (configuração semanal)
+        Route::prefix('class-schedules')->group(function () {
+            Route::get('/', [App\Http\Controllers\HorarioAulaController::class, 'index']);
+            Route::post('/', [App\Http\Controllers\HorarioAulaController::class, 'store']);
+            Route::get('/{id}', [App\Http\Controllers\HorarioAulaController::class, 'show']);
+            Route::put('/{id}', [App\Http\Controllers\HorarioAulaController::class, 'update']);
+            Route::delete('/{id}', [App\Http\Controllers\HorarioAulaController::class, 'destroy']);
+        });
+
+        // Ocorrências de Aula (geração e cancelamento)
+        Route::prefix('class-occurrences')->group(function () {
+            Route::post('/generate', [App\Http\Controllers\OcorrenciaAulaController::class, 'gerar']);
+            Route::patch('/{id}/cancel', [App\Http\Controllers\OcorrenciaAulaController::class, 'cancelar']);
+            Route::get('/', [App\Http\Controllers\OcorrenciaAulaController::class, 'index']);
+            Route::get('/{id}', [App\Http\Controllers\OcorrenciaAulaController::class, 'show']);
+            
+            // Gerenciar inscrições de uma ocorrência específica
+            Route::get('/{occurrenceId}/enrollments', [App\Http\Controllers\InscricaoAulaController::class, 'index']);
+            Route::post('/{occurrenceId}/enrollments', [App\Http\Controllers\InscricaoAulaController::class, 'adminInscrever']);
+        });
+
+        // Inscrições (admin pode ver todas e gerenciar)
+        Route::prefix('class-enrollments')->group(function () {
+            Route::get('/', [App\Http\Controllers\InscricaoAulaController::class, 'index']);
+            Route::delete('/{id}', [App\Http\Controllers\InscricaoAulaController::class, 'adminRemover']);
+        });
+        
+        // Alunos disponíveis para inscrição
+        Route::get('/available-students', [App\Http\Controllers\InscricaoAulaController::class, 'alunosDisponiveis']);
+        
+        // CRUD de Aulas (DEVE vir POR ÚLTIMO para não capturar rotas acima!)
+        Route::apiResource('classes', App\Http\Controllers\AulaController::class)->parameters(['classes' => 'id']);
     });
 
     // =====================================================================
@@ -112,6 +151,26 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{id}', [SessaoPersonalController::class, 'destroy']);
         Route::patch('/{id}/confirm', [SessaoPersonalController::class, 'confirm']);
         Route::post('/check-availability', [SessaoPersonalController::class, 'checkAvailability']);
+    });
+
+    // =====================================================================
+    // AULAS (TURMAS EM GRUPO) - Aluno
+    // =====================================================================
+    Route::prefix('classes')->group(function () {
+        // Listar aulas disponíveis
+        Route::get('/', [App\Http\Controllers\AulaController::class, 'index']);
+        Route::get('/{id}', [App\Http\Controllers\AulaController::class, 'show']);
+
+        // Listar ocorrências futuras
+        Route::get('/occurrences', [App\Http\Controllers\OcorrenciaAulaController::class, 'index']);
+        Route::get('/occurrences/{id}', [App\Http\Controllers\OcorrenciaAulaController::class, 'show']);
+    });
+
+    // Inscrições em aulas
+    Route::prefix('class-enrollments')->group(function () {
+        Route::get('/me', [App\Http\Controllers\InscricaoAulaController::class, 'minhasInscricoes']);
+        Route::post('/', [App\Http\Controllers\InscricaoAulaController::class, 'inscrever']);
+        Route::delete('/{id}', [App\Http\Controllers\InscricaoAulaController::class, 'cancelar']);
     });
     
 });

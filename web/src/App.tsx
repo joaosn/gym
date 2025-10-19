@@ -38,6 +38,11 @@ import AdminCourtBookings from "./pages/admin/agendamentos/court-bookings";
 import AdminClasses from "./pages/admin/agendamentos/classes/Classes";
 import AddClass from "./pages/admin/agendamentos/classes/AddClass";
 import EditClass from "./pages/admin/agendamentos/classes/EditClass";
+import ClassSchedules from "./pages/admin/agendamentos/classes/ClassSchedules";
+import GenerateOccurrences from "./pages/admin/agendamentos/classes/GenerateOccurrences";
+import OccurrenceEnrollments from "./pages/admin/agendamentos/classes/OccurrenceEnrollments";
+import ClassOccurrencesList from "./pages/admin/agendamentos/classes/ClassOccurrencesList";
+import BulkEnrollment from "./pages/admin/agendamentos/classes/BulkEnrollment";
 import AdminPayments from "./pages/admin/payments/Payments";
 
 import NotFound from "./pages/NotFound";
@@ -98,6 +103,11 @@ const App = () => (
             <Route path="aulas" element={<AdminClasses />} />
             <Route path="aulas/novo" element={<AddClass />} />
             <Route path="aulas/editar/:id" element={<EditClass />} />
+            <Route path="aulas/:id/horarios" element={<ClassSchedules />} />
+            <Route path="aulas/:id/gerar-ocorrencias" element={<GenerateOccurrences />} />
+            <Route path="aulas/:classId/ocorrencias" element={<ClassOccurrencesList />} />
+            <Route path="aulas/:classId/inscricao-lote" element={<BulkEnrollment />} />
+            <Route path="aulas/ocorrencias/:occurrenceId/inscricoes" element={<OccurrenceEnrollments />} />
             <Route path="pagamentos" element={<AdminPayments />} />
           </Route>
           
