@@ -1,7 +1,7 @@
 # 🎯 Plano de Ação: Fitway - Desenvolvimento Full Stack
 
-**Última Atualização**: 18 de outubro de 2025  
-**Versão**: 2.2 (Fase 9 Concluída + Integração Fase 8)
+**Última Atualização**: 19 de outubro de 2025  
+**Versão**: 2.3 (Fase 11 Concluída - Assinaturas)
 
 ---
 
@@ -23,7 +23,7 @@
 
 ---
 
-## ✅ FASES CONCLUÍDAS (10 fases + 2 refatorações)
+## ✅ FASES CONCLUÍDAS (11 fases + 2 refatorações)
 
 | # | Feature | Backend | Frontend | Doc |
 |---|---------|---------|----------|-----|
@@ -38,16 +38,19 @@
 | **8.1** | **Integração Sessão→Quadra** | Auto-criação de ReservaQuadra, FK id_sessao_personal, Bug fix dia_semana | Transparente (backend) | [📄](./FASE_8.md#integração-sessão-personal-auto-cria-reserva-de-quadra) |
 | **9** | **Reservas de Quadras** | ReservaQuadraController, 8 endpoints, 3 validações | CourtBookings.tsx (3 páginas), ApiError pattern | [📄](./FASE_9.md) |
 | **10** | **Aulas em Grupo** | 4 Models, 4 Controllers, OcorrenciaAulaService | 8 páginas, dual enrollment flow, deletion system | [📄](./FASE_10.md) |
+| **11** | **Assinaturas** | AssinaturaController (6 endpoints), EventoAssinatura | Subscriptions.tsx (admin), MyPlan.tsx (aluno) | [📄](./FASE_11.md) |
 
 ### 🎯 Achievements
 
-- ✅ **13 documentos** de fase criados
-- ✅ **8 CRUDs** completos (Quadras, Planos, Usuários, Instrutores, Sessões, Reservas, Aulas + Auth)
+- ✅ **14 documentos** de fase criados
+- ✅ **9 CRUDs** completos (Quadras, Planos, Usuários, Instrutores, Sessões, Reservas, Aulas, Assinaturas + Auth)
 - ✅ **10 Validações Anti-Overlap**: Instrutor (2), Disponibilidade Semanal (1), Quadra vs Reservas (1), Quadra vs Sessões (1), Aluno (2), Aulas (3)
 - ✅ **Dual Enrollment Flow**: Individual + lote para aulas em grupo
 - ✅ **Integração Sessão↔Quadra**: Auto-criação de reservas quando sessão usa quadra
 - ✅ **ApiError Pattern**: Preserva erros de validação do backend (422)
 - ✅ **formatValidationErrors()**: Helper i18n para exibição de erros
+- ✅ **Admin Manual Creation**: Admin pode criar assinaturas para qualquer usuário
+- ✅ **EventoAssinatura**: Registro de histórico de mudanças nas assinaturas
 - ✅ **Disponibilidade de Instrutores** funcionando (CRUD dentro do modal)
 - ✅ **Soft Delete** padrão do sistema
 - ✅ **3 papéis** unificados: admin, aluno, instrutor
