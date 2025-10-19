@@ -78,7 +78,8 @@ const Sidebar = ({ userRole }: SidebarProps) => {
               { title: 'Aulas (Turmas)', href: '/admin/aulas', icon: BookOpen },
             ]
           },
-          { title: 'Pagamentos', href: '/admin/pagamentos', icon: CreditCard, badge: '8' },
+          { title: 'Assinaturas', href: '/admin/assinaturas', icon: CreditCard },
+          { title: 'Pagamentos', href: '/admin/pagamentos', icon: DollarSign, badge: '8' },
         ];
       case 'instrutor':
         return [

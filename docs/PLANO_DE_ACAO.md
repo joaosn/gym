@@ -8,12 +8,14 @@
 ## 📊 Visão Geral do Projeto
 
 **Fitway** é um sistema completo de gestão de academia/centro esportivo com foco em:
+
 - 🏐 Quadras de beach tennis
 - 👥 Aulas em grupo
 - 💪 Personal trainers (sessões 1:1)
 - 💳 Assinaturas e pagamentos
 
 ### Stack Tecnológica
+
 - **Backend**: Laravel 10 + PHP 8.4 + PostgreSQL 16 (Docker)
 - **Frontend**: React 18 + TypeScript + Vite + TailwindCSS + shadcn/ui
 - **Autenticação**: Laravel Sanctum (Bearer Token)
@@ -21,7 +23,7 @@
 
 ---
 
-## ✅ FASES CONCLUÍDAS (9 fases + 2 refatorações)
+## ✅ FASES CONCLUÍDAS (10 fases + 2 refatorações)
 
 | # | Feature | Backend | Frontend | Doc |
 |---|---------|---------|----------|-----|
@@ -35,11 +37,14 @@
 | **8** | **Sessões Personal 1:1** | SessaoPersonalController, 4 validações | PersonalSessions.tsx, CRUD completo | [📄](./FASE_8.md) |
 | **8.1** | **Integração Sessão→Quadra** | Auto-criação de ReservaQuadra, FK id_sessao_personal, Bug fix dia_semana | Transparente (backend) | [📄](./FASE_8.md#integração-sessão-personal-auto-cria-reserva-de-quadra) |
 | **9** | **Reservas de Quadras** | ReservaQuadraController, 8 endpoints, 3 validações | CourtBookings.tsx (3 páginas), ApiError pattern | [📄](./FASE_9.md) |
+| **10** | **Aulas em Grupo** | 4 Models, 4 Controllers, OcorrenciaAulaService | 8 páginas, dual enrollment flow, deletion system | [📄](./FASE_10.md) |
 
 ### 🎯 Achievements
-- ✅ **12 documentos** de fase criados
-- ✅ **7 CRUDs** completos (Quadras, Planos, Usuários, Instrutores, Sessões Personal, Reservas + Auth)
-- ✅ **7 Validações Anti-Overlap**: Instrutor (2), Disponibilidade Semanal (1), Quadra vs Reservas (1), Quadra vs Sessões (1), Aluno (2)
+
+- ✅ **13 documentos** de fase criados
+- ✅ **8 CRUDs** completos (Quadras, Planos, Usuários, Instrutores, Sessões, Reservas, Aulas + Auth)
+- ✅ **10 Validações Anti-Overlap**: Instrutor (2), Disponibilidade Semanal (1), Quadra vs Reservas (1), Quadra vs Sessões (1), Aluno (2), Aulas (3)
+- ✅ **Dual Enrollment Flow**: Individual + lote para aulas em grupo
 - ✅ **Integração Sessão↔Quadra**: Auto-criação de reservas quando sessão usa quadra
 - ✅ **ApiError Pattern**: Preserva erros de validação do backend (422)
 - ✅ **formatValidationErrors()**: Helper i18n para exibição de erros
@@ -56,9 +61,11 @@
 ## 🗺️ ROADMAP - PRÓXIMAS FASES (Ordem Lógica)
 
 ### ✅ Fase 8: Sessões Personal 1:1 (CONCLUÍDA)
+
 **Objetivo**: Aluno agenda sessão com instrutor (anti-overlap).
 
 **Backend**:
+
 - ✅ Model `SessaoPersonal` + `ReservaQuadra`
 - ✅ `SessaoPersonalController` (8 endpoints)
 - ✅ Service com **4 validações de conflito**:
@@ -70,6 +77,7 @@
 - ✅ Seeder com 12 registros
 
 **Frontend**:
+
 - ✅ Admin: `PersonalSessions.tsx` (CRUD completo)
 - ✅ Filtros: status, período, instrutor
 - ✅ Service: `personal-sessions.service.ts`
@@ -77,6 +85,7 @@
 - ✅ Layout com padding
 
 **Refactor**:
+
 - ✅ Estrutura organizada por contexto (cadastros/agendamentos/payments)
 - ✅ Barrel exports (index.ts)
 - ✅ README.md criado
@@ -87,9 +96,11 @@
 ---
 
 ### ✅ Fase 9: Reservas de Quadras (CONCLUÍDA)
+
 **Objetivo**: Aluno reserva quadras (anti-overlap).
 
 **Implementado**:
+
 - ✅ Backend (8 REST endpoints):
   - Model `ReservaQuadra` com relacionamentos
   - `ReservaQuadraController`: index, show, store, update, destroy, confirm, checkAvailability, myBookings
@@ -115,6 +126,7 @@
   - Admin sem campo usuario → adicionado Select
 
 **TODO Crítico (integração com Fase 8)**:
+
 - ✅ Sessões Personal com quadra devem auto-criar ReservaQuadra (CONCLUÍDO!)
 - ✅ Adicionar FK `id_sessao_personal` em `reservas_quadra` (MIGRATION EXECUTADA!)
 - ✅ Atualizar `SessaoPersonalController`: store(), update(), destroy() (SINCRONIZADO!)
@@ -130,47 +142,54 @@
 
 ---
 
-### 📅 Fase 10: Aulas (Turmas em Grupo)
-**Objetivo**: Admin cria aulas, aluno se inscreve.
+### ✅ Fase 10: Aulas (Turmas em Grupo) (CONCLUÍDA)
 
-**Por quê agora?**
-- Mais complexa (recorrência semanal + ocorrências)
-- Depende de Quadras (local das aulas)
+**Objetivo**: Admin cria aulas, aluno se inscreve (sistema completo com dual flow).
+
+**Implementado**:
 
 **Backend**:
-- [ ] Models: `Aula`, `HorarioAula`, `OcorrenciaAula`, `InscricaoAula`
-- [ ] `AulaController` (CRUD aulas)
-- [ ] `HorarioAulaController` (configurar horários semanais)
-- [ ] `OcorrenciaController` (gerar ocorrências concretas no calendário)
-- [ ] `InscricaoController` (aluno inscrever/cancelar)
-- [ ] Service: Gerador de ocorrências (recorrência semanal)
-- [ ] Validações:
-  - Capacidade máxima
-  - Anti-overlap de quadra (se usar quadra)
-  - Anti-overlap de instrutor
-- [ ] Routes:
-  - GET/POST/PUT/DELETE `/admin/classes`
-  - GET/POST `/class-enrollments` (aluno)
+
+- ✅ Models: `Aula`, `HorarioAula`, `OcorrenciaAula`, `InscricaoAula`
+- ✅ 4 Controllers (AulaController, HorarioAulaController, OcorrenciaAulaController, InscricaoAulaController)
+- ✅ OcorrenciaAulaService (geração automática de ocorrências recorrentes)
+- ✅ Validações:
+  - Capacidade máxima (3 camadas: UI + JS + Backend)
+  - Anti-overlap de quadra + instrutor (GIST constraint)
+- ✅ Soft delete com cascade (cancela inscrições relacionadas)
+- ✅ Routes: 15 endpoints (CRUD + generate + enrollments)
 
 **Frontend**:
-- [ ] Admin: `Classes.tsx` (CRUD aulas + horários)
-- [ ] Admin: `ClassSchedule.tsx` (gerar ocorrências)
-- [ ] Student: `AvailableClasses.tsx` (buscar, inscrever)
-- [ ] Student: `MyClasses.tsx` (minhas inscrições)
-- [ ] Types: `Class`, `ClassSchedule`, `ClassOccurrence`, `ClassEnrollment`
 
-**Tempo Estimado**: 5-6 dias
+- ✅ 8 páginas completas:
+  - Classes.tsx (lista com grid 2×2)
+  - AddClass, EditClass (CRUD)
+  - ClassSchedules (horários semanais)
+  - GenerateOccurrences (gerar calendário)
+  - ClassOccurrencesList (27 datas com multi-select)
+  - OccurrenceEnrollments (individual)
+  - BulkEnrollment (inscrição em lote)
+- ✅ Dual enrollment flow (individual + massa)
+- ✅ Multi-select com checkboxes + search
+- ✅ Sistema de remoção (individual + bulk)
+- ✅ Help dialogs completos
+
+**Tempo Real**: 2 dias (18-19/10/2025)  
+**Doc**: [📄 FASE_10.md](./FASE_10.md)
 
 ---
 
 ### 📅 Fase 11: Assinaturas
+
 **Objetivo**: Conectar aluno ao plano (assinatura mensal/trimestral/anual).
 
 **Por quê agora?**
+
 - Planos CRUD já existe (Fase 3)
 - Necessário para limitar reservas (max_reservas_futuras)
 
 **Backend**:
+
 - [ ] Models: `Assinatura`, `EventoAssinatura`
 - [ ] `AssinaturaController`
   - Aluno: `store()` assinar, `show()` ver minha, `destroy()` cancelar
@@ -184,6 +203,7 @@
   - GET/PUT `/admin/subscriptions` (admin)
 
 **Frontend**:
+
 - [ ] Student: `Plans.tsx` (escolher plano, assinar)
 - [ ] Student: `MyPlan.tsx` (ver assinatura, cancelar)
 - [ ] Admin: `Subscriptions.tsx` (listar, gerenciar)
@@ -194,13 +214,16 @@
 ---
 
 ### 📅 Fase 12: Pagamentos (Básico)
+
 **Objetivo**: Registrar pagamentos (simulação ou integração real).
 
 **Por quê agora?**
+
 - Monetização do sistema
 - Conecta com Assinaturas, Reservas, Sessões
 
 **Backend**:
+
 - [ ] Models: `Pagamento`, `ItemPagamento`, `WebhookPagamento`
 - [ ] `PagamentoController`
   - `store()` criar checkout (assinatura/reserva/sessão)
@@ -212,6 +235,7 @@
   - POST `/payments/webhook` (público)
 
 **Frontend**:
+
 - [ ] `CheckoutPage.tsx` (simulação ou formulário real)
 - [ ] Student: `PaymentHistory.tsx` (histórico)
 - [ ] Types: `Payment`, `PaymentItem`
@@ -221,9 +245,11 @@
 ---
 
 ### 📅 Fase 13: Refinamentos e Testes
+
 **Objetivo**: Polimento, testes, deploy.
 
 **Tarefas**:
+
 - [ ] Testes de integração (PHPUnit)
 - [ ] Validações de UX em todas páginas
 - [ ] Paginação em listagens longas
@@ -257,6 +283,7 @@
 ## ✅ Checklist de Validação (Aplicar em Cada Fase)
 
 ### Backend
+
 - [ ] Model criado com `protected $table`, `$fillable`, `CREATED_AT`, `UPDATED_AT`
 - [ ] Controller com métodos RESTful (index, show, store, update, destroy)
 - [ ] **Soft Delete**: `$model->update(['status' => 'excluido'])` no destroy()
@@ -267,6 +294,7 @@
 - [ ] Testar via `php artisan route:list` e Postman
 
 ### Frontend
+
 - [ ] Types/Interfaces em `types/index.ts`
 - [ ] Service methods em `services/*.service.ts`
 - [ ] Página React conectada (useState/useQuery)
@@ -276,9 +304,10 @@
 - [ ] Modal criar/editar
 - [ ] AlertDialog para confirmação de exclusão
 - [ ] Filtros com `value="all"` (não "")
-- [ ] Testado no navegador (http://localhost:5173)
+- [ ] Testado no navegador (<http://localhost:5173>)
 
 ### Documentação
+
 - [ ] Criar `docs/FASE_X_CONCLUIDA.md` com:
   - Arquivos criados/modificados
   - Comandos executados
@@ -290,6 +319,7 @@
 ## 📚 Referências Importantes
 
 ### Documentação
+
 - **DDL**: `api/database/ddl.sql` ← **FONTE DA VERDADE**
 - **Copilot Instructions**: `.github/copilot-instructions.md`
 - **Arquitetura**: `docs/arquitetura-dados-e-fluxos.md`
@@ -319,10 +349,11 @@ docker-compose up -d --force-recreate api
 ```
 
 ### URLs
-- API: http://localhost:8000
-- Frontend Dev: http://localhost:5173
-- Frontend Prod: http://localhost:3000
-- pgAdmin: http://localhost:5050
+
+- API: <http://localhost:8000>
+- Frontend Dev: <http://localhost:5173>
+- Frontend Prod: <http://localhost:3000>
+- pgAdmin: <http://localhost:5050>
 
 ---
 
@@ -331,6 +362,7 @@ docker-compose up -d --force-recreate api
 ### 🚀 AGORA: Fase 7 - Disponibilidade Instrutor
 
 **1. Backend** (1 dia):
+
 ```powershell
 # Criar Model
 docker-compose exec api php artisan make:model DisponibilidadeInstrutor
@@ -351,6 +383,7 @@ docker-compose exec api php artisan db:seed --class=DisponibilidadeSeeder
 ```
 
 **2. Frontend** (1 dia):
+
 ```bash
 # Criar types em web/src/types/index.ts
 # Criar service em web/src/services/availability.service.ts
@@ -359,6 +392,7 @@ docker-compose exec api php artisan db:seed --class=DisponibilidadeSeeder
 ```
 
 **3. Documentação**:
+
 ```bash
 # Criar docs/FASE_7_CONCLUIDA.md após testar tudo
 ```

@@ -12,7 +12,7 @@ import PublicReservePage from "./pages/PublicReservePage";
 
 // Protected Pages
 import StudentDashboard from "./pages/student/Dashboard";
-import StudentPlans from "./pages/student/Plans";
+import StudentMyPlan from "./pages/student/MyPlan";
 import StudentCourts from "./pages/student/Courts";
 import StudentCourtBookings from "./pages/student/CourtBookings";
 import StudentClasses from "./pages/student/Classes";
@@ -44,6 +44,7 @@ import OccurrenceEnrollments from "./pages/admin/agendamentos/classes/Occurrence
 import ClassOccurrencesList from "./pages/admin/agendamentos/classes/ClassOccurrencesList";
 import BulkEnrollment from "./pages/admin/agendamentos/classes/BulkEnrollment";
 import AdminPayments from "./pages/admin/payments/Payments";
+import AdminSubscriptions from "./pages/admin/payments/Subscriptions";
 
 import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
@@ -70,7 +71,7 @@ const App = () => (
           <Route path="/aluno" element={<ProtectedRoute allowedRoles={['aluno']} />}>
             <Route index element={<Navigate to="/aluno/dashboard" replace />} />
             <Route path="dashboard" element={<StudentDashboard />} />
-            <Route path="planos" element={<StudentPlans />} />
+            <Route path="planos" element={<StudentMyPlan />} />
             <Route path="quadras" element={<StudentCourts />} />
             <Route path="reservas" element={<StudentCourtBookings />} />
             <Route path="aulas" element={<StudentClasses />} />
@@ -109,6 +110,7 @@ const App = () => (
             <Route path="aulas/:classId/inscricao-lote" element={<BulkEnrollment />} />
             <Route path="aulas/ocorrencias/:occurrenceId/inscricoes" element={<OccurrenceEnrollments />} />
             <Route path="pagamentos" element={<AdminPayments />} />
+            <Route path="assinaturas" element={<AdminSubscriptions />} />
           </Route>
           
           {/* Catch-all */}

@@ -49,4 +49,29 @@ class Assinatura extends Model
         'status',
         'proximo_vencimento',
     ];
+
+    protected $casts = [
+        'data_inicio' => 'date',
+        'data_fim' => 'date',
+        'proximo_vencimento' => 'date',
+        'renova_automatico' => 'boolean',
+        'criado_em' => 'datetime',
+        'atualizado_em' => 'datetime',
+    ];
+
+    // Relacionamentos
+    public function usuario()
+    {
+        return $this->belongsTo(Usuario::class, 'id_usuario', 'id_usuario');
+    }
+
+    public function plano()
+    {
+        return $this->belongsTo(Plano::class, 'id_plano', 'id_plano');
+    }
+
+    public function eventos()
+    {
+        return $this->hasMany(EventoAssinatura::class, 'id_assinatura', 'id_assinatura');
+    }
 }

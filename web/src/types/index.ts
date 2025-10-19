@@ -410,3 +410,43 @@ export interface GerarOcorrenciasResponse {
 export interface InscricaoAulaRequest {
   id_ocorrencia_aula: string;
 }
+
+// =====================================================================
+// ASSINATURAS (SUBSCRIPTIONS)
+// =====================================================================
+export interface Assinatura {
+  id_assinatura: string;
+  id_usuario: string;
+  id_plano: string;
+  data_inicio: string; // ISO date
+  data_fim?: string; // ISO date
+  renova_automatico: boolean;
+  status: 'ativa' | 'pendente' | 'cancelada' | 'expirada';
+  proximo_vencimento?: string; // ISO date
+  criado_em: string;
+  atualizado_em: string;
+  // Relacionamentos (eager loaded)
+  plano?: Plan;
+  usuario?: AdminUser;
+  eventos?: EventoAssinatura[];
+}
+
+export interface EventoAssinatura {
+  id_evento_assinatura: string;
+  id_assinatura: string;
+  tipo: 'criada' | 'renovada' | 'cancelada' | 'pagamento_ok' | 'pagamento_erro';
+  payload_json?: Record<string, any>;
+  criado_em: string;
+}
+
+export interface AssinarPlanoRequest {
+  id_plano: string;
+  renova_automatico?: boolean;
+}
+
+export interface AssinaturaFormData {
+  status?: 'ativa' | 'pendente' | 'cancelada' | 'expirada';
+  data_fim?: string;
+  proximo_vencimento?: string;
+  renova_automatico?: boolean;
+}

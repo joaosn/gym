@@ -67,6 +67,11 @@ Route::middleware('auth:sanctum')->group(function () {
         ]);
         Route::patch('/plans/{id}/status', [PlanoController::class, 'updateStatus']);
         
+        // ASSINATURAS (Admin Management)
+        Route::get('/subscriptions', [App\Http\Controllers\AssinaturaController::class, 'index'])->name('subscriptions.index');
+        Route::post('/subscriptions', [App\Http\Controllers\AssinaturaController::class, 'adminAssinar'])->name('subscriptions.create');
+        Route::put('/subscriptions/{id}', [App\Http\Controllers\AssinaturaController::class, 'update'])->name('subscriptions.update');
+        
         // USUÁRIOS (CRUD) - Registrando rotas manualmente para debug
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');
@@ -172,6 +177,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [App\Http\Controllers\InscricaoAulaController::class, 'minhasInscricoes']);
         Route::post('/', [App\Http\Controllers\InscricaoAulaController::class, 'inscrever']);
         Route::delete('/{id}', [App\Http\Controllers\InscricaoAulaController::class, 'cancelar']);
+    });
+
+    // =====================================================================
+    // ASSINATURAS (Aluno)
+    // =====================================================================
+    Route::prefix('subscriptions')->group(function () {
+        Route::get('/me', [App\Http\Controllers\AssinaturaController::class, 'minhaAssinatura']);
+        Route::post('/', [App\Http\Controllers\AssinaturaController::class, 'assinar']);
+        Route::delete('/me', [App\Http\Controllers\AssinaturaController::class, 'cancelar']);
     });
     
 });
