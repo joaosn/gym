@@ -1,387 +1,431 @@
 # 🏋️ Fitway — Sistema de Gestão Esportiva
 
-> **Sistema completo** de gestão de academia/centro esportivo com quadras de beach tennis, aulas em grupo, personal trainers e assinaturas.
+> **Sistema completo** de gestão de academia/centro esportivo com quadras de beach tennis, aulas em grupo, personal trainers e pagamentos integrados.
+
+[![Laravel](https://img.shields.io/badge/Laravel-10-red?logo=laravel)](https://laravel.com)
+[![React](https://img.shields.io/badge/React-18-blue?logo=react)](https://reactjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql)](https://www.postgresql.org)
+[![Docker](https://img.shields.io/badge/Docker-Compose-blue?logo=docker)](https://www.docker.com)
+
+---
+
+## 📚 Índice
+
+- [Visão Geral](#-visão-geral)
+- [Stack Tecnológica](#-stack-tecnológica)
+- [Quick Start](#-quick-start)
+- [Funcionalidades](#-funcionalidades)
+- [Estrutura do Projeto](#-estrutura-do-projeto)
+- [API Endpoints](#-api-endpoints)
+- [Como Testar](#-como-testar)
+- [Desenvolvimento](#-desenvolvimento)
+- [Documentação](#-documentação)
+
+---
+
+## 🎯 Visão Geral
+
+**Fitway** é um sistema full-stack moderno para gestão de centros esportivos que oferece:
+
+- 🏐 **Gestão de Quadras** - Reservas com anti-overlap automático
+- 👥 **Aulas em Grupo** - Turmas com inscrições e geração de calendário
+- 💪 **Personal Trainers** - Sessões 1:1 com disponibilidade semanal
+- 💳 **Assinaturas** - Planos mensais/trimestrais/anuais
+- 💰 **Pagamentos** - Integração com Mercado Pago (PIX + Cartão)
+- 👤 **3 Perfis** - Admin, Aluno, Instrutor com permissões específicas
+
+### Diferencial Técnico
+
+- ✅ **10 validações anti-overlap** (quadra, instrutor, aluno, disponibilidade)
+- ✅ **Soft Delete** em todo sistema (auditoria completa)
+- ✅ **28 testes de integração** (PHPUnit + SQLite in-memory)
+- ✅ **Type-safe** (TypeScript + Laravel strict types)
+- ✅ **Real-time feedback** (toasts, loading states, error handling)
+- ✅ **Responsive design** (TailwindCSS + shadcn/ui)
+
+---
+
+## 🛠️ Stack Tecnológica
+
+### Backend
+- **Framework**: Laravel 10.x
+- **Linguagem**: PHP 8.4
+- **Database**: PostgreSQL 16
+- **Autenticação**: Laravel Sanctum (Bearer Token)
+- **API**: RESTful JSON
+- **Testes**: PHPUnit 10.x
+
+### Frontend
+- **Framework**: React 18
+- **Linguagem**: TypeScript 5
+- **Build**: Vite 5
+- **Styling**: TailwindCSS 3 + shadcn/ui
+- **State**: React Query (TanStack)
+- **Routing**: React Router v6
+
+### DevOps
+- **Containers**: Docker + Docker Compose
+- **Servidor Web**: Nginx
+- **Database GUI**: pgAdmin 4
+
+---
 
 ## 🚀 Quick Start
 
-### 1) Pré-requisitos
+### 1️⃣ Pré-requisitos
 
 - **Docker Desktop** instalado e rodando
-- **PowerShell** (Windows) ou **Bash** (Linux/macOS)
-- Portas livres: 3000, 5050, 5173, 5432, 8000
+- **Git** (para clonar o repositório)
+- Portas livres: `3000, 5050, 5173, 5432, 8000`
 
-### 2) Iniciar o Ambiente
-
-**Windows** (PowerShell ou CMD):
-
-```powershell
-quick-start.bat
-```
-
-**Linux/macOS** (Terminal):
+### 2️⃣ Clonar e Iniciar
 
 ```bash
+# Clonar repositório
+git clone https://github.com/joaosn/tccfitway.git
+cd tccfitway
+
+# Iniciar ambiente (Windows)
+quick-start.bat
+
+# OU iniciar ambiente (Linux/macOS)
 chmod +x quick-start.sh
 ./quick-start.sh
 ```
 
 **O que acontece automaticamente**:
+1. ✅ Sobe 4 containers Docker (PostgreSQL, pgAdmin, API, Frontend)
+2. ✅ Aplica DDL completo (43 tabelas)
+3. ✅ Executa migrations e seeders (dados de teste)
+4. ✅ Instala dependências do frontend
+5. ✅ Ambiente pronto em ~2 minutos!
 
-- ✅ Sobe PostgreSQL 16 (banco de dados)
-- ✅ Sobe pgAdmin (interface gráfica do banco)
-- ✅ Sobe API Laravel (backend PHP 8.4)
-- ✅ Sobe Frontend React (produção e desenvolvimento)
-- ✅ Aplica DDL completo (estrutura do banco)
-- ✅ Roda migrations e seeders (dados de teste)
-
-### 3) Acessar o Sistema
+### 3️⃣ Acessar o Sistema
 
 | Serviço | URL | Credenciais |
 |---------|-----|-------------|
-| � **Frontend Dev** (HMR) | http://localhost:5173 | Ver usuários de teste abaixo |
-| 🌐 **Frontend Prod** | http://localhost:3000 | Ver usuários de teste abaixo |
-| 🔧 **API** | http://localhost:8000 | - |
+| 🎨 **Frontend Dev** (HMR) | http://localhost:5173 | Ver abaixo |
+| 🌐 **Frontend Prod** | http://localhost:3000 | Ver abaixo |
+| 🔧 **API Backend** | http://localhost:8000 | - |
 | 🗄️ **pgAdmin** | http://localhost:5050 | `admin@fitway.com` / `admin123` |
-| 📊 **PostgreSQL** | `localhost:5432` | `fitway_user` / `fitway_password` |
 
-### 4) Usuários de Teste (Login)
+### 4️⃣ Usuários de Teste
 
 Após rodar seeders, você pode fazer login com:
 
-| Perfil | Email | Senha | Dashboard |
-|--------|-------|-------|-----------|
-| 👨‍💼 **Admin** | `admin@fitway.com` | `admin123` | http://localhost:5173/admin/dashboard |
-| � **Personal** | `personal@fitway.com` | `personal123` | http://localhost:5173/personal/dashboard |
-| 👤 **Aluno** | `aluno@fitway.com` | `aluno123` | http://localhost:5173/aluno/dashboard |
-
-
----
-
-## 📚 Documentação Completa
-
-### 📖 Guias Principais
-
-| Documento | Descrição |
-|-----------|-----------|
-| [`docs/README.md`](docs/README.md) | 📚 **Índice da documentação** - navegação rápida |
-| [`docs/PLANO_DE_ACAO.md`](docs/PLANO_DE_ACAO.md) | 🎯 **Plano mestre** - roadmap, fases, checklist |
-| [`.github/copilot-instructions.md`](.github/copilot-instructions.md) | 📘 **Guia do desenvolvedor** - padrões, nomenclaturas |
-
-### 📋 Fases Concluídas
-
-| Fase | Feature | Documentação |
-|------|---------|--------------|
-| 1 | Autenticação (Login/Register/Logout) | [`docs/FASE_1.md`](docs/FASE_1.md) |
-| 2 | Admin - Quadras (CRUD) | [`docs/FASE_2.md`](docs/FASE_2.md) |
-| 3 | Admin - Planos (CRUD) | [`docs/FASE_3.md`](docs/FASE_3.md) |
-| 4 | Admin - Usuários (CRUD + Soft Delete) | [`docs/FASE_4.md`](docs/FASE_4.md) |
-| 5 | Admin - Instrutores (CRUD + Unificação) | [`docs/FASE_5.md`](docs/FASE_5.md) |
-| 6 | Soft Delete Unificado | [`docs/FASE_6.md`](docs/FASE_6.md) |
-| 7 | Disponibilidade Instrutor | [`docs/FASE_7.md`](docs/FASE_7.md) |
-
-### �️ Guias Técnicos
-
-| Guia | Descrição |
-|------|-----------|
-| [`docs/MAPA_VISUAL.md`](docs/MAPA_VISUAL.md) | 🗺️ Arquitetura, fluxos, endpoints, permissões |
-| [`docs/UTILS_E_UX.md`](docs/UTILS_E_UX.md) | 🎨 Utilitários UX (formatCurrency, formatDate, etc) |
-| [`docs/arquitetura-dados-e-fluxos.md`](docs/arquitetura-dados-e-fluxos.md) | 🏗️ DDL completo, relacionamentos |
-| [`docs/containers-e-comandos.md`](docs/containers-e-comandos.md) | 🐳 Comandos Docker úteis |
-
-### 🔧 Stack Tecnológica
-
-**Backend**:
-- Laravel 10 + PHP 8.4
-- PostgreSQL 16 (anti-overlap com GIST constraints)
-- Laravel Sanctum (autenticação Bearer Token)
-
-**Frontend**:
-- React 18 + TypeScript
-- Vite (HMR para dev)
-- TailwindCSS + shadcn/ui
-- React Query (server state)
-- React Router (navegação)
-
-**DevOps**:
-- Docker Compose (4 serviços: DB, API, Frontend Dev, Frontend Prod)
-- Nginx (proxy reverso)
-- pgAdmin (gestão do banco)
+| Email | Senha | Papel |
+|-------|-------|-------|
+| `admin@fitway.com` | `senha123` | **Admin** (acesso total) |
+| `joao.silva@example.com` | `senha123` | **Aluno** (pode reservar, inscrever) |
+| `personal1@fitway.com` | `senha123` | **Instrutor** (gerencia agenda) |
 
 ---
 
-## 🛠️ Comandos Úteis (Desenvolvimento)
+## ✨ Funcionalidades
 
-### Docker
+### Para Administradores
 
-```powershell
-# Subir apenas backend + DB
-docker-compose up -d db api
+#### Cadastros
+- ✅ **Quadras**: CRUD completo com status (ativa/manutenção/inativa)
+- ✅ **Planos**: Criar planos com ciclo de cobrança (mensal/trimestral/anual)
+- ✅ **Usuários**: Gerenciar alunos e instrutores (CRUD + soft delete)
+- ✅ **Instrutores**: CRUD com especialidades e valor/hora
 
-# Subir frontend dev (com HMR)
-docker-compose up -d frontend-dev
+#### Agendamentos
+- ✅ **Sessões Personal**: Criar sessões 1:1 para qualquer aluno
+- ✅ **Aulas em Grupo**: 
+  - Criar aulas (nome, capacidade, preço)
+  - Definir horários semanais
+  - Gerar ocorrências automáticas (próximos 30 dias)
+  - Inscrever alunos (individual ou em lote)
+- ✅ **Reservas de Quadras**: Visualizar e gerenciar todas as reservas
 
+#### Financeiro
+- ✅ **Assinaturas**: Criar e cancelar assinaturas para usuários
+- ✅ **Pagamentos**: 
+  - Criar cobranças manuais
+  - Vincular com reservas/aulas/sessões
+  - Visualizar histórico de pagamentos
+  - Receber webhooks do Mercado Pago
+
+### Para Alunos
+
+- ✅ **Reservar Quadras**: Escolher quadra, data e horário (anti-overlap)
+- ✅ **Agendar Personal**: Escolher instrutor e horário disponível
+- ✅ **Inscrever em Aulas**: Ver aulas disponíveis e se inscrever
+- ✅ **Gerenciar Assinatura**: Ver plano ativo e cancelar se necessário
+- ✅ **Pagamentos**: 
+  - Ver cobranças pendentes
+  - Pagar via Mercado Pago (PIX ou Cartão)
+  - Visualizar histórico de pagamentos
+
+### Para Instrutores
+
+- ✅ **Disponibilidade**: Configurar horários disponíveis por dia da semana
+- ✅ **Agenda**: Visualizar sessões personal agendadas
+- ✅ **Turmas**: Ver aulas que ministra
+
+---
+
+## 📂 Estrutura do Projeto
+
+```
+tccFitway/
+├── api/                          # Backend Laravel
+│   ├── app/
+│   │   ├── Http/Controllers/     # Controllers REST
+│   │   ├── Models/               # Eloquent Models
+│   │   ├── Services/             # Lógica de negócio
+│   │   └── Http/Requests/        # Form Requests (validação)
+│   ├── database/
+│   │   ├── ddl.sql              # ⭐ DDL completo (fonte da verdade)
+│   │   ├── migrations/           # Laravel migrations
+│   │   └── seeders/              # Dados de teste
+│   ├── routes/api.php           # ⭐ Rotas da API
+│   └── tests/Feature/           # Testes de integração
+│
+├── web/                          # Frontend React
+│   ├── src/
+│   │   ├── pages/               # Páginas React
+│   │   │   ├── admin/           # Área administrativa
+│   │   │   ├── student/         # Área do aluno
+│   │   │   └── personal/        # Área do instrutor
+│   │   ├── services/            # API clients (axios)
+│   │   ├── components/          # Componentes reutilizáveis
+│   │   ├── types/               # TypeScript interfaces
+│   │   └── lib/
+│   │       ├── api-client.ts    # Cliente HTTP centralizado
+│   │       └── utils.ts         # ⭐ 23 utilitários UX
+│   └── public/
+│
+├── docs/                         # Documentação
+│   ├── FASE_1.md a FASE_13.md   # Documentação de cada fase
+│   ├── PLANO_DE_ACAO.md         # Roadmap completo
+│   ├── guia-mercado-pago.md     # Setup Mercado Pago
+│   └── API.md                   # Documentação da API
+│
+├── docker-compose.yml            # ⭐ Orquestração de containers
+├── quick-start.bat              # Script Windows
+└── quick-start.sh               # Script Linux/macOS
+```
+
+---
+
+## 🔌 API Endpoints
+
+### Autenticação
+
+```http
+POST   /api/auth/register       # Criar conta
+POST   /api/auth/login          # Login (retorna token)
+POST   /api/auth/logout         # Logout
+GET    /api/auth/me             # Dados do usuário logado
+```
+
+### Quadras (Admin)
+
+```http
+GET    /api/admin/courts              # Listar quadras
+POST   /api/admin/courts              # Criar quadra
+GET    /api/admin/courts/{id}         # Ver quadra
+PUT    /api/admin/courts/{id}         # Atualizar quadra
+DELETE /api/admin/courts/{id}         # Deletar (soft delete)
+```
+
+### Reservas de Quadras
+
+```http
+GET    /api/court-bookings                    # Listar reservas
+POST   /api/court-bookings                    # Criar reserva
+GET    /api/court-bookings/{id}               # Ver reserva
+PATCH  /api/court-bookings/{id}/confirm       # Confirmar (admin)
+PATCH  /api/court-bookings/{id}/cancel        # Cancelar
+POST   /api/court-bookings/check-availability # Verificar disponibilidade
+```
+
+### Aulas em Grupo
+
+```http
+GET    /api/admin/classes           # Listar aulas
+POST   /api/admin/classes           # Criar aula
+PUT    /api/admin/classes/{id}      # Atualizar aula
+DELETE /api/admin/classes/{id}      # Deletar aula
+
+POST   /api/admin/class-schedules   # Criar horário semanal
+POST   /api/admin/class-occurrences/generate   # Gerar calendário
+POST   /api/classes/{id}/enroll     # Aluno se inscrever
+DELETE /api/enrollments/{id}        # Cancelar inscrição
+```
+
+### Sessões Personal 1:1
+
+```http
+GET    /api/personal-sessions                    # Listar sessões
+POST   /api/personal-sessions                    # Criar sessão
+PATCH  /api/personal-sessions/{id}/confirm       # Confirmar (instrutor)
+DELETE /api/personal-sessions/{id}               # Cancelar
+POST   /api/personal-sessions/check-availability # Verificar disponibilidade
+GET    /api/personal-sessions/my-sessions        # Sessões do instrutor
+```
+
+### Pagamentos
+
+```http
+GET    /api/payments/pending         # Minhas cobranças pendentes
+GET    /api/payments/history         # Meu histórico
+POST   /api/admin/payments/charges   # Admin cria cobrança manual
+POST   /api/payments/{id}/checkout   # Criar checkout Mercado Pago
+POST   /api/payments/{id}/simulate   # Simular pagamento (DEV)
+POST   /api/webhooks/mercadopago     # Receber notificação MP
+```
+
+### Assinaturas
+
+```http
+GET    /api/subscriptions/active                # Minha assinatura ativa
+POST   /api/admin/subscriptions                 # Admin criar assinatura
+PATCH  /api/admin/subscriptions/{id}/cancel     # Admin cancelar
+```
+
+📖 **Documentação completa da API**: Veja [docs/API.md](./docs/API.md)
+
+---
+
+## 🧪 Como Testar
+
+### Testes Backend (PHPUnit)
+
+```bash
+# Executar TODOS os testes
+docker-compose exec api php artisan test
+
+# Executar suite específica
+docker-compose exec api php artisan test --testsuite=Feature
+
+# Executar teste específico
+docker-compose exec api php artisan test --filter=PaymentsApiTest
+```
+
+**Cobertura Atual**: 28 testes (7 passando, 21 documentados em FASE_13.md)
+
+### Testes Manuais
+
+1. **Login**: http://localhost:5173/login
+2. **Criar Reserva**: Dashboard Aluno → Quadras → Reservar
+3. **Pagar**: Dashboard Aluno → Pagamentos → Ver cobranças → Pagar
+
+---
+
+## 💻 Desenvolvimento
+
+### Comandos Úteis
+
+```bash
 # Ver logs em tempo real
 docker-compose logs -f api
 docker-compose logs -f frontend-dev
 
-# Reiniciar um serviço específico
-docker-compose restart api
+# Acessar shell do container
+docker-compose exec api sh
+docker-compose exec frontend-dev sh
 
-# Recriar após mudanças no .env.docker
-docker-compose up -d --no-deps --force-recreate api
+# Executar Artisan commands
+docker-compose exec api php artisan migrate
+docker-compose exec api php artisan db:seed
+docker-compose exec api php artisan route:list
+docker-compose exec api php artisan make:controller NomeController
+
+# Rebuild containers
+docker-compose up -d --force-recreate api
+docker-compose up -d --force-recreate frontend-dev
 
 # Derrubar tudo (mantém volumes)
 docker-compose down
 
-# ⚠️ CUIDADO: Apagar volumes (perde dados do DB)
+# Derrubar e apagar dados
 docker-compose down -v
 ```
 
-### Laravel (API)
+### Variáveis de Ambiente
 
-```powershell
-# Artisan
-docker-compose exec api php artisan migrate
-docker-compose exec api php artisan db:seed
-docker-compose exec api php artisan route:list
-docker-compose exec api php artisan tinker
+**Backend** (`api/.env.docker`):
+```env
+DB_HOST=db
+DB_DATABASE=fitway_db
+DB_USERNAME=fitway_user
+DB_PASSWORD=fitway_password
 
-# Limpar caches
-docker-compose exec api php artisan cache:clear
-docker-compose exec api php artisan config:clear
-docker-compose exec api php artisan route:clear
-
-# Criar recursos
-docker-compose exec api php artisan make:controller NomeController
-docker-compose exec api php artisan make:model NomeModel
-docker-compose exec api php artisan make:request NomeRequest
-docker-compose exec api php artisan make:seeder NomeSeeder
-
-# Composer
-docker-compose exec api composer install
-docker-compose exec api composer require pacote/nome
-
-# Shell
-docker-compose exec api sh
+MP_ACCESS_TOKEN=seu_token_aqui
+MP_PUBLIC_KEY=sua_chave_publica_aqui
+MP_WEBHOOK_SECRET=seu_secret_aqui
 ```
 
-### PostgreSQL
-
-```powershell
-# Acessar psql
-docker-compose exec db psql -U fitway_user -d fitway_db
-
-# Comandos dentro do psql
-\dt           # Listar tabelas
-\d usuarios   # Descrever tabela
-\l            # Listar bancos
-\q            # Sair
-
-# Backup
-docker-compose exec db pg_dump -U fitway_user fitway_db > backup.sql
-
-# Restore
-docker-compose exec -T db psql -U fitway_user fitway_db < backup.sql
+**Frontend** (`web/.env.docker`):
+```env
+VITE_API_URL=http://localhost:8000
 ```
 
-### Frontend
+### Adicionar Nova Feature
 
-```powershell
-# Instalar dependências
-docker-compose exec frontend-dev npm install
+1. **Backend**:
+   ```bash
+   docker-compose exec api php artisan make:model NomeModel
+   docker-compose exec api php artisan make:controller NomeController --resource
+   docker-compose exec api php artisan make:request CreateNomeRequest
+   # Registrar rota em api/routes/api.php
+   ```
 
-# Adicionar pacote
-docker-compose exec frontend-dev npm install nome-pacote
+2. **Frontend**:
+   - Criar types em `web/src/types/index.ts`
+   - Criar service em `web/src/services/nome.service.ts`
+   - Criar página em `web/src/pages/admin/Nome.tsx`
 
-# Build de produção
-docker-compose build frontend
-docker-compose up -d frontend
-```
+3. **Documentação**:
+   - Criar `docs/FASE_X.md` após testar
 
 ---
 
-## 🐛 Troubleshooting
+## 📖 Documentação
 
-### API retorna 500
-
-```powershell
-# 1. Ver logs
-docker-compose logs -f api
-
-# 2. Verificar .env.docker
-# DB_HOST=db
-# DB_DATABASE=fitway_db
-
-# 3. Rodar migrations
-docker-compose exec api php artisan migrate
-```
-
-### CORS Error
-
-```powershell
-# Verificar api/.env.docker:
-# CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
-# SANCTUM_STATEFUL_DOMAINS=localhost:5173,localhost:3000
-
-# Recriar API
-docker-compose up -d --force-recreate api
-```
-
-### Frontend não conecta na API
-
-```powershell
-# 1. Verificar web/.env.docker
-# VITE_API_URL=http://localhost:8000
-
-# 2. API deve estar rodando
-docker-compose ps api
-
-# 3. Testar endpoint
-curl http://localhost:8000/api/healthz
-```
-
-### Permissões no Laravel
-
-```powershell
-docker-compose exec api chown -R www-data:www-data storage bootstrap/cache
-docker-compose exec api chmod -R 775 storage bootstrap/cache
-```
+- 📄 **[PLANO_DE_ACAO.md](./docs/PLANO_DE_ACAO.md)** - Roadmap completo das 13 fases
+- 📄 **[FASE_1.md a FASE_13.md](./docs/)** - Documentação detalhada de cada fase
+- 📄 **[guia-mercado-pago.md](./docs/guia-mercado-pago.md)** - Setup Mercado Pago
+- 📄 **[API.md](./docs/API.md)** - Documentação completa da API
+- 📄 **[copilot-instructions.md](./.github/copilot-instructions.md)** - Padrões de código
 
 ---
 
-## 🎯 Status do Projeto (16/10/2025)
+## 🤝 Contribuindo
 
-### ✅ Concluído
-- **Infraestrutura**: Docker completa (DB, API, Frontend Dev/Prod, pgAdmin)
-- **Database**: DDL completo com constraints anti-overlap (GIST + TSTZRANGE)
-- **Frontend**: React + TypeScript + shadcn/ui + TailwindCSS
-- **Autenticação**: Laravel Sanctum funcionando (login/logout/me)
-- **Fase 1**: ✅ Sistema de Autenticação (admin/personal/aluno)
-- **Fase 2**: ✅ CRUD de Quadras (admin)
-- **Fase 3**: ✅ CRUD de Planos (admin) + **Soft Delete**
-- **Fase 4**: ✅ CRUD de Usuários (admin) + **Soft Delete**
-- **Fase 5**: ✅ CRUD de Instrutores (admin) + **Soft Delete**
-- **Fase 6**: ✅ **Soft Delete** implementado em todos os CRUDs
-- **Fase 7**: ✅ **Disponibilidade de Instrutores** (CRUD de horários dentro do modal)
-
-### 🎉 Novo: Disponibilidade de Instrutores (Fase 7)
-Agora os administradores podem gerenciar os horários disponíveis de cada instrutor:
-- ✅ Modal dedicado com dia da semana + hora início/fim
-- ✅ Adicionar/Editar/Remover horários
-- ✅ Contador visual de horários configurados
-- ✅ Backend com validação e transaction
-- 📖 Documentação completa: `docs/FASE_7_CONCLUIDA.md`
-
-### 🔄 Em Progresso
-- **Fase 8**: Sessões Personal 1:1 (agendamento com anti-overlap)
-- **Fase 9**: Reservas de Quadra (anti-overlap)
-
-### 📋 Próximas Fases
-1. ⏳ Sessões Personal (3-4 dias)
-2. ⏳ Reservas de Quadra (3-4 dias)
-3. ⏳ Aulas em Grupo (3-4 dias)
-4. Admin - Planos (1-2 dias)
-5. Aluno - Reservas (3 dias)
-6. Aluno - Assinaturas (2 dias)
-7. Admin - Aulas (3 dias)
-8. Aluno - Aulas (2 dias)
-9. Admin - Personals (2 dias)
-10. Personal - Disponibilidade (2 dias)
-11. Aluno - Sessões Personal (3 dias)
-12. Pagamentos MVP (4 dias)
-13. Refinamentos (3 dias)
-
-**Estimativa Total**: ~6-7 semanas
-
-Ver detalhes completos em [`docs/PLANO_DE_ACAO.md`](docs/PLANO_DE_ACAO.md)
+1. Fork o projeto
+2. Crie uma branch (`git checkout -b feature/NovaFeature`)
+3. Commit suas mudanças (`git commit -m 'feat: Add NovaFeature'`)
+4. Push para a branch (`git push origin feature/NovaFeature`)
+5. Abra um Pull Request
 
 ---
 
-## 🤝 Como Contribuir
+## 📝 Licença
 
-1. Ler `.github/copilot-instructions.md` (guia completo)
-2. Consultar `docs/PLANO_DE_ACAO.md` (fase atual)
-3. Seguir padrões de nomenclatura definidos
-4. Testar localmente antes de commitar
-5. Atualizar documentação quando necessário
+Este projeto é parte de um Trabalho de Conclusão de Curso (TCC) e está disponível para fins educacionais.
 
 ---
 
-## 📞 Suporte
+## 👨‍💻 Autor
 
-**Dúvidas sobre o projeto?**
-- Consulte os documentos em `docs/`
-- Verifique `api/database/ddl.sql` (fonte da verdade do banco)
-- Use `docker-compose logs -f` para debugar
+**João Silva Neto**  
+🔗 GitHub: [@joaosn](https://github.com/joaosn)
 
 ---
 
-**Criado**: 2025  
-**Equipe**: Fitway Development Team  
-**Licença**: Proprietário
+## 🙏 Agradecimentos
 
+- Laravel Community
+- React Community
+- shadcn/ui
+- Mercado Pago Developers
 
-## 5) Conectar com DBeaver/outro cliente SQL
+---
 
-- Host: `localhost`
-- Porta: `5432`
-- Database: `fitway_db`
-- Usuário: `fitway_user`
-- Senha: `fitway_password`
-
-## 5) Usuários de teste (para login)
-
-- `admin@fitway.com` / `password` → Administrador
-- `personal@fitway.com` / `password` → Personal Trainer
-- `aluno@fitway.com` / `password` → Aluno
-
-## 6) Se algo não subir
-
-No Windows (PowerShell) ou macOS/Linux (Terminal):
-
-```bash
-docker-compose logs -f          # ver o que está acontecendo
-docker-compose restart          # reiniciar serviços
-docker-compose down && docker-compose up --build -d  # parar, reconstruir e subir
-```
-
-Problemas comuns:
-
-- “Porta em uso” (3000, 8000 ou 5432): feche outro programa que usa a porta ou edite as portas no docker-compose.yml
-- “Permissão no Laravel”: dentro do container
-
-```bash
-docker-compose exec api chown -R www-data:www-data storage bootstrap/cache
-docker-compose exec api chmod -R 775 storage bootstrap/cache
-```
-
-- “Cache do Laravel”:
-
-```bash
-docker-compose exec api php artisan cache:clear
-docker-compose exec api php artisan config:clear
-docker-compose exec api php artisan route:clear
-docker-compose exec api php artisan view:clear
-```
-
-## 7) Para desenvolvedores (opcional)
-
-Comandos úteis:
-
-```bash
-docker-compose exec api php artisan migrate            # migrations
-docker-compose exec api php artisan db:seed           # seeders
-docker-compose exec api php artisan tinker            # console
-docker-compose exec db psql -U fitway_user -d fitway_db
-```
-
-Estrutura (resumo):
-
-```text
-tccfitway/
-├─ api/      # Laravel (API)
-├─ web/      # React (Frontend)
-└─ docker-compose.yml
-```
-
-Pronto. É só abrir o site e usar.
+**⭐ Se este projeto te ajudou, considere dar uma estrela!**
