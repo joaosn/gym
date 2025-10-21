@@ -7,6 +7,7 @@ use App\Models\CobrancaParcela;
 use App\Models\Pagamento;
 use App\Services\PagamentoService;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class PagamentoController extends Controller
 {
@@ -114,9 +115,9 @@ class PagamentoController extends Controller
             auth()->id(),
             'manual', // tipo fictício para cobranças manuais
             null, // sem referência
-            $request->valor,
-            $request->descricao,
-            $request->vencimento
+            (float) $request->valor,
+            (string) $request->descricao,
+            Carbon::parse($request->vencimento)
         );
 
         // Adicionar observações se houver

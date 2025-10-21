@@ -65,6 +65,13 @@ Passo a passo (Aluno – Meu Histórico):
 Fallback (Simulação):
 - Em `CheckoutPage`, se a criação do link MP falhar, o fluxo de simulação é ativado: “Criar Pagamento” → “Aprovar”
 
+### Testes Automatizados
+
+- **Backend**: `cd api && ./vendor/bin/phpunit tests/Feature/Payments/PaymentsApiTest.php`  
+  (usa SQLite em memória para validar CRUD de cobranças, checkout simulado e processamento de webhook)
+- **Frontend**: `cd web && npm exec --prefix .deps -- vitest -- --run`  
+  (executar uma vez `npm install --prefix .deps` para instalar as dependências de teste isoladas)
+
 ## 📝 Lições Aprendidas
 - Radix UI Select: nunca usar `value=""` em itens; usar mensagem desabilitada quando sem resultados
 - Overlays: padronizar z-index e portalizar o conteúdo do Select dentro do Dialog ativo

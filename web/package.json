@@ -8,6 +8,8 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
+    "test": "npm exec --prefix .deps -- vitest",
+    "test:watch": "npm exec --prefix .deps -- vitest -- --watch",
     "preview": "vite preview"
   },
   "dependencies": {

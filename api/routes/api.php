@@ -70,6 +70,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // ASSINATURAS (Admin Management)
         Route::get('/subscriptions', [App\Http\Controllers\AssinaturaController::class, 'index'])->name('subscriptions.index');
         Route::post('/subscriptions', [App\Http\Controllers\AssinaturaController::class, 'adminAssinar'])->name('subscriptions.create');
+        Route::get('/subscriptions/active', [App\Http\Controllers\AssinaturaController::class, 'active'])->name('subscriptions.active');
+        Route::patch('/subscriptions/{id}/cancel', [App\Http\Controllers\AssinaturaController::class, 'cancelar'])->name('subscriptions.cancel');
         Route::put('/subscriptions/{id}', [App\Http\Controllers\AssinaturaController::class, 'update'])->name('subscriptions.update');
         
         // USUÁRIOS (CRUD) - Registrando rotas manualmente para debug
@@ -95,6 +97,8 @@ Route::middleware('auth:sanctum')->group(function () {
         // ⚠️ IMPORTANTE: Rotas específicas ANTES das genéricas!
         Route::post('/court-bookings/check-availability', [ReservaQuadraController::class, 'checkAvailability'])->name('court-bookings.check');
         Route::patch('/court-bookings/{id}/confirm', [ReservaQuadraController::class, 'confirm'])->name('court-bookings.confirm');
+        Route::patch('/court-bookings/{id}/cancel', [ReservaQuadraController::class, 'cancel'])->name('court-bookings.cancel');
+        Route::post('/court-blockings', [App\Http\Controllers\BloqueioQuadraController::class, 'store'])->name('court-blockings.store');
         
         // Rotas CRUD normais
         Route::get('/court-bookings', [ReservaQuadraController::class, 'index'])->name('court-bookings.index');
@@ -165,6 +169,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('personal-sessions')->group(function () {
         // Rotas específicas ANTES das genéricas (evitar conflito com {id})
         Route::get('/me', [SessaoPersonalController::class, 'mySessions']); // Sessões do instrutor logado
+        Route::get('/my-sessions', [SessaoPersonalController::class, 'mySessions']); // Alias para compatibilidade com testes
         Route::post('/check-availability', [SessaoPersonalController::class, 'checkAvailability']);
         Route::patch('/{id}/confirm', [SessaoPersonalController::class, 'confirm']);
         

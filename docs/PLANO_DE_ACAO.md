@@ -1,7 +1,7 @@
 # 🎯 Plano de Ação: Fitway - Desenvolvimento Full Stack
 
 **Última Atualização**: 21 de outubro de 2025  
-**Versão**: 2.4 (Fase 12 Concluída - Pagamentos)
+**Versão**: 2.5 (Fase 13 em Progresso - Testes e Refinamentos)
 
 ---
 
@@ -40,14 +40,16 @@
 | **10** | **Aulas em Grupo** | 4 Models, 4 Controllers, OcorrenciaAulaService | 8 páginas, dual enrollment flow, deletion system | [📄](./FASE_10.md) |
 | **11** | **Assinaturas** | AssinaturaController (6 endpoints), EventoAssinatura | Subscriptions.tsx (admin), MyPlan.tsx (aluno) | [📄](./FASE_11.md) |
 | **12** | **Pagamentos (MP)** | CRUD cobranças, Checkout MP, Webhook | Admin Payments, Student History/Checkout | [📄](./FASE_12.md) |
+| **13** | **Testes e Refinamentos** | 28 testes criados (7 passando), correções tipo/schema | UX polishing (parcial), documentação testes | [📄](./FASE_13.md) |
 
 ### 🎯 Achievements
 
-- ✅ **14 documentos** de fase criados
+- ✅ **15 documentos** de fase criados
 - ✅ **9 CRUDs** completos (Quadras, Planos, Usuários, Instrutores, Sessões, Reservas, Aulas, Assinaturas + Auth)
 - ✅ **10 Validações Anti-Overlap**: Instrutor (2), Disponibilidade Semanal (1), Quadra vs Reservas (1), Quadra vs Sessões (1), Aluno (2), Aulas (3)
 - ✅ **Dual Enrollment Flow**: Individual + lote para aulas em grupo
 - ✅ **Integração Sessão↔Quadra**: Auto-criação de reservas quando sessão usa quadra
+- ✅ **28 Integration Tests**: 7 passando (Payments 100%), 21 em correção
 - ✅ **ApiError Pattern**: Preserva erros de validação do backend (422)
 - ✅ **formatValidationErrors()**: Helper i18n para exibição de erros
 - ✅ **Admin Manual Creation**: Admin pode criar assinaturas para qualquer usuário

@@ -88,7 +88,8 @@ class PagamentoService
                 'metodo' => 'pix',
                 'valor' => $parcela->valor,
                 'status' => 'pendente',
-                'url_checkout' => route('checkout.simulacao', ['id' => $parcela->id_parcela]),
+                // Para simulação, não dependemos de rotas nomeadas
+                'url_checkout' => null,
                 'qr_code' => null,
                 'payload_json' => [
                     'tipo' => 'simulacao',
