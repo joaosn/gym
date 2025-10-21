@@ -2,7 +2,12 @@
 -- BANCO FITWAY / POSTGRESQL 16
 -- Tabelas em pt-BR, snake_case, ids explícitos, constraints e índices.
 -- 
--- ÚLTIMAS ATUALIZAÇÕES (15/10/2025):
+-- ÚLTIMAS ATUALIZAÇÕES:
+-- 20/10/2025:
+-- - Nova estrutura financeira: cobrancas, cobranca_parcelas, pagamentos, webhooks_pagamento
+--   Sistema preparado para múltiplas tentativas de pagamento e parcelamento futuro
+-- 
+-- 15/10/2025:
 -- - Soft Delete implementado nas tabelas: usuarios, planos, instrutores
 --   Status agora aceita: 'ativo', 'inativo', 'excluido'
 -- - Papel 'personal' removido, unificado como 'instrutor'
@@ -23,8 +28,9 @@ DROP TABLE IF EXISTS
   notificacoes,
   auditorias,
   webhooks_pagamento,
-  itens_pagamento,
   pagamentos,
+  cobranca_parcelas,
+  cobrancas,
   sessoes_personal,
   disponibilidade_instrutor,
   inscricoes_aula,
@@ -256,42 +262,121 @@ CREATE INDEX ix_sessoes_personal_instrutor_inicio ON sessoes_personal (id_instru
 CREATE INDEX ix_sessoes_personal_usuario_inicio   ON sessoes_personal (id_usuario, inicio);
 
 -- =====================================================================
--- FINANCEIRO E WEBHOOKS
+-- FINANCEIRO E WEBHOOKS (NOVA ESTRUTURA - 20/10/2025)
+-- Sistema de cobranças com parcelas e múltiplas tentativas de pagamento
 -- =====================================================================
+
+-- COBRANÇAS: Representa o que precisa ser pago
+CREATE TABLE cobrancas (
+  id_cobranca          BIGSERIAL PRIMARY KEY,
+  id_usuario           BIGINT NOT NULL REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+  
+  -- O QUE está sendo cobrado
+  referencia_tipo      TEXT NOT NULL CHECK (referencia_tipo IN ('assinatura','reserva_quadra','sessao_personal','inscricao_aula')),
+  referencia_id        BIGINT NOT NULL,
+  
+  -- VALORES
+  valor_total          NUMERIC(12,2) NOT NULL,
+  valor_pago           NUMERIC(12,2) NOT NULL DEFAULT 0,
+  moeda                TEXT NOT NULL DEFAULT 'BRL',
+  
+  -- STATUS
+  status               TEXT NOT NULL DEFAULT 'pendente' CHECK (status IN ('pendente','parcialmente_pago','pago','cancelado','expirado')),
+  
+  -- METADADOS
+  descricao            TEXT NOT NULL,
+  vencimento           DATE NOT NULL,
+  observacoes          TEXT,
+  
+  criado_em            TIMESTAMPTZ NOT NULL DEFAULT now(),
+  atualizado_em        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX ix_cobrancas_usuario_status ON cobrancas (id_usuario, status);
+CREATE INDEX ix_cobrancas_vencimento ON cobrancas (vencimento) WHERE status = 'pendente';
+CREATE INDEX ix_cobrancas_referencia ON cobrancas (referencia_tipo, referencia_id);
+
+-- COBRANÇA PARCELAS: Como uma cobrança será dividida (1x por enquanto, depois 2x, 3x...)
+CREATE TABLE cobranca_parcelas (
+  id_parcela           BIGSERIAL PRIMARY KEY,
+  id_cobranca          BIGINT NOT NULL REFERENCES cobrancas(id_cobranca) ON DELETE CASCADE,
+  
+  -- PARCELA
+  numero_parcela       INTEGER NOT NULL DEFAULT 1,
+  total_parcelas       INTEGER NOT NULL DEFAULT 1,
+  
+  -- VALOR
+  valor                NUMERIC(12,2) NOT NULL,
+  valor_pago           NUMERIC(12,2) NOT NULL DEFAULT 0,
+  
+  -- STATUS
+  status               TEXT NOT NULL DEFAULT 'pendente' CHECK (status IN ('pendente','pago','cancelado','expirado')),
+  
+  -- DATAS
+  vencimento           DATE NOT NULL,
+  pago_em              TIMESTAMPTZ,
+  
+  criado_em            TIMESTAMPTZ NOT NULL DEFAULT now(),
+  atualizado_em        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  
+  UNIQUE (id_cobranca, numero_parcela)
+);
+CREATE INDEX ix_cobranca_parcelas_cobranca ON cobranca_parcelas (id_cobranca);
+CREATE INDEX ix_cobranca_parcelas_vencimento ON cobranca_parcelas (vencimento) WHERE status = 'pendente';
+
+-- PAGAMENTOS: Tentativa de pagamento via gateway (PIX, cartão, boleto)
 CREATE TABLE pagamentos (
-  id_pagamento       BIGSERIAL PRIMARY KEY,
-  id_usuario         BIGINT NOT NULL REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
-  valor_total        NUMERIC(12,2) NOT NULL,
-  moeda              TEXT NOT NULL DEFAULT 'BRL',
-  status             TEXT NOT NULL CHECK (status IN ('pendente','pago','falhou','estornado')),
-  provedor           TEXT NOT NULL,   -- ex.: 'mercadopago'
-  id_transacao_ext   TEXT,            -- charge_id / payment_id do provedor
-  descricao          TEXT,
-  criado_em          TIMESTAMPTZ NOT NULL DEFAULT now(),
-  atualizado_em      TIMESTAMPTZ NOT NULL DEFAULT now()
+  id_pagamento         BIGSERIAL PRIMARY KEY,
+  id_parcela           BIGINT NOT NULL REFERENCES cobranca_parcelas(id_parcela) ON DELETE CASCADE,
+  
+  -- GATEWAY
+  provedor             TEXT NOT NULL CHECK (provedor IN ('mercadopago','stripe','pix','boleto','simulacao')),
+  metodo               TEXT CHECK (metodo IN ('pix','cartao_credito','cartao_debito','boleto')),
+  
+  -- IDENTIFICADORES EXTERNOS
+  id_transacao_ext     TEXT,            -- ID da transação no gateway
+  id_pagamento_ext     TEXT,            -- ID do pagamento específico
+  
+  -- VALOR
+  valor                NUMERIC(12,2) NOT NULL,
+  
+  -- STATUS
+  status               TEXT NOT NULL DEFAULT 'pendente' CHECK (status IN ('pendente','processando','aprovado','recusado','estornado','cancelado')),
+  
+  -- METADADOS
+  url_checkout         TEXT,            -- Link de pagamento (PIX, boleto)
+  qr_code              TEXT,            -- QR Code PIX
+  payload_json         JSONB,           -- Resposta completa do gateway
+  erro_mensagem        TEXT,
+  
+  -- DATAS
+  aprovado_em          TIMESTAMPTZ,
+  expirado_em          TIMESTAMPTZ,
+  
+  criado_em            TIMESTAMPTZ NOT NULL DEFAULT now(),
+  atualizado_em        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX ix_pagamentos_usuario_status ON pagamentos (id_usuario, status);
+CREATE INDEX ix_pagamentos_parcela ON pagamentos (id_parcela);
+CREATE INDEX ix_pagamentos_transacao_ext ON pagamentos (provedor, id_transacao_ext);
+CREATE INDEX ix_pagamentos_status ON pagamentos (status);
 
-CREATE TABLE itens_pagamento (
-  id_item_pagamento  BIGSERIAL PRIMARY KEY,
-  id_pagamento       BIGINT NOT NULL REFERENCES pagamentos(id_pagamento) ON DELETE CASCADE,
-  referencia_tipo    TEXT NOT NULL CHECK (referencia_tipo IN ('assinatura','reserva_quadra','inscricao_aula','sessao_personal')),
-  referencia_id      BIGINT NOT NULL,
-  valor              NUMERIC(12,2) NOT NULL,
-  quantidade         INTEGER NOT NULL DEFAULT 1
-);
-CREATE INDEX ix_itens_pagamento_ref ON itens_pagamento (referencia_tipo, referencia_id);
-
+-- WEBHOOKS: Registro de webhooks recebidos do gateway
 CREATE TABLE webhooks_pagamento (
-  id_webhook         BIGSERIAL PRIMARY KEY,
-  provedor           TEXT NOT NULL,
-  tipo_evento        TEXT NOT NULL,
-  id_evento_externo  TEXT NOT NULL,
-  payload_json       JSONB NOT NULL,
-  processado_em      TIMESTAMPTZ,
-  criado_em          TIMESTAMPTZ NOT NULL DEFAULT now(),
+  id_webhook           BIGSERIAL PRIMARY KEY,
+  id_pagamento         BIGINT REFERENCES pagamentos(id_pagamento) ON DELETE SET NULL,
+  
+  provedor             TEXT NOT NULL,
+  tipo_evento          TEXT NOT NULL,
+  id_evento_externo    TEXT NOT NULL,
+  
+  payload_json         JSONB NOT NULL,
+  processado           BOOLEAN NOT NULL DEFAULT false,
+  processado_em        TIMESTAMPTZ,
+  
+  criado_em            TIMESTAMPTZ NOT NULL DEFAULT now(),
+  
   UNIQUE (provedor, id_evento_externo)
 );
+CREATE INDEX ix_webhooks_pagamento_processado ON webhooks_pagamento (processado, criado_em);
 
 -- =====================================================================
 -- UTILIDADES (OPCIONAIS)
