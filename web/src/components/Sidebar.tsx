@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { NotificationBell } from '@/components/NotificationBell';
 import {
   Home,
   Users,
@@ -23,7 +24,9 @@ import {
   ChevronDown,
   ChevronRight,
   FolderOpen,
-  Dumbbell
+  Dumbbell,
+  Receipt,
+  Bell
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -79,7 +82,8 @@ const Sidebar = ({ userRole }: SidebarProps) => {
             ]
           },
           { title: 'Assinaturas', href: '/admin/assinaturas', icon: CreditCard },
-          { title: 'Pagamentos', href: '/admin/pagamentos', icon: DollarSign, badge: '8' },
+          { title: 'Pagamentos', href: '/admin/pagamentos', icon: DollarSign },
+          { title: 'Notificações', href: '/admin/notificacoes', icon: Bell },
         ];
       case 'instrutor':
         return [
@@ -97,6 +101,7 @@ const Sidebar = ({ userRole }: SidebarProps) => {
           { title: 'Minhas Reservas', href: '/aluno/reservas', icon: Calendar },
           { title: 'Aulas', href: '/aluno/aulas', icon: BookOpen },
           { title: 'Personal', href: '/aluno/personal', icon: User },
+          { title: 'Pagamentos', href: '/aluno/pagamentos', icon: CreditCard },
           { title: 'Perfil', href: '/aluno/perfil', icon: Settings },
         ];
       default:
@@ -154,14 +159,17 @@ const Sidebar = ({ userRole }: SidebarProps) => {
               </div>
             </div>
           )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="text-white hover:bg-dashboard-bg"
-          >
-            {isCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
-          </Button>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="text-white hover:bg-dashboard-bg"
+            >
+              {isCollapsed ? <Menu className="h-4 w-4" /> : <X className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
       </div>
 

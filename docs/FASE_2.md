@@ -11,7 +11,7 @@
 
 ### Backend (Laravel)
 
-#### ✅ Arquivos Criados/Modificados:
+#### ✅ Arquivos Criados/Modificados
 
 1. **Model**: `api/app/Models/Quadra.php`
    - Mapeamento da tabela `quadras` (PostgreSQL)
@@ -35,6 +35,7 @@
    - `updateStatus()`: Atualizar apenas status (ativa/inativa)
 
 4. **Rotas**: `api/routes/api.php`
+
    ```php
    Route::middleware('auth:sanctum')->group(function () {
        Route::middleware('role:admin')->prefix('admin')->group(function () {
@@ -54,9 +55,10 @@
 
 ### Frontend (React + TypeScript)
 
-#### ✅ Arquivos Criados/Modificados:
+#### ✅ Arquivos Criados/Modificados
 
 1. **Types**: `web/src/types/index.ts`
+
    ```typescript
    export interface Court {
      id_quadra: string;
@@ -99,6 +101,7 @@
 ### ✅ Backend
 
 1. **Seeder executado com sucesso**:
+
    ```
    ✅ Quadra criada: Quadra Beach Tennis 1
    ✅ Quadra criada: Quadra Beach Tennis 2
@@ -110,6 +113,7 @@
    ```
 
 2. **Rotas registradas**:
+
    ```
    GET|HEAD   api/admin/courts
    POST       api/admin/courts
@@ -135,6 +139,7 @@ Base URL: `http://localhost:8000/api/admin/courts`
 **Autorização**: Middleware `role:admin`
 
 #### 1. **Listar Quadras** (Paginado)
+
 ```http
 GET /api/admin/courts
 Headers: Authorization: Bearer {token}
@@ -178,6 +183,7 @@ Response 200:
 ```
 
 #### 2. **Obter Quadra por ID**
+
 ```http
 GET /api/admin/courts/{id}
 Headers: Authorization: Bearer {token}
@@ -199,6 +205,7 @@ Response 404:
 ```
 
 #### 3. **Criar Quadra**
+
 ```http
 POST /api/admin/courts
 Headers: Authorization: Bearer {token}
@@ -234,6 +241,7 @@ Response 422 (Validação):
 ```
 
 #### 4. **Atualizar Quadra**
+
 ```http
 PUT /api/admin/courts/{id}
 Headers: Authorization: Bearer {token}
@@ -253,6 +261,7 @@ Response 200:
 ```
 
 #### 5. **Excluir Quadra**
+
 ```http
 DELETE /api/admin/courts/{id}
 Headers: Authorization: Bearer {token}
@@ -264,6 +273,7 @@ Response 200:
 ```
 
 #### 6. **Atualizar Status**
+
 ```http
 PATCH /api/admin/courts/{id}/status
 Headers: Authorization: Bearer {token}
@@ -288,6 +298,7 @@ Response 200:
 ### Mapeamento Backend ↔ Frontend
 
 #### Nomenclatura (Backend pt-BR → Frontend pt-BR temporário)
+
 - `id_quadra` → `id_quadra` (mantido igual por enquanto)
 - `nome` → `nome`
 - `localizacao` → `localizacao`
@@ -303,6 +314,7 @@ Response 200:
 ### Validações
 
 #### Backend (Laravel)
+
 - **Nome**: required, string, max:100, unique
 - **Localização**: nullable, string, max:255
 - **Esporte**: required, string, enum (beach_tennis, tenis, futsal, volei, basquete, outros)
@@ -311,10 +323,12 @@ Response 200:
 - **Status**: nullable, string, enum (ativa, inativa) - default: 'ativa'
 
 #### Frontend (TypeScript)
+
 - Validação via formulário (a implementar na próxima etapa)
 - Tipos seguros via `CourtFormData` interface
 
 ### Paginação
+
 - **Backend**: Laravel paginate() automático
 - **Frontend**: Interface `PaginatedResponse<T>` pronta para consumo
 
@@ -323,6 +337,7 @@ Response 200:
 ## 🚀 Próximos Passos (Fase 3)
 
 ### Opção A: Conectar UI Admin de Quadras
+
 1. Modificar `web/src/pages/admin/Courts.tsx`
 2. Remover mock data
 3. Usar `courtsService.getAdminCourts()` para listar
@@ -332,6 +347,7 @@ Response 200:
 7. Adicionar filtros e busca
 
 ### Opção B: Ir para Fase 3 - Admin: Planos (CRUD)
+
 1. Model `Plano`
 2. `AdminPlanoController`
 3. Form Requests
@@ -339,6 +355,7 @@ Response 200:
 5. Seeder de planos
 
 ### Opção C: Ir para Fase 4 - Reservas de Quadras
+
 1. Model `ReservaQuadra`
 2. Controller com anti-overlap (GIST)
 3. Endpoints de disponibilidade
@@ -348,6 +365,7 @@ Response 200:
 ## 📝 Comandos Úteis
 
 ### Backend
+
 ```bash
 # Listar rotas admin
 docker-compose exec -T api php artisan route:list --path=admin
@@ -361,6 +379,7 @@ docker-compose exec -T api php artisan route:clear
 ```
 
 ### Frontend
+
 ```bash
 # Recriar container (se mudar .env.docker)
 docker-compose up -d --force-recreate frontend-dev
@@ -374,6 +393,7 @@ docker-compose logs -f frontend-dev
 ## 🎉 Conclusão
 
 A **Fase 2** está **100% completa** no backend! Criamos:
+
 - ✅ Model com relacionamentos e scopes
 - ✅ CRUD completo (6 endpoints)
 - ✅ Validação via Form Requests

@@ -16,6 +16,7 @@ Permitir que **instrutores definam seus horários disponíveis** na semana para 
 ### Backend (Laravel)
 
 #### 1. **Controller** ✅
+
 **Arquivo**: `api/app/Http/Controllers/Admin/InstrutorController.php`
 
 **Endpoint**: `PUT /api/admin/instructors/{id}/availability`
@@ -23,7 +24,9 @@ Permitir que **instrutores definam seus horários disponíveis** na semana para 
 **Método**: `updateAvailability(Request $request, string $id)`
 
 **Funcionalidades**:
+
 - ✅ Validação completa:
+
   ```php
   'disponibilidades' => 'required|array',
   'disponibilidades.*.dia_semana' => 'required|integer|between:1,7',
@@ -31,14 +34,17 @@ Permitir que **instrutores definam seus horários disponíveis** na semana para 
   'disponibilidades.*.hora_fim' => 'required|date_format:H:i|after:disponibilidades.*.hora_inicio',
   'disponibilidades.*.disponivel' => 'nullable|boolean',
   ```
+
 - ✅ Transaction com rollback em caso de erro
 - ✅ Delete de horários antigos + Insert dos novos
 - ✅ Retorno JSON padronizado (200 com mensagem de sucesso)
 
 #### 2. **Model** ✅
+
 **Arquivo**: `api/app/Models/DisponibilidadeInstrutor.php`
 
 **Relacionamento**:
+
 ```php
 // Model Instrutor
 public function disponibilidades() {
@@ -52,6 +58,7 @@ public function instrutor() {
 ```
 
 #### 3. **Rota** ✅
+
 **Arquivo**: `api/routes/api.php`
 
 ```php
@@ -62,6 +69,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
 ```
 
 **Proteções**:
+
 - ✅ `auth:sanctum` - Requer autenticação
 - ✅ `role:admin` - Apenas administradores
 
@@ -70,9 +78,11 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
 ### Frontend (React)
 
 #### 1. **Interface Modal** ✅
+
 **Arquivo**: `web/src/pages/admin/Instructors.tsx` (linhas 704-774)
 
 **Componentes**:
+
 - ✅ Modal "Disponibilidade - {instrutor.nome}"
 - ✅ Lista de horários editáveis
 - ✅ Select de dia da semana (Segunda-Domingo)
@@ -83,6 +93,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
 - ✅ Botão "Salvar" com loading state
 
 **Código do Modal**:
+
 ```tsx
 <Dialog open={isAvailabilityOpen} onOpenChange={setIsAvailabilityOpen}>
   <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -121,6 +132,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
 ```
 
 #### 2. **Handlers** ✅
+
 **Arquivo**: `web/src/pages/admin/Instructors.tsx` (linhas 100-195)
 
 ```tsx
@@ -177,9 +189,11 @@ const handleUpdateAvailability = async () => {
 ```
 
 #### 3. **Botão de Acesso** ✅
+
 **Arquivo**: `web/src/pages/admin/Instructors.tsx` (linhas 471-477)
 
 No card de cada instrutor:
+
 ```tsx
 <Button 
   variant="outline" 
@@ -193,9 +207,11 @@ No card de cada instrutor:
 ```
 
 #### 4. **Resumo Visual** ✅
+
 **Arquivo**: `web/src/pages/admin/Instructors.tsx` (linhas 462-468)
 
 Exibe quantidade de horários configurados:
+
 ```tsx
 <div className="flex items-center gap-2.5 bg-muted/40 rounded-lg p-3.5 border">
   <Clock className="h-4 w-4 text-fitway-green shrink-0" />
@@ -209,6 +225,7 @@ Exibe quantidade de horários configurados:
 ```
 
 #### 5. **Service** ✅
+
 **Arquivo**: `web/src/services/instructors.service.ts`
 
 ```typescript
@@ -220,6 +237,7 @@ async updateAvailability(id: string, disponibilidades: Availability[]): Promise<
 ```
 
 #### 6. **Types** ✅
+
 **Arquivo**: `web/src/types/index.ts`
 
 ```typescript
@@ -254,6 +272,7 @@ export interface Instructor {
 ## 🎨 UX/UI
 
 ### Feedback Visual
+
 - ✅ **Toast de sucesso**: "Disponibilidade atualizada!"
 - ✅ **Toast de erro**: Mensagem do backend em caso de falha
 - ✅ **Loading state**: Botão "Salvando..." durante submit
@@ -261,6 +280,7 @@ export interface Instructor {
 - ✅ **Validação visual**: Inputs type="time" com validação nativa do browser
 
 ### Usabilidade
+
 - ✅ **Botão fácil de encontrar**: "Horários" visível em cada card
 - ✅ **Adicionar múltiplos horários**: Sem limite
 - ✅ **Edição inline**: Alterar dia/hora sem trocar de tela
@@ -272,12 +292,15 @@ export interface Instructor {
 ## 🧪 Como Testar
 
 ### 1. **Acessar Admin**
+
 ```
 http://localhost:5173/admin/instrutores
 ```
+
 Login: `admin@fitway.com` / `admin123`
 
 ### 2. **Editar Disponibilidade**
+
 1. Clique no botão "Horários" de um instrutor
 2. Modal abre com horários existentes (se houver)
 3. Clique "Adicionar Horário" para criar novo
@@ -287,12 +310,14 @@ Login: `admin@fitway.com` / `admin123`
 7. Modal fecha e contador atualiza
 
 ### 3. **Remover Horário**
+
 1. Abra modal de disponibilidade
 2. Clique "Remover" em um horário
 3. Clique "Salvar"
 4. Horário deletado com sucesso
 
 ### 4. **Verificar Backend**
+
 ```powershell
 # Ver logs da API
 docker-compose logs -f api
@@ -309,6 +334,7 @@ SELECT * FROM disponibilidade_instrutor WHERE id_instrutor = '1';
 ## 📊 Estado da Tabela no Banco
 
 ### Estrutura da Tabela
+
 ```sql
 CREATE TABLE disponibilidade_instrutor (
     id_disponibilidade_instrutor UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -326,6 +352,7 @@ CREATE INDEX idx_disponibilidade_instrutor ON disponibilidade_instrutor(id_instr
 ```
 
 ### Constraints
+
 - ✅ `dia_semana BETWEEN 1 AND 7` (1=Segunda, 7=Domingo)
 - ✅ `hora_fim > hora_inicio` (validação básica)
 - ✅ `ON DELETE CASCADE` (deleta horários quando instrutor é deletado)
@@ -336,9 +363,11 @@ CREATE INDEX idx_disponibilidade_instrutor ON disponibilidade_instrutor(id_instr
 ## 🔄 Integração com Outras Fases
 
 ### ✅ **Dependências Atendidas**
+
 - Fase 5 ✅ - CRUD de Instrutores (pré-requisito)
 
 ### 📋 **Próximas Fases que Dependem Desta**
+
 - **Fase 8**: Sessões Personal 1:1
   - Aluno só pode agendar dentro dos horários disponíveis
   - Validação: horário da sessão INTERSECT disponibilidade
@@ -349,12 +378,14 @@ CREATE INDEX idx_disponibilidade_instrutor ON disponibilidade_instrutor(id_instr
 ## 📝 Observações Técnicas
 
 ### ✅ Pontos Fortes
+
 1. **UI Intuitiva**: Modal simples e direto ao ponto
 2. **Integração Completa**: Backend + Frontend + Types
 3. **Transaction**: Garante consistência (delete old + insert new)
 4. **Validação**: hora_fim > hora_inicio validado no backend
 
 ### ⚠️ Limitações Atuais
+
 1. **Sem validação de overlap**: Instrutor pode criar dois horários conflitantes no mesmo dia
    - Exemplo: Segunda 08:00-12:00 E Segunda 10:00-14:00 (overlap!)
    - **Sugestão**: Adicionar validação no backend ou constraint no DB
@@ -368,7 +399,9 @@ CREATE INDEX idx_disponibilidade_instrutor ON disponibilidade_instrutor(id_instr
    - **Sugestão futura**: Botão "Copiar para todas as semanas"
 
 ### 🚀 Melhorias Futuras (Opcional)
+
 1. **Validação de Overlap**:
+
    ```sql
    -- Constraint GIST para evitar overlap no mesmo dia
    CREATE EXTENSION IF NOT EXISTS btree_gist;
@@ -394,9 +427,10 @@ CREATE INDEX idx_disponibilidade_instrutor ON disponibilidade_instrutor(id_instr
 
 ## ✅ Conclusão
 
-A **Fase 7 estava completamente implementada** e funcional, apenas não estava documentada formalmente no plano de ação. 
+A **Fase 7 estava completamente implementada** e funcional, apenas não estava documentada formalmente no plano de ação.
 
 **Descoberta**: Durante revisão do código em 16/10/2025, identificamos que:
+
 - Backend tinha o endpoint `updateAvailability` pronto
 - Frontend tinha modal completo com CRUD de horários
 - Rota estava registrada e protegida

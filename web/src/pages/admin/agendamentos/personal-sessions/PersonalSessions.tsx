@@ -70,6 +70,13 @@ export default function PersonalSessionsPage() {
     observacoes: '',
   });
 
+  // Form data simplificado (data + hora separados)
+  const [simpleFormData, setSimpleFormData] = useState({
+    data: new Date().toISOString().split('T')[0], // "2025-10-20"
+    horaInicio: '08:00',
+    horaFim: '09:00',
+  });
+
   // Carregar dados iniciais
   useEffect(() => {
     loadInitialData();
@@ -141,7 +148,7 @@ export default function PersonalSessionsPage() {
   };
 
   const handleCreate = async () => {
-    if (!formData.id_instrutor || !formData.id_usuario || !formData.inicio || !formData.fim) {
+    if (!formData.id_instrutor || !formData.id_usuario || !simpleFormData.data || !simpleFormData.horaInicio || !simpleFormData.horaFim) {
       toast({
         title: 'Campos obrigatórios',
         description: 'Preencha todos os campos obrigatórios',
@@ -150,8 +157,12 @@ export default function PersonalSessionsPage() {
       return;
     }
 
+    // Combinar data + hora em formato ISO
+    const inicio = `${simpleFormData.data}T${simpleFormData.horaInicio}:00`;
+    const fim = `${simpleFormData.data}T${simpleFormData.horaFim}:00`;
+
     // Validar que fim > inicio
-    if (new Date(formData.fim) <= new Date(formData.inicio)) {
+    if (new Date(fim) <= new Date(inicio)) {
       toast({
         title: 'Horário inválido',
         description: 'O horário de término deve ser após o horário de início',
@@ -165,9 +176,9 @@ export default function PersonalSessionsPage() {
       setSubmitting(true);
       const availability = await personalSessionsService.checkAvailability({
         id_instrutor: formData.id_instrutor,
-        inicio: formData.inicio,
-        fim: formData.fim,
-        id_quadra: formData.id_quadra || undefined, // Enviar quadra se selecionada
+        inicio: inicio,
+        fim: fim,
+        id_quadra: formData.id_quadra || undefined,
       });
 
       if (!availability.disponivel) {
@@ -181,7 +192,11 @@ export default function PersonalSessionsPage() {
       }
 
       // Criar sessão
-      await personalSessionsService.create(formData);
+      await personalSessionsService.create({
+        ...formData,
+        inicio: inicio,
+        fim: fim,
+      });
       toast({
         title: 'Sessão criada!',
         description: `Preço calculado: ${formatCurrency(availability.preco_total || 0)}`,
@@ -269,6 +284,11 @@ export default function PersonalSessionsPage() {
       inicio: '',
       fim: '',
       observacoes: '',
+    });
+    setSimpleFormData({
+      data: new Date().toISOString().split('T')[0],
+      horaInicio: '08:00',
+      horaFim: '09:00',
     });
     setSelectedSession(null);
   };
@@ -562,25 +582,41 @@ export default function PersonalSessionsPage() {
             </div>
 
             {/* Data/Hora Início */}
-            <div className="space-y-2">
-              <Label htmlFor="inicio">Data/Hora Início *</Label>
+            <div className="space-y-2 col-span-2">
+              <Label htmlFor="data">Data da Sessão *</Label>
               <Input
-                id="inicio"
-                type="datetime-local"
-                value={formData.inicio}
-                onChange={(e) => setFormData({ ...formData, inicio: e.target.value })}
+                id="data"
+                type="date"
+                value={simpleFormData.data}
+                onChange={(e) => setSimpleFormData({ ...simpleFormData, data: e.target.value })}
+                min={new Date().toISOString().split('T')[0]}
               />
             </div>
 
-            {/* Data/Hora Fim */}
+            {/* Hora Início */}
             <div className="space-y-2">
-              <Label htmlFor="fim">Data/Hora Fim *</Label>
+              <Label htmlFor="horaInicio">Hora Início *</Label>
               <Input
-                id="fim"
-                type="datetime-local"
-                value={formData.fim}
-                onChange={(e) => setFormData({ ...formData, fim: e.target.value })}
+                id="horaInicio"
+                type="time"
+                value={simpleFormData.horaInicio}
+                onChange={(e) => setSimpleFormData({ ...simpleFormData, horaInicio: e.target.value })}
+                step="1800"
               />
+              <p className="text-xs text-muted-foreground">Intervalos de 30 min</p>
+            </div>
+
+            {/* Hora Fim */}
+            <div className="space-y-2">
+              <Label htmlFor="horaFim">Hora Fim *</Label>
+              <Input
+                id="horaFim"
+                type="time"
+                value={simpleFormData.horaFim}
+                onChange={(e) => setSimpleFormData({ ...simpleFormData, horaFim: e.target.value })}
+                step="1800"
+              />
+              <p className="text-xs text-muted-foreground">Intervalos de 30 min</p>
             </div>
 
             {/* Quadra (Opcional) */}

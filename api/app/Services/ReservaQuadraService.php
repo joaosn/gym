@@ -10,6 +10,17 @@ use Illuminate\Support\Facades\DB;
 
 class ReservaQuadraService
 {
+    protected PagamentoService $pagamentoService;
+    protected NotificacaoService $notificacaoService;
+
+    public function __construct(
+        PagamentoService $pagamentoService,
+        NotificacaoService $notificacaoService
+    ) {
+        $this->pagamentoService = $pagamentoService;
+        $this->notificacaoService = $notificacaoService;
+    }
+
     /**
      * Valida disponibilidade da quadra no período
      * 
@@ -119,16 +130,46 @@ class ReservaQuadraService
         // Calcular preço
         $precoTotal = $this->calcularPreco($dados['id_quadra'], $inicio, $fim);
 
-        // Criar reserva
-        return ReservaQuadra::create([
-            'id_quadra' => $dados['id_quadra'],
-            'id_usuario' => $dados['id_usuario'],
-            'inicio' => $inicio,
-            'fim' => $fim,
-            'preco_total' => $precoTotal,
-            'status' => 'pendente',
-            'observacoes' => $dados['observacoes'] ?? null,
-        ]);
+        // Criar reserva dentro de transação
+        return DB::transaction(function () use ($dados, $inicio, $fim, $precoTotal) {
+            // 1. Criar reserva com status 'pendente' (aguardando pagamento)
+            $reserva = ReservaQuadra::create([
+                'id_quadra' => $dados['id_quadra'],
+                'id_usuario' => $dados['id_usuario'],
+                'inicio' => $inicio,
+                'fim' => $fim,
+                'preco_total' => $precoTotal,
+                'status' => 'pendente',
+                'observacoes' => $dados['observacoes'] ?? null,
+            ]);
+
+            // 2. Criar cobrança
+            $quadra = Quadra::find($dados['id_quadra']);
+            $descricao = "Reserva da quadra {$quadra->nome} em {$inicio->format('d/m/Y H:i')}";
+            
+            $cobranca = $this->pagamentoService->criarCobranca(
+                $dados['id_usuario'],
+                'reserva_quadra',
+                $reserva->id_reserva_quadra,
+                $precoTotal,
+                $descricao,
+                Carbon::parse($dados['inicio'])->subDay() // Vencimento 1 dia antes da reserva
+            );
+
+            // 3. Criar notificação
+            $parcela = $cobranca->parcelas->first();
+            $this->notificacaoService->notificarNovaCobranca(
+                $dados['id_usuario'],
+                $descricao,
+                $precoTotal,
+                "/aluno/checkout/{$parcela->id_parcela}"
+            );
+
+            // Carregar relacionamento para retorno
+            $reserva->cobranca = $cobranca->load('parcelas');
+
+            return $reserva;
+        });
     }
 
     /**

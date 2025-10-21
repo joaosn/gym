@@ -8,6 +8,7 @@
 ## 🎯 Objetivo
 
 Implementar integração automática entre **Sessões Personal** e **Reservas de Quadra**:
+
 - Quando uma sessão personal **usa uma quadra**, deve criar automaticamente uma **reserva de quadra** vinculada
 - Garantir sincronização: atualizar/deletar reserva quando sessão muda/cancela
 - Evitar duplicação de lógica de anti-overlap
@@ -198,10 +199,12 @@ public function destroy($id)
 ### 5. Bug Fix - Mapeamento de `dia_semana`
 
 **Problema**: `verificarDisponibilidadeSemanal()` estava mapeando errado:
+
 - Carbon: `0=Sunday, 1=Monday, ..., 6=Saturday`
 - Banco: `1=Segunda, 2=Terça, ..., 7=Domingo` (ISO 8601)
 
 **Corrigido**:
+
 ```php
 $diaSemanaCarbon = $inicio->dayOfWeek; // 0=Sunday, 1=Monday, ..., 6=Saturday
 $diaSemana = $diaSemanaCarbon === 0 ? 7 : $diaSemanaCarbon; // 1=Segunda, 7=Domingo
@@ -275,17 +278,20 @@ TESTE: Integração Fase 8 - Auto-Reserva
 ### Cascade Delete
 
 Configurado na FK:
+
 ```php
 ->onDelete('cascade')
 ```
 
 **Comportamento**:
+
 - Se `SessaoPersonal` for deletada (hard delete) → `ReservaQuadra` vinculada é deletada automaticamente
 - Se `SessaoPersonal` for cancelada (soft delete) → Usamos `destroy()` do Controller para sincronizar status
 
 ### Validação de Anti-Overlap
 
 O Service já validava conflitos de quadra contra:
+
 1. Outras sessões personal na mesma quadra
 2. Reservas de quadra diretas
 
@@ -309,6 +315,7 @@ POST /api/personal-sessions
 ```
 
 **Resultado**:
+
 - ✅ Sessão criada
 - ❌ Nenhuma reserva criada (id_quadra null)
 
@@ -328,6 +335,7 @@ POST /api/personal-sessions
 ```
 
 **Resultado**:
+
 - ✅ Sessão criada (id_sessao_personal: 27)
 - ✅ Reserva criada automaticamente:
   - `id_sessao_personal: 27`
@@ -346,6 +354,7 @@ PATCH /api/personal-sessions/27
 ```
 
 **Resultado**:
+
 - ✅ Validação de disponibilidade da nova quadra
 - ✅ Reserva antiga (quadra 2) deletada
 - ✅ Reserva nova (quadra 3) criada
@@ -359,6 +368,7 @@ DELETE /api/personal-sessions/27
 ```
 
 **Resultado**:
+
 - ✅ Sessão: `status = 'cancelada'`
 - ✅ Reserva vinculada: `status = 'cancelada'` (sincronizado pelo Controller)
 
@@ -369,6 +379,7 @@ DELETE /api/personal-sessions/27
 ### 1. **Transações DB são essenciais**
 
 Usar `DB::transaction()` garante atomicidade:
+
 - Se criar sessão falha, não cria reserva órfã
 - Se criar reserva falha, rollback da sessão
 
@@ -397,6 +408,7 @@ Reservas automáticas tem `origem = 'admin'` para diferenciar de reservas manuai
 ## 🚀 Próximos Passos
 
 ### ✅ Completo
+
 - [x] Migration FK `id_sessao_personal`
 - [x] Models com relacionamentos
 - [x] Service com auto-criação/atualização/deleção
@@ -462,6 +474,7 @@ docker-compose exec -T db psql -U fitway_user -d fitway_db -c "
 ✅ **Integração Fase 8 100% COMPLETA!**
 
 **Impacto**:
+
 - Sessões personal com quadra agora bloqueiam automaticamente a quadra
 - Evita conflitos de reserva (anti-overlap funciona corretamente)
 - Sincronização automática entre sessão ↔ reserva

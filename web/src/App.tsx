@@ -9,6 +9,7 @@ import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import PublicReservePage from "./pages/PublicReservePage";
+import NotificationList from "./pages/NotificationList";
 
 // Protected Pages
 import StudentDashboard from "./pages/student/Dashboard";
@@ -18,6 +19,8 @@ import StudentCourtBookings from "./pages/student/CourtBookings";
 import StudentClasses from "./pages/student/Classes";
 import StudentPersonal from "./pages/student/Personal";
 import StudentProfile from "./pages/student/Profile";
+import PaymentHistory from "./pages/student/PaymentHistory";
+import CheckoutPage from "./pages/student/CheckoutPage";
 
 import InstrutorDashboard from "./pages/personal/Dashboard";
 import InstrutorSchedule from "./pages/personal/Schedule";
@@ -43,13 +46,15 @@ import GenerateOccurrences from "./pages/admin/agendamentos/classes/GenerateOccu
 import OccurrenceEnrollments from "./pages/admin/agendamentos/classes/OccurrenceEnrollments";
 import ClassOccurrencesList from "./pages/admin/agendamentos/classes/ClassOccurrencesList";
 import BulkEnrollment from "./pages/admin/agendamentos/classes/BulkEnrollment";
-import AdminPayments from "./pages/admin/payments/Payments";
+import AdminPayments from "./pages/admin/Payments";
 import AdminSubscriptions from "./pages/admin/payments/Subscriptions";
+import AdminNotifications from "./pages/admin/AdminNotifications";
 
 import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Layout from "./components/Layout";
+import { useAuth } from "@/hooks/useAuth";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +71,8 @@ const App = () => (
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/reserve" element={<PublicReservePage />} />
+          {/* Fallback de Notificações sem prefixo de role */}
+          <Route path="/notificacoes" element={<RedirectNotifications />} />
           
           {/* Student Routes */}
           <Route path="/aluno" element={<ProtectedRoute allowedRoles={['aluno']} />}>
@@ -77,6 +84,9 @@ const App = () => (
             <Route path="aulas" element={<StudentClasses />} />
             <Route path="personal" element={<StudentPersonal />} />
             <Route path="perfil" element={<StudentProfile />} />
+            <Route path="pagamentos" element={<PaymentHistory />} />
+            <Route path="checkout/:idParcela" element={<CheckoutPage />} />
+            <Route path="notificacoes" element={<NotificationList />} />
           </Route>
           
           {/* Instrutor Routes */}
@@ -87,6 +97,7 @@ const App = () => (
             <Route path="slots" element={<InstrutorSlots />} />
             <Route path="turmas" element={<InstrutorClasses />} />
             <Route path="reservas" element={<InstrutorCourtBookings />} />
+            <Route path="notificacoes" element={<NotificationList />} />
           </Route>
           
           {/* Admin Routes */}
@@ -111,6 +122,7 @@ const App = () => (
             <Route path="aulas/ocorrencias/:occurrenceId/inscricoes" element={<OccurrenceEnrollments />} />
             <Route path="pagamentos" element={<AdminPayments />} />
             <Route path="assinaturas" element={<AdminSubscriptions />} />
+            <Route path="notificacoes" element={<AdminNotifications />} />
           </Route>
           
           {/* Catch-all */}
@@ -123,3 +135,11 @@ const App = () => (
 );
 
 export default App;
+
+// Componente auxiliar: redireciona /notificacoes para a rota correta por papel
+function RedirectNotifications() {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  const base = user.role === 'admin' ? '/admin' : user.role === 'instrutor' ? '/instrutor' : '/aluno';
+  return <Navigate to={`${base}/notificacoes`} replace />;
+}

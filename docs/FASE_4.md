@@ -13,6 +13,7 @@ Implementado sistema completo de **Gestão de Usuários** (CRUD) para administra
 ### Funcionalidades Implementadas
 
 ✅ **Backend (API)**:
+
 - Listar usuários com filtros (papel, status, busca)
 - Criar novo usuário
 - Visualizar detalhes de um usuário
@@ -21,6 +22,7 @@ Implementado sistema completo de **Gestão de Usuários** (CRUD) para administra
 - Toggle de status (ativar/desativar)
 
 ✅ **Frontend (React)**:
+
 - Grid de cards com usuários
 - Filtros dinâmicos (papel, status, busca)
 - Modal de criação com validação
@@ -37,6 +39,7 @@ Implementado sistema completo de **Gestão de Usuários** (CRUD) para administra
 ### Backend (Laravel)
 
 #### 1. **api/app/Models/User.php** (ATUALIZADO)
+
 ```php
 // Mapeamento para tabela `usuarios` do PostgreSQL
 protected $table = 'usuarios';
@@ -65,6 +68,7 @@ public function scopePapel($query, string $papel) { ... }
 ---
 
 #### 2. **api/app/Http/Requests/CreateUserRequest.php** (NOVO)
+
 ```php
 public function rules()
 {
@@ -86,6 +90,7 @@ public function rules()
 ---
 
 #### 3. **api/app/Http/Requests/UpdateUserRequest.php** (NOVO)
+
 ```php
 public function rules()
 {
@@ -107,6 +112,7 @@ public function rules()
 ---
 
 #### 4. **api/app/Http/Controllers/Admin/UserController.php** (NOVO)
+
 ```php
 class UserController extends Controller
 {
@@ -201,6 +207,7 @@ class UserController extends Controller
 ---
 
 #### 5. **api/routes/api.php** (ATUALIZADO)
+
 ```php
 use App\Http\Controllers\Admin\UserController;
 
@@ -211,6 +218,7 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
 ```
 
 **Rotas Criadas**:
+
 ```
 GET|HEAD    /api/admin/users           → users.index
 POST        /api/admin/users           → users.store
@@ -227,6 +235,7 @@ PATCH       /api/admin/users/{id}/status → updateStatus
 ### Frontend (React + TypeScript)
 
 #### 6. **web/src/types/index.ts** (ATUALIZADO)
+
 ```typescript
 export interface User {
   id_usuario: string;
@@ -258,6 +267,7 @@ export interface UserFormData {
 ---
 
 #### 7. **web/src/services/users.service.ts** (NOVO)
+
 ```typescript
 import { apiClient } from '@/lib/api-client';
 import { User, UserFormData } from '@/types';
@@ -302,7 +312,9 @@ export const usersService = new UsersService();
 ---
 
 #### 8. **web/src/pages/admin/Users.tsx** (NOVO)
+
 **Principais Features**:
+
 - ✅ Grid responsivo de cards (3 colunas em desktop, 1 em mobile)
 - ✅ Filtros: Papel (admin/aluno/personal/instrutor), Status (ativo/inativo), Busca (nome/email)
 - ✅ Modal de criação com campos: nome, email, senha, telefone, CPF, data nascimento, papel, status
@@ -316,6 +328,7 @@ export const usersService = new UsersService();
 - ✅ Validação: botão "Criar" desabilitado se faltar nome/email/senha
 
 **Componentes Utilizados**:
+
 - `Card`, `Badge`, `Button`, `Input`, `Label`, `Select`
 - `Dialog` (modals), `AlertDialog` (confirmação)
 - `useToast` (feedback), `useState`, `useEffect`
@@ -326,6 +339,7 @@ export const usersService = new UsersService();
 ---
 
 #### 9. **web/src/App.tsx** (ATUALIZADO)
+
 ```typescript
 import AdminUsers from "./pages/admin/Users";
 
@@ -341,6 +355,7 @@ import AdminUsers from "./pages/admin/Users";
 ---
 
 #### 10. **web/src/components/Sidebar.tsx** (ATUALIZADO)
+
 ```typescript
 case 'admin':
   return [
@@ -360,6 +375,7 @@ case 'admin':
 ## 🧪 Como Testar
 
 ### 1. Verificar Containers Rodando
+
 ```powershell
 docker-compose ps
 # api: Up (porta 8000)
@@ -368,11 +384,13 @@ docker-compose ps
 ```
 
 ### 2. Verificar Rotas da API
+
 ```powershell
 docker-compose exec api php artisan route:list --path=admin/users
 ```
 
 **Saída Esperada**:
+
 ```
 GET|HEAD    api/admin/users           users.index
 POST        api/admin/users           users.store
@@ -383,11 +401,13 @@ PATCH       api/admin/users/{id}/status updateStatus
 ```
 
 ### 3. Verificar Dados de Teste no Banco
+
 ```powershell
 docker-compose exec -T db psql -U fitway_user -d fitway_db -c "SELECT id_usuario, nome, email, papel, status FROM usuarios ORDER BY id_usuario;"
 ```
 
 **Saída Esperada**:
+
 ```
  id_usuario |        nome          |         email         |   papel   | status
 ------------+----------------------+-----------------------+-----------+--------
@@ -401,14 +421,15 @@ docker-compose exec -T db psql -U fitway_user -d fitway_db -c "SELECT id_usuario
 
 ### 4. Testar no Navegador
 
-1. **Abrir Frontend**: http://localhost:5173
+1. **Abrir Frontend**: <http://localhost:5173>
 2. **Login**: `admin@fitway.com` / `admin123`
 3. **Navegar**: Sidebar → "Usuários"
-4. **URL**: http://localhost:5173/admin/usuarios
+4. **URL**: <http://localhost:5173/admin/usuarios>
 
 ### 5. Testes de CRUD
 
 #### ✅ CREATE (Criar Usuário)
+
 1. Clicar em "Novo Usuário"
 2. Preencher:
    - Nome: `Teste João Santos`
@@ -423,6 +444,7 @@ docker-compose exec -T db psql -U fitway_user -d fitway_db -c "SELECT id_usuario
 4. **Resultado esperado**: Toast verde "Usuário criado com sucesso!", card aparece na lista
 
 #### ✅ READ (Listar Usuários)
+
 1. Ver lista de cards com os 5 usuários iniciais + novo
 2. Verificar badges:
    - Admin: vermelho
@@ -435,12 +457,14 @@ docker-compose exec -T db psql -U fitway_user -d fitway_db -c "SELECT id_usuario
    - Data: `15/05/1990`
 
 #### ✅ FILTROS
+
 1. **Filtro por Papel**: Selecionar "Aluno" → Ver apenas alunos
 2. **Filtro por Status**: Selecionar "Inativo" → Ver apenas `Teste Aluno Inativo`
 3. **Busca**: Digitar "maria" → Ver apenas `Aluno Maria Santos`
 4. **Resetar**: Selecionar "Todos" em ambos filtros
 
 #### ✅ UPDATE (Editar Usuário)
+
 1. Clicar em "Editar" no card de `Teste João Santos`
 2. Alterar:
    - Nome: `João Santos Silva`
@@ -450,20 +474,23 @@ docker-compose exec -T db psql -U fitway_user -d fitway_db -c "SELECT id_usuario
 4. **Resultado esperado**: Toast verde, dados atualizados no card
 
 #### ✅ TOGGLE STATUS
+
 1. Card de `Teste João Santos` → Clicar no botão de status (ícone de check/x)
-2. **Resultado esperado**: 
+2. **Resultado esperado**:
    - Badge muda de "Ativo" (verde) para "Inativo" (cinza)
    - Toast: "Status alterado com sucesso!"
 3. Clicar novamente → Volta para "Ativo"
 
 #### ✅ DELETE (Excluir Usuário)
+
 1. Card de `Teste João Santos` → Clicar em ícone de lixeira (🗑️)
 2. **Resultado esperado**: AlertDialog com confirmação
 3. Clicar "Excluir"
 4. **Resultado esperado**: Toast verde, card desaparece da lista
 
 #### ❌ PROTEÇÕES
-1. Tentar excluir **sua própria conta** (admin@fitway.com)
+
+1. Tentar excluir **sua própria conta** (<admin@fitway.com>)
 2. **Resultado esperado**: Toast vermelho "Você não pode excluir sua própria conta."
 
 ---
@@ -471,6 +498,7 @@ docker-compose exec -T db psql -U fitway_user -d fitway_db -c "SELECT id_usuario
 ## 📊 Validação da Fase 4 (Checklist)
 
 ### Backend
+
 - [x] Model User atualizado com mapeamento correto (`usuarios`, `id_usuario`, `criado_em`)
 - [x] CreateUserRequest com validações (nome, email unique, senha min:6)
 - [x] UpdateUserRequest com validações parciais ('sometimes')
@@ -482,6 +510,7 @@ docker-compose exec -T db psql -U fitway_user -d fitway_db -c "SELECT id_usuario
 - [x] Senha opcional ao editar (não envia se vazia)
 
 ### Frontend
+
 - [x] Interface `User` e `UserFormData` em types/index.ts
 - [x] Service `users.service.ts` com 6 métodos
 - [x] Página `Users.tsx` criada
@@ -500,6 +529,7 @@ docker-compose exec -T db psql -U fitway_user -d fitway_db -c "SELECT id_usuario
 - [x] Link "Usuários" no Sidebar (admin)
 
 ### UX/UI
+
 - [x] Valores formatados corretamente (CPF, telefone, datas)
 - [x] Badges de status (ativo=verde, inativo=cinza)
 - [x] Badges de papel com cores distintas
@@ -510,6 +540,7 @@ docker-compose exec -T db psql -U fitway_user -d fitway_db -c "SELECT id_usuario
 - [x] Loading states durante operações assíncronas
 
 ### Testes
+
 - [x] API: 6 rotas verificadas via `route:list`
 - [x] DB: 5 usuários de teste confirmados
 - [x] Navegador: Login funcionando

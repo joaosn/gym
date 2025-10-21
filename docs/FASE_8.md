@@ -16,6 +16,7 @@ Implementar sistema completo de agendamento de sessões personal 1:1 entre instr
 ### Backend
 
 #### 1. Models
+
 - **`SessaoPersonal.php`**: Model principal com relacionamentos
   - Relacionamentos: `instrutor`, `usuario`, `quadra`
   - Scopes: `futuras()`, `passadas()`, `ativas()`
@@ -26,6 +27,7 @@ Implementar sistema completo de agendamento de sessões personal 1:1 entre instr
   - Scopes: `ativas()`, `futuras()`, `passadas()`
 
 #### 2. Controllers
+
 - **`SessaoPersonalController.php`**: 8 endpoints RESTful
   - `GET /api/personal-sessions` - Listar (com filtros)
   - `GET /api/personal-sessions/{id}` - Buscar por ID
@@ -36,6 +38,7 @@ Implementar sistema completo de agendamento de sessões personal 1:1 entre instr
   - `POST /api/personal-sessions/check-availability` - Verificar disponibilidade
 
 #### 3. Services
+
 - **`SessaoPersonalService.php`**: Lógica de negócio
   - **4 Validações de Conflito**:
     1. ✅ **Instrutor**: Anti-overlap (instrutor não pode ter 2 sessões simultâneas)
@@ -51,11 +54,14 @@ Implementar sistema completo de agendamento de sessões personal 1:1 entre instr
     - `atualizarSessao()` - Atualiza com validações
 
 #### 4. Form Requests
+
 - **`CreateSessaoPersonalRequest.php`**: Validação de criação
 - **`UpdateSessaoPersonalRequest.php`**: Validação de atualização
 
 #### 5. Rotas
+
 Registradas em `api/routes/api.php`:
+
 ```php
 Route::prefix('personal-sessions')->group(function () {
     Route::get('/', [SessaoPersonalController::class, 'index']);
@@ -70,6 +76,7 @@ Route::prefix('personal-sessions')->group(function () {
 ```
 
 #### 6. Seeder
+
 - **`SessaoPersonalSeeder.php`**: 12 sessões de teste
   - 5 sessões passadas (concluida, no_show, cancelada)
   - 7 sessões futuras (pendente, confirmada)
@@ -81,7 +88,9 @@ Route::prefix('personal-sessions')->group(function () {
 ### Frontend
 
 #### 1. Types
+
 Adicionado em `web/src/types/index.ts`:
+
 ```typescript
 export interface PersonalSession {
   id_sessao_personal: string;
@@ -124,6 +133,7 @@ export interface AvailabilityCheckResponse {
 ```
 
 #### 2. Service
+
 - **`personal-sessions.service.ts`**: Métodos para API
   - `list()` - Listar com filtros (instrutor, aluno, status, período)
   - `getById()` - Buscar por ID
@@ -134,9 +144,10 @@ export interface AvailabilityCheckResponse {
   - `checkAvailability()` - Verificar disponibilidade (instrutor + quadra)
 
 #### 3. Página Admin
+
 - **`PersonalSessions.tsx`**: CRUD completo
   - **Listagem**: Grid de cards com informações da sessão
-  - **Filtros**: 
+  - **Filtros**:
     - Busca por nome (instrutor/aluno)
     - Status (pendente, confirmada, cancelada, concluida, no_show)
     - Período (futuras, passadas)
@@ -153,6 +164,7 @@ export interface AvailabilityCheckResponse {
     - Mostra mensagens de erro claras
 
 #### 4. Menu
+
 Adicionado em `Sidebar.tsx` → Agendamentos → Sessões Personal
 
 ---
@@ -160,9 +172,11 @@ Adicionado em `Sidebar.tsx` → Agendamentos → Sessões Personal
 ## 🐛 Bugs Corrigidos
 
 ### 1. Select com `value=""` (Radix UI)
+
 **Problema**: Radix UI não permite `<SelectItem value="">`, causa erro.
 
 **Solução**: Usar `value="none"` e converter:
+
 ```tsx
 <Select
   value={formData.id_quadra || 'none'}
@@ -175,17 +189,21 @@ Adicionado em `Sidebar.tsx` → Agendamentos → Sessões Personal
 ```
 
 ### 2. Layout "Colado"
+
 **Problema**: Conteúdo das páginas colado nas bordas.
 
 **Solução**: Adicionado `p-6` no `<main>` do Layout.tsx:
+
 ```tsx
 <main className="flex-1 overflow-auto p-6">
 ```
 
 ### 3. Tipos do Service
+
 **Problema**: Type mismatch entre service e component.
 
 **Solução**: Service retorna objeto paginate completo:
+
 ```typescript
 return await apiClient.get<{
   data: PersonalSession[];
@@ -201,9 +219,11 @@ return await apiClient.get<{
 ## 🎨 Refatoração: Estrutura de Pastas
 
 ### Problema
+
 Páginas admin estavam todas soltas na raiz, dificultando manutenção.
 
 ### Solução
+
 Organizadas por contexto em subpastas:
 
 ```
@@ -223,6 +243,7 @@ pages/admin/
 ```
 
 ### Benefícios
+
 - ✅ Escalabilidade: Fácil adicionar componentes específicos
 - ✅ Manutenibilidade: Código relacionado fica junto
 - ✅ Organização: Estrutura clara por contexto
@@ -236,11 +257,13 @@ pages/admin/
 ### 1. Backend (via API)
 
 #### Executar Seeder
+
 ```bash
 docker-compose exec api php artisan db:seed --class=SessaoPersonalSeeder
 ```
 
 #### Verificar Dados no Banco
+
 ```sql
 -- Via psql
 docker-compose exec db psql -U fitway_user -d fitway_db
@@ -255,6 +278,7 @@ ORDER BY sp.inicio DESC;
 ```
 
 #### Testar Endpoints (Postman/Insomnia)
+
 ```bash
 # 1. Listar sessões
 GET http://localhost:8000/api/personal-sessions
@@ -288,6 +312,7 @@ Body:
 ### 2. Frontend (via Navegador)
 
 #### Acessar Página
+
 1. Login como admin: `http://localhost:5173/login`
    - Email: `admin@fitway.com`
    - Senha: `admin123`
@@ -296,16 +321,17 @@ Body:
    - URL: `http://localhost:5173/admin/sessoes-personal`
 
 #### Testar CRUD
+
 1. **Listar**: Deve mostrar as 12 sessões seedadas
-2. **Filtrar**: 
+2. **Filtrar**:
    - Status: "Pendente" → 4 sessões
    - Período: "Futuras" → 7 sessões
-3. **Criar**: 
+3. **Criar**:
    - Clicar em "Nova Sessão"
    - Preencher: Instrutor, Aluno, Horários
    - Adicionar quadra (opcional)
    - Sistema verifica disponibilidade automaticamente
-4. **Confirmar**: 
+4. **Confirmar**:
    - Clicar no ✓ em uma sessão pendente
    - Status muda para "Confirmada"
 5. **Editar**:
@@ -318,6 +344,7 @@ Body:
    - Status muda para "Cancelada"
 
 #### Testar Validações
+
 1. **Conflito de Instrutor**:
    - Tentar criar 2 sessões com mesmo instrutor no mesmo horário
    - Deve mostrar: "O instrutor já possui outra sessão agendada neste horário"
@@ -335,7 +362,9 @@ Body:
    - Deve mostrar: "O horário solicitado está fora da disponibilidade do instrutor"
 
 #### Debug (DevTools Console)
+
 Abrir F12 → Console, deve mostrar:
+
 ```
 🔑 Token: Presente ✅
 📊 Sessions Data: {data: [...], current_page: 1, total: 12}
@@ -349,21 +378,28 @@ Abrir F12 → Console, deve mostrar:
 ## 📝 Lições Aprendidas
 
 ### 1. Validações em Cascata
+
 Implementar validações de negócio no Service, não no Controller:
+
 - Permite reutilização
 - Facilita testes
 - Mantém Controller limpo
 
 ### 2. Anti-Overlap Multi-Tabela
+
 Para validar conflito de quadra, verificar:
+
 - `reservas_quadra` (reservas diretas)
 - `sessoes_personal` (outras sessões usando a quadra)
 
 ### 3. Radix UI Select Requirements
+
 `<SelectItem value="">` é proibido. Usar string única como `"none"` ou `"null"`.
 
 ### 4. Barrel Exports
+
 Criar `index.ts` em cada pasta facilita imports:
+
 ```typescript
 // index.ts
 export { default } from './Component';
@@ -373,7 +409,9 @@ import Component from './path/to/folder';
 ```
 
 ### 5. Organização por Contexto
+
 Estrutura de pastas por módulo (cadastros, agendamentos) facilita:
+
 - Encontrar código relacionado
 - Adicionar novos componentes específicos
 - Manter projeto escalável
@@ -383,6 +421,7 @@ Estrutura de pastas por módulo (cadastros, agendamentos) facilita:
 ## 🚀 Próximos Passos
 
 ### Melhorias Futuras
+
 1. **Notificações**: Email/SMS para confirmação de sessão
 2. **Pagamentos**: Integração com gateway (Stripe/PagSeguro)
 3. **Recorrência**: Agendar sessões recorrentes (semanais)
@@ -390,6 +429,7 @@ Estrutura de pastas por módulo (cadastros, agendamentos) facilita:
 5. **Avaliações**: Aluno avaliar instrutor após sessão
 
 ### Fase 9 (Próxima)
+
 **Reservas de Quadra** - Sistema público de reserva de quadras por horário.
 
 ---
@@ -402,6 +442,7 @@ Estrutura de pastas por módulo (cadastros, agendamentos) facilita:
 ### 🎯 Objetivo da Integração
 
 Implementar integração automática entre **Sessões Personal** e **Reservas de Quadra**:
+
 - Quando uma sessão personal **usa uma quadra**, deve criar automaticamente uma **reserva de quadra** vinculada
 - Garantir sincronização: atualizar/deletar reserva quando sessão muda/cancela
 - Evitar duplicação de lógica de anti-overlap
@@ -432,6 +473,7 @@ Schema::table('reservas_quadra', function (Blueprint $table) {
 #### 2. Models Atualizados
 
 **`ReservaQuadra.php`**:
+
 ```php
 // Fillable
 protected $fillable = [
@@ -454,6 +496,7 @@ public function sessaoPersonal()
 ```
 
 **`SessaoPersonal.php`**:
+
 ```php
 // Relacionamento
 public function reservaQuadra()
@@ -465,6 +508,7 @@ public function reservaQuadra()
 #### 3. Service - Auto-Gestão de Reservas (`SessaoPersonalService.php`)
 
 **criarSessao()** - Cria reserva automaticamente se tiver quadra:
+
 ```php
 public function criarSessao(array $dados): SessaoPersonal
 {
@@ -483,6 +527,7 @@ public function criarSessao(array $dados): SessaoPersonal
 ```
 
 **atualizarSessao()** - Gerencia reserva em 3 cenários:
+
 ```php
 public function atualizarSessao(SessaoPersonal $sessao, array $dados): SessaoPersonal
 {
@@ -513,6 +558,7 @@ public function atualizarSessao(SessaoPersonal $sessao, array $dados): SessaoPer
 ```
 
 **Métodos Privados de Gestão**:
+
 ```php
 private function criarReservaAutomatica(SessaoPersonal $sessao): void
 {
@@ -581,10 +627,12 @@ public function destroy($id)
 #### 1. Mapeamento de `dia_semana`
 
 **Problema**: `verificarDisponibilidadeSemanal()` estava mapeando errado:
+
 - Carbon: `0=Sunday, 1=Monday, ..., 6=Saturday`
 - Banco: `1=Segunda, 2=Terça, ..., 7=Domingo` (ISO 8601)
 
 **Corrigido**:
+
 ```php
 $diaSemanaCarbon = $inicio->dayOfWeek; // 0=Sunday, 1=Monday, ..., 6=Saturday
 $diaSemana = $diaSemanaCarbon === 0 ? 7 : $diaSemanaCarbon; // 1=Segunda, 7=Domingo
@@ -595,6 +643,7 @@ $diaSemana = $diaSemanaCarbon === 0 ? 7 : $diaSemanaCarbon; // 1=Segunda, 7=Domi
 **Problema**: `atualizarReservaAutomatica()` tentava UPDATE id_quadra=NULL, mas coluna tem NOT NULL constraint.
 
 **Solução**: Deletar reserva ao invés de atualizar para NULL:
+
 ```php
 elseif (!$sessao->id_quadra && $reserva) {
     $reserva->delete(); // ← DELETE ao invés de UPDATE
@@ -649,17 +698,20 @@ TESTE: Integração Fase 8 - Auto-Reserva
 #### Cascade Delete
 
 Configurado na FK:
+
 ```php
 ->onDelete('cascade')
 ```
 
 **Comportamento**:
+
 - Se `SessaoPersonal` for deletada (hard delete) → `ReservaQuadra` vinculada é deletada automaticamente
 - Se `SessaoPersonal` for cancelada (soft delete) → Usamos `destroy()` do Controller para sincronizar status
 
 #### Validação de Anti-Overlap
 
 O Service já validava conflitos de quadra contra:
+
 1. Outras sessões personal na mesma quadra
 2. Reservas de quadra diretas
 
@@ -683,6 +735,7 @@ POST /api/personal-sessions
 ```
 
 **Resultado**:
+
 - ✅ Sessão criada
 - ❌ Nenhuma reserva criada (id_quadra null)
 
@@ -700,6 +753,7 @@ POST /api/personal-sessions
 ```
 
 **Resultado**:
+
 - ✅ Sessão criada (id_sessao_personal: 27)
 - ✅ Reserva criada automaticamente:
   - `id_sessao_personal: 27`
@@ -716,6 +770,7 @@ PATCH /api/personal-sessions/27
 ```
 
 **Resultado**:
+
 - ✅ Validação de disponibilidade da nova quadra
 - ✅ Reserva antiga (quadra 2) deletada
 - ✅ Reserva nova (quadra 3) criada
@@ -727,6 +782,7 @@ DELETE /api/personal-sessions/27
 ```
 
 **Resultado**:
+
 - ✅ Sessão: `status = 'cancelada'`
 - ✅ Reserva vinculada: `status = 'cancelada'` (sincronizado pelo Controller)
 
@@ -737,6 +793,7 @@ DELETE /api/personal-sessions/27
 #### 1. **Transações DB são essenciais**
 
 Usar `DB::transaction()` garante atomicidade:
+
 - Se criar sessão falha, não cria reserva órfã
 - Se criar reserva falha, rollback da sessão
 
@@ -804,6 +861,7 @@ docker-compose exec db psql -U fitway_user -d fitway_db -c "
 ✅ **Integração Fase 8 100% COMPLETA!**
 
 **Impacto**:
+
 - Sessões personal com quadra agora bloqueiam automaticamente a quadra
 - Evita conflitos de reserva (anti-overlap funciona corretamente)
 - Sincronização automática entre sessão ↔ reserva

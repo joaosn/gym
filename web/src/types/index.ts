@@ -450,3 +450,132 @@ export interface AssinaturaFormData {
   proximo_vencimento?: string;
   renova_automatico?: boolean;
 }
+
+// =====================================================================
+// PAGAMENTOS (PAYMENTS)
+// =====================================================================
+export interface Cobranca {
+  id_cobranca: string;
+  id_usuario: string;
+  referencia_tipo: 'assinatura' | 'reserva_quadra' | 'sessao_personal' | 'inscricao_aula';
+  referencia_id: string;
+  valor_total: number;
+  valor_pago: number;
+  moeda: string; // 'BRL', 'USD'
+  status: 'pendente' | 'parcialmente_pago' | 'pago' | 'cancelado' | 'estornado';
+  descricao: string;
+  vencimento: string; // ISO date
+  observacoes?: string;
+  criado_em: string;
+  atualizado_em: string;
+  // Relacionamentos (eager loaded)
+  usuario?: AdminUser;
+  parcelas?: CobrancaParcela[];
+  assinatura?: Assinatura;
+  reserva_quadra?: CourtBooking;
+  sessao_personal?: PersonalSession;
+  inscricao_aula?: InscricaoAula;
+}
+
+export interface CobrancaParcela {
+  id_parcela: string;
+  id_cobranca: string;
+  numero_parcela: number;
+  total_parcelas: number;
+  valor: number;
+  valor_pago: number;
+  status: 'pendente' | 'pago' | 'cancelado';
+  vencimento: string; // ISO date
+  pago_em?: string; // ISO date
+  criado_em: string;
+  atualizado_em: string;
+  // Relacionamentos
+  cobranca?: Cobranca;
+  pagamentos?: Pagamento[];
+}
+
+export interface Pagamento {
+  id_pagamento: string;
+  id_parcela: string;
+  provedor: 'mercadopago' | 'stripe' | 'pix' | 'boleto' | 'simulacao';
+  metodo?: string; // 'pix', 'credit_card', 'debit_card', 'boleto'
+  id_transacao_ext?: string;
+  id_pagamento_ext?: string;
+  valor: number;
+  status: 'pendente' | 'processando' | 'aprovado' | 'recusado' | 'cancelado' | 'estornado' | 'expirado';
+  url_checkout?: string;
+  qr_code?: string;
+  payload_json?: Record<string, any>;
+  erro_mensagem?: string;
+  aprovado_em?: string;
+  expirado_em?: string;
+  criado_em: string;
+  atualizado_em: string;
+  // Relacionamentos
+  parcela?: CobrancaParcela;
+  webhooks?: WebhookPagamento[];
+}
+
+export interface WebhookPagamento {
+  id_webhook: string;
+  id_pagamento: string;
+  provedor: string;
+  tipo_evento: string;
+  id_evento_externo: string;
+  payload_json: Record<string, any>;
+  processado: boolean;
+  processado_em?: string;
+  criado_em: string;
+  // Relacionamento
+  pagamento?: Pagamento;
+}
+
+export interface CheckoutRequest {
+  provedor?: 'simulacao' | 'mercadopago' | 'stripe' | 'pix' | 'boleto';
+  metodo?: string;
+}
+
+export interface CheckoutResponse {
+  pagamento: Pagamento;
+  url_checkout?: string;
+  qr_code?: string;
+}
+
+export interface PaymentHistoryFilters {
+  status?: 'all' | 'pendente' | 'pago' | 'cancelado';
+  page?: number;
+  per_page?: number;
+}
+
+export interface AdminPaymentFilters {
+  status?: 'all' | 'pendente' | 'parcialmente_pago' | 'pago' | 'cancelado' | 'estornado';
+  tipo?: 'all' | 'assinatura' | 'reserva_quadra' | 'sessao_personal' | 'inscricao_aula';
+  search?: string;
+  page?: number;
+  per_page?: number;
+}// =====================================================================
+// NOTIFICAÇÕES
+// =====================================================================
+export interface Notificacao {
+  id_notificacao: string;
+  id_usuario: string;
+  tipo: 'cobranca' | 'pagamento' | 'sessao' | 'reserva' | 'aula' | 'assinatura' | 'sistema';
+  titulo: string;
+  mensagem: string;
+  lida: boolean;
+  data_leitura?: string;
+  link?: string;
+  criado_em: string;
+}
+
+export interface NotificacaoFormData {
+  id_usuario: string;
+  tipo: 'cobranca' | 'pagamento' | 'sessao' | 'reserva' | 'aula' | 'assinatura' | 'sistema';
+  titulo: string;
+  mensagem: string;
+  link?: string;
+}
+
+export interface NotificacaoFilters {
+  lida?: 'true' | 'false' | 'all';
+}

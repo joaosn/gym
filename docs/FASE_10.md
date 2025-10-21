@@ -8,6 +8,7 @@
 ## 🎯 Objetivo
 
 Implementar sistema completo de **Aulas em Grupo** com:
+
 - Admin cria aulas (templates)
 - Admin configura horários semanais recorrentes
 - Admin gera ocorrências no calendário
@@ -49,6 +50,7 @@ graph LR
    - Quinta-feira às 19:00 (Instrutor Ana, Quadra 2)
 
 3. **Admin gera ocorrências** (01/11 a 30/11):
+
    ```
    → 05/11/2025 19:00 (Terça) - Instrutor Carlos
    → 07/11/2025 19:00 (Quinta) - Instrutor Ana
@@ -71,6 +73,7 @@ graph LR
 #### 1. Models (4 arquivos)
 
 **`app/Models/Aula.php`**
+
 ```php
 // Template da aula
 fillable: nome, esporte, nivel, duracao_min, capacidade_max, preco_unitario, descricao, requisitos, status
@@ -78,6 +81,7 @@ relationships: hasMany(horarios), hasMany(ocorrencias), hasMany(inscricoes)
 ```
 
 **`app/Models/HorarioAula.php`**
+
 ```php
 // Configuração semanal recorrente
 fillable: id_aula, id_instrutor, id_quadra, dia_semana (1-7), hora_inicio
@@ -85,6 +89,7 @@ relationships: belongsTo(aula), belongsTo(instrutor), belongsTo(quadra)
 ```
 
 **`app/Models/OcorrenciaAula.php`**
+
 ```php
 // Aula real no calendário
 fillable: id_aula, id_instrutor, id_quadra, inicio, fim, status
@@ -93,6 +98,7 @@ attributes: numero_inscritos, is_cheia
 ```
 
 **`app/Models/InscricaoAula.php`**
+
 ```php
 // Inscrição do aluno em uma ocorrência
 fillable: id_ocorrencia_aula, id_aula, id_usuario, status
@@ -102,6 +108,7 @@ relationships: belongsTo(ocorrencia), belongsTo(aula), belongsTo(usuario)
 #### 2. Controllers (4 arquivos)
 
 **`AulaController`** - CRUD de aulas
+
 - `index()` - Listar com filtros (status, esporte, nivel, search), eager loading de counts
 - `store()` - Criar aula (validação: duracao_min 15-240, capacidade_max 1-50)
 - `show()` - Detalhes da aula com horários
@@ -109,18 +116,21 @@ relationships: belongsTo(ocorrencia), belongsTo(aula), belongsTo(usuario)
 - `destroy()` - Soft delete (status='inativa')
 
 **`HorarioAulaController`** - CRUD de horários semanais
+
 - `index()` - Listar horários de uma aula
 - `store()` - Criar horário semanal (validação anti-duplicação)
 - `update()` - Atualizar horário
 - `destroy()` - Remover horário
 
 **`OcorrenciaAulaController`** - Geração e listagem de ocorrências
+
 - `index()` - Listar ocorrências (filtros: id_aula, id_instrutor, data_inicio, data_fim, apenas_futuras)
 - `show()` - Detalhes da ocorrência com inscrições
 - `gerar()` - **Gera ocorrências automaticamente** baseado em horários semanais
 - `cancelar()` - Cancelar ocorrências futuras de uma aula
 
 **`InscricaoAulaController`** - Inscrições de alunos
+
 - `minhasInscricoes()` - Listar inscrições do aluno logado
 - `inscrever()` - Inscrever em ocorrência (valida capacidade)
 - `cancelar()` - Cancelar inscrição
@@ -162,6 +172,7 @@ private function temConflito(...)
 ```
 
 **Anti-Overlap Logic**:
+
 - Valida conflito de **instrutor** (não pode estar em 2 lugares)
 - Valida conflito de **quadra** (não pode ter 2 aulas simultâneas)
 - Pula ocorrências conflitantes (conta em "puladas")
@@ -190,6 +201,7 @@ Total: 14 horários semanais criados
 #### 5. Rotas API
 
 **Admin Routes** (`/api/admin/*`):
+
 ```php
 // CRUD Aulas
 GET    /admin/classes
@@ -213,6 +225,7 @@ GET    /admin/class-enrollments
 ```
 
 **Public Routes** (`/api/*`):
+
 ```php
 // Aluno visualiza aulas
 GET /classes
@@ -277,6 +290,7 @@ ClassEnrollmentsService:
 ```
 
 **Normalization Pattern**:
+
 ```typescript
 const normalizeAula = (aula: any): Aula => ({
   id_aula: String(aula.id_aula),
@@ -288,6 +302,7 @@ const normalizeAula = (aula: any): Aula => ({
 #### 3. Páginas Admin
 
 **`Classes.tsx`** (360 linhas) - Lista de aulas
+
 - Stats cards: Total, Ativas, Horários Configurados, Esportes
 - Filtros: Search (debounced), Status, Esporte, Nível
 - Cards com detalhes da aula
@@ -298,18 +313,21 @@ const normalizeAula = (aula: any): Aula => ({
   - **Deletar** (soft delete com confirmação)
 
 **`AddClass.tsx`** (240 linhas) - Criar aula
+
 - Form com validação
 - Campos: nome, esporte, nivel, duracao_min, capacidade_max, preco_unitario, descricao, requisitos
 - Submit → `classesService.create()`
 - Loading state + Toast feedback
 
 **`EditClass.tsx`** (295 linhas) - Editar aula
+
 - useEffect para carregar aula existente
 - Pre-popula formulário
 - Submit → `classesService.update(id, data)`
 - Campo adicional: Status (ativa/inativa)
 
 **`ClassSchedules.tsx`** (380 linhas) - Configurar horários semanais
+
 - Layout 2 colunas (form + tabela)
 - Form para adicionar horário:
   - Dia da semana (1-7 → Segunda-Domingo)
@@ -320,6 +338,7 @@ const normalizeAula = (aula: any): Aula => ({
 - Ações: Deletar horário (com confirmação)
 
 **`GenerateOccurrences.tsx`** (305 linhas) - Gerar ocorrências
+
 - Date range picker (data_inicio, data_fim)
 - Alertas informativos:
   - Explicação do processo
@@ -359,11 +378,11 @@ docker-compose exec db psql -U fitway_user -d fitway_db -c "SELECT * FROM horari
 
 ### 2. Testar CRUD de Aulas
 
-1. Login como admin: http://localhost:5173/login
+1. Login como admin: <http://localhost:5173/login>
    - Email: `admin@fitway.com`
    - Senha: `admin123`
 
-2. Navegar para Aulas: http://localhost:5173/admin/aulas
+2. Navegar para Aulas: <http://localhost:5173/admin/aulas>
 
 3. **Criar aula**:
    - Clicar "Nova Aula"
@@ -404,6 +423,7 @@ docker-compose exec db psql -U fitway_user -d fitway_db -c "SELECT * FROM horari
    - Quantos conflitos foram detectados
 
 **Exemplo de Resultado**:
+
 ```
 ✅ 12 Ocorrências Criadas
 ⚠️ 2 Conflitos Detectados
@@ -422,9 +442,11 @@ docker-compose exec db psql -U fitway_user -d fitway_db -c "SELECT id_ocorrencia
 ## 🐛 Bugs Corrigidos Durante Implementação
 
 ### 1. Rota `/api/courts` retornando 404
+
 **Problema**: `courtsService.getCourts()` chamava `/courts` mas rota é `/admin/courts`
 
 **Solução**:
+
 ```typescript
 // web/src/services/courts.service.ts
 async getCourts(): Promise<Court[]> {
@@ -434,9 +456,11 @@ async getCourts(): Promise<Court[]> {
 ```
 
 ### 2. SelectItem com value vazio
+
 **Problema**: Shadcn/ui não aceita `<SelectItem value="">`, causava erro de validação
 
 **Solução**: Usar `value="livre"` e converter para `undefined` no handler:
+
 ```tsx
 <Select 
   value={formData.nivel || 'livre'} 
@@ -451,9 +475,11 @@ async getCourts(): Promise<Court[]> {
 ```
 
 ### 3. Tipos de IDs inconsistentes
+
 **Problema**: Backend retorna `id_aula` como `number`, frontend precisa `string` para Select
 
 **Solução**: Normalization functions em todos os services:
+
 ```typescript
 const normalizeAula = (aula: any): Aula => ({
   id_aula: String(aula.id_aula),
@@ -466,22 +492,26 @@ const normalizeAula = (aula: any): Aula => ({
 ## 📝 Lições Aprendidas
 
 ### 1. Geração de Ocorrências é Complexa
+
 - Precisa calcular datas corretamente (Carbon `dayOfWeekIso`)
 - Precisa validar anti-overlap (instrutor E quadra)
 - Precisa ser transacional (rollback em caso de erro)
 - Service layer é essencial para essa lógica
 
 ### 2. Shadcn/ui Select é Rigoroso
+
 - Nunca use `value=""` em SelectItem
 - Sempre use placeholder para opção vazia
 - Converta `undefined` ↔ string especial ('livre', 'all')
 
 ### 3. Normalização é Crítica
+
 - Backend retorna IDs como `number`
 - Frontend Select precisa `string`
 - Criar funções `normalize*()` em TODOS os services
 
 ### 4. UX da Geração de Ocorrências
+
 - Mostrar alerta se não há horários configurados
 - Exibir resultado detalhado (criadas vs puladas)
 - Usar cards coloridos (verde/amarelo) para feedback visual
@@ -495,6 +525,7 @@ const normalizeAula = (aula: any): Aula => ({
 **`StudentClasses.tsx`** - Página do aluno para ver e se inscrever em aulas:
 
 **Features**:
+
 - Listar aulas ativas
 - Filtrar por esporte/nível
 - Ver próximas ocorrências de cada aula
@@ -505,6 +536,7 @@ const normalizeAula = (aula: any): Aula => ({
 **Rota**: `/aluno/aulas`
 
 **API Calls**:
+
 - `classesService.list({ status: 'ativa' })`
 - `classOccurrencesService.list({ apenas_futuras: true, id_aula })`
 - `classEnrollmentsService.enroll({ id_ocorrencia_aula, id_aula })`

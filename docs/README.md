@@ -7,6 +7,7 @@
 ## 🎯 Comece Aqui
 
 ### **[PLANO_DE_ACAO.md](./PLANO_DE_ACAO.md)** ← Guia Principal
+
 - 📊 Status do projeto (7 fases concluídas)
 - 🗺️ Roadmap (próximas 6 fases)
 - ✅ Checklist de implementação

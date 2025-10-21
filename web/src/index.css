@@ -131,3 +131,53 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Fix z-index hierarchy for overlays */
+@layer utilities {
+  /* Popper wrapper precisa estar acima do Dialog (resolve stacking context do transform) */
+  [data-radix-popper-content-wrapper] { z-index: 300 !important; }
+  
+  /* Dialogs e AlertDialogs (overlay:200, content:210) */
+  [data-radix-dialog-overlay] { z-index: 200 !important; }
+  [data-radix-dialog-content] { z-index: 210 !important; }
+  
+  /* Select dropdowns (acima do dialog content e outros poppers) */
+  [role="listbox"],
+  [data-radix-select-content] { z-index: 300 !important; }
+  
+  /* Select viewport wrapper */
+  [data-radix-select-viewport] { position: relative !important; z-index: 1 !important; }
+  
+  /* Select trigger */
+  [data-radix-select-trigger] { position: relative !important; z-index: 1 !important; }
+  
+  /* Toasts devem ficar acima de tudo */
+  [data-sonner-toaster] { z-index: 1000 !important; }
+}
+
+/* Garantir que Portal do Select sempre renderiza acima */
+@layer base {
+  /* Radix generic portal baseline (não competir com Select/Toast) */
+  [data-radix-portal] { z-index: auto; }
+}
+
+/* Melhorar visibilidade do DropdownMenu */
+@layer components {
+  [data-radix-dropdown-menu-content] {
+    background: hsl(var(--card)) !important;
+    border: 2px solid hsl(var(--border)) !important;
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.8),
+                0 0 20px rgba(0, 204, 102, 0.15) !important;
+  }
+  
+  /* Dialog não deve cortar Selects - overflow só no conteúdo interno */
+  [data-radix-dialog-content] {
+    overflow: visible !important;
+  }
+  
+  /* Scroll no conteúdo do Dialog, não no Dialog em si */
+  [data-radix-dialog-content] > div {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}

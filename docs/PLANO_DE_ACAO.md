@@ -1,7 +1,7 @@
 # 🎯 Plano de Ação: Fitway - Desenvolvimento Full Stack
 
-**Última Atualização**: 19 de outubro de 2025  
-**Versão**: 2.3 (Fase 11 Concluída - Assinaturas)
+**Última Atualização**: 21 de outubro de 2025  
+**Versão**: 2.4 (Fase 12 Concluída - Pagamentos)
 
 ---
 
@@ -23,7 +23,7 @@
 
 ---
 
-## ✅ FASES CONCLUÍDAS (11 fases + 2 refatorações)
+## ✅ FASES CONCLUÍDAS (12 fases + 2 refatorações)
 
 | # | Feature | Backend | Frontend | Doc |
 |---|---------|---------|----------|-----|
@@ -39,6 +39,7 @@
 | **9** | **Reservas de Quadras** | ReservaQuadraController, 8 endpoints, 3 validações | CourtBookings.tsx (3 páginas), ApiError pattern | [📄](./FASE_9.md) |
 | **10** | **Aulas em Grupo** | 4 Models, 4 Controllers, OcorrenciaAulaService | 8 páginas, dual enrollment flow, deletion system | [📄](./FASE_10.md) |
 | **11** | **Assinaturas** | AssinaturaController (6 endpoints), EventoAssinatura | Subscriptions.tsx (admin), MyPlan.tsx (aluno) | [📄](./FASE_11.md) |
+| **12** | **Pagamentos (MP)** | CRUD cobranças, Checkout MP, Webhook | Admin Payments, Student History/Checkout | [📄](./FASE_12.md) |
 
 ### 🎯 Achievements
 
@@ -216,34 +217,9 @@
 
 ---
 
-### 📅 Fase 12: Pagamentos (Básico)
+### ✅ Fase 12: Pagamentos (CONCLUÍDA)
 
-**Objetivo**: Registrar pagamentos (simulação ou integração real).
-
-**Por quê agora?**
-
-- Monetização do sistema
-- Conecta com Assinaturas, Reservas, Sessões
-
-**Backend**:
-
-- [ ] Models: `Pagamento`, `ItemPagamento`, `WebhookPagamento`
-- [ ] `PagamentoController`
-  - `store()` criar checkout (assinatura/reserva/sessão)
-  - `webhook()` receber notificações do gateway
-- [ ] Integrações (opcional):
-  - Stripe, Mercado Pago, PagSeguro
-- [ ] Routes:
-  - POST `/payments/checkout`
-  - POST `/payments/webhook` (público)
-
-**Frontend**:
-
-- [ ] `CheckoutPage.tsx` (simulação ou formulário real)
-- [ ] Student: `PaymentHistory.tsx` (histórico)
-- [ ] Types: `Payment`, `PaymentItem`
-
-**Tempo Estimado**: 4-5 dias
+Veja o documento da fase: [FASE_12.md](./FASE_12.md) e o guia: [guia-mercado-pago.md](./guia-mercado-pago.md).
 
 ---
 
@@ -309,7 +285,7 @@
 - [ ] Filtros com `value="all"` (não "")
 - [ ] Testado no navegador (<http://localhost:5173>)
 
-### Documentação
+### Documentação e Guias
 
 - [ ] Criar `docs/FASE_X_CONCLUIDA.md` com:
   - Arquivos criados/modificados

@@ -2,13 +2,14 @@
 
 **Data:** 15 de outubro de 2025  
 **Status:** ✅ Backend + Frontend 100% funcional  
-**Testado:** Sim (http://localhost:5173/admin/instrutores)
+**Testado:** Sim (<http://localhost:5173/admin/instrutores>)
 
 ---
 
 ## 📋 Resumo da Implementação
 
 Implementação completa do CRUD de **Personal Trainers/Instrutores** com:
+
 - ✅ Cadastro de instrutores (com ou sem conta de usuário)
 - ✅ Gerenciamento de disponibilidades semanais
 - ✅ Especialidades customizáveis
@@ -58,6 +59,7 @@ Implementação completa do CRUD de **Personal Trainers/Instrutores** com:
 
 6. **`api/routes/api.php`** ✅
    - **8 rotas explícitas** registradas:
+
      ```
      GET    /api/admin/instructors
      POST   /api/admin/instructors
@@ -126,6 +128,7 @@ Implementação completa do CRUD de **Personal Trainers/Instrutores** com:
 ## 🎯 Lógica de Cadastro (2 Formas)
 
 ### **Forma 1: Instrutor SEM conta de usuário** (Padrão)
+
 - ✅ Cadastra apenas na tabela `instrutores`
 - ✅ `id_usuario = NULL`
 - ✅ Aparece na listagem para alunos agendarem
@@ -133,6 +136,7 @@ Implementação completa do CRUD de **Personal Trainers/Instrutores** com:
 - **Exemplo:** Ana Paula Santos, Maria Costa
 
 ### **Forma 2: Instrutor COM conta de usuário** (Opcional)
+
 - ✅ Marcar checkbox **"Criar conta de acesso ao sistema"** no formulário
 - ✅ Preencher campo **Senha**
 - ✅ Backend cria 2 registros:
@@ -147,11 +151,13 @@ Implementação completa do CRUD de **Personal Trainers/Instrutores** com:
 ## 🧪 Como Testar
 
 ### 1. Verificar dados no banco
+
 ```powershell
 docker-compose exec -T db psql -U fitway_user -d fitway_db -c "SELECT id_instrutor, nome, email, valor_hora, status, id_usuario FROM instrutores;"
 ```
 
 **Resultado esperado:**
+
 ```
  id_instrutor |       nome        |          email           | valor_hora |  status  | id_usuario 
 --------------+-------------------+--------------------------+------------+----------+------------
@@ -162,6 +168,7 @@ docker-compose exec -T db psql -U fitway_user -d fitway_db -c "SELECT id_instrut
 ```
 
 ### 2. Testar API
+
 ```bash
 # Listar todos (precisa token de admin)
 curl -H "Authorization: Bearer SEU_TOKEN" http://localhost:8000/api/admin/instructors
@@ -174,6 +181,7 @@ curl -H "Authorization: Bearer SEU_TOKEN" http://localhost:8000/api/admin/instru
 ```
 
 ### 3. Testar Frontend
+
 1. Login: `admin@fitway.com / admin123`
 2. Acesse: `http://localhost:5173/admin/instrutores`
 3. Verifique:
@@ -185,6 +193,7 @@ curl -H "Authorization: Bearer SEU_TOKEN" http://localhost:8000/api/admin/instru
    - ✅ Busca por nome funciona
 
 ### 4. Testar CRUD
+
 - **Criar:** Novo Instrutor → Preencher campos → SEM marcar "Criar conta" → Criar ✅
 - **Criar com usuário:** Novo Instrutor → Marcar "Criar conta" → Senha → Criar ✅
 - **Editar:** Editar → Mudar especialidades → Salvar ✅
@@ -233,11 +242,13 @@ curl -H "Authorization: Bearer SEU_TOKEN" http://localhost:8000/api/admin/instru
 ## 🐛 Bugs Corrigidos
 
 ### Bug 1: Select.Item com value vazio
+
 **Erro:** `A <Select.Item /> must have a value prop that is not an empty string`
 
 **Causa:** Filtros iniciavam com `""` e SelectItem tinha `value=""`
 
 **Solução:**
+
 - Mudou filtros iniciais para `"all"`
 - Mudou SelectItem de `value=""` para `value="all"`
 - Adicionou lógica para filtrar apenas quando `!= "all"`
@@ -287,6 +298,7 @@ Start-Process "http://localhost:5173/admin/instrutores"
 Durante esta fase, também **unificamos o papel** `'personal'` como `'instrutor'` em todo o sistema.
 
 ### Database (PostgreSQL)
+
 ```sql
 -- CHECK Constraint atualizado
 ALTER TABLE usuarios DROP CONSTRAINT IF EXISTS usuarios_papel_check;
@@ -295,11 +307,13 @@ ALTER TABLE usuarios ADD CONSTRAINT usuarios_papel_check
 ```
 
 ### Backend (Laravel)
+
 - ✅ **Seeder atualizado**: `UserSeeder.php`
   - Removido usuário `personal@fitway.com` com papel `'personal'`
   - Criado usuário `instrutor@fitway.com` com papel `'instrutor'`
 
 ### Frontend (React)
+
 - ✅ **Types atualizados**: `papel: 'admin' | 'aluno' | 'instrutor'`
 - ✅ **Rotas atualizadas**: `/personal/*` → `/instrutor/*`
 - ✅ **ProtectedRoute**: `allowedRoles={['instrutor']}`

@@ -11,6 +11,17 @@ use Illuminate\Support\Facades\DB;
 
 class SessaoPersonalService
 {
+    protected PagamentoService $pagamentoService;
+    protected NotificacaoService $notificacaoService;
+
+    public function __construct(
+        PagamentoService $pagamentoService,
+        NotificacaoService $notificacaoService
+    ) {
+        $this->pagamentoService = $pagamentoService;
+        $this->notificacaoService = $notificacaoService;
+    }
+
     /**
      * Validar se o instrutor está disponível no horário solicitado
      * E se a quadra (se informada) está disponível
@@ -226,7 +237,7 @@ class SessaoPersonalService
 
         // Criar sessão dentro de uma transação (para garantir atomicidade)
         return DB::transaction(function () use ($dados, $inicio, $fim, $preco, $idQuadra, $idUsuario) {
-            // 1. Criar sessão
+            // 1. Criar sessão com status 'pendente' (aguardando pagamento)
             $sessao = SessaoPersonal::create([
                 'id_instrutor' => $dados['id_instrutor'],
                 'id_usuario' => $idUsuario,
@@ -238,10 +249,35 @@ class SessaoPersonalService
                 'observacoes' => $dados['observacoes'] ?? null,
             ]);
 
-            // 2. Se tem quadra, criar reserva automática
+            // 2. Criar cobrança
+            $instrutor = Instrutor::with('usuario')->find($dados['id_instrutor']);
+            $descricao = "Sessão Personal com {$instrutor->nome} em {$inicio->format('d/m/Y H:i')}";
+            
+            $cobranca = $this->pagamentoService->criarCobranca(
+                $idUsuario,
+                'sessao_personal',
+                $sessao->id_sessao_personal,
+                $preco,
+                $descricao,
+                Carbon::parse($dados['inicio'])->subDay() // Vencimento 1 dia antes da sessão
+            );
+
+            // 3. Criar notificação
+            $parcela = $cobranca->parcelas->first();
+            $this->notificacaoService->notificarNovaCobranca(
+                $idUsuario,
+                $descricao,
+                $preco,
+                "/aluno/checkout/{$parcela->id_parcela}"
+            );
+
+            // 4. Se tem quadra, criar reserva automática
             if ($idQuadra) {
                 $this->criarReservaAutomatica($sessao);
             }
+
+            // Carregar relacionamentos para retorno
+            $sessao->cobranca = $cobranca->load('parcelas');
 
             return $sessao;
         });

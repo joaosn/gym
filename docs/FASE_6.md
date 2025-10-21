@@ -9,12 +9,14 @@
 ## 🎯 Motivação
 
 ### Problemas do Hard Delete
+
 - ❌ **Perda permanente de dados**: Não há como recuperar registros excluídos
 - ❌ **Quebra de integridade referencial**: Foreign keys ficam inválidas
 - ❌ **Impossível auditar**: Não há rastro de quando/quem excluiu
 - ❌ **Risco de erros**: Exclusões acidentais são irreversíveis
 
 ### Benefícios do Soft Delete
+
 - ✅ **Preservação de dados**: Registros permanecem no banco
 - ✅ **Auditoria completa**: Histórico de todas as ações
 - ✅ **Recuperação possível**: Basta mudar o status de volta
@@ -26,11 +28,13 @@
 ## 📋 Escopo da Implementação
 
 ### Tabelas Afetadas
+
 1. **planos** - Planos de assinatura
 2. **usuarios** - Usuários do sistema (admin, aluno, personal, instrutor)
 3. **instrutores** - Personal trainers/instrutores
 
 ### Estratégia Escolhida
+
 - Usar campo `status` existente com novo valor: `'excluido'`
 - Manter rotas DELETE inalteradas (transparência para o frontend)
 - Filtrar automaticamente registros com `status = 'excluido'` nas listagens
@@ -43,9 +47,11 @@
 ### 1. Backend - Controllers
 
 #### PlanoController.php
+
 **Arquivo**: `api/app/Http/Controllers/Admin/PlanoController.php`
 
 **Mudanças**:
+
 ```php
 // ANTES (index - linha 19-20)
 public function index(Request $request) {
@@ -76,9 +82,11 @@ public function destroy($id) {
 ```
 
 #### UserController.php
+
 **Arquivo**: `api/app/Http/Controllers/Admin/UserController.php`
 
 **Mudanças**:
+
 ```php
 // index() - Adicionada linha 20
 $query->where('status', '!=', 'excluido');
@@ -89,9 +97,11 @@ $query->where('status', '!=', 'excluido');
 ```
 
 #### InstrutorController.php
+
 **Arquivo**: `api/app/Http/Controllers/Admin/InstrutorController.php`
 
 **Mudanças**:
+
 ```php
 // index() - Adicionada linha 24
 $query->where('status', '!=', 'excluido');
@@ -110,6 +120,7 @@ $query->where('status', '!=', 'excluido');
 **Solução**: Atualizar constraints via SQL direto no PostgreSQL.
 
 #### Scripts Executados
+
 ```sql
 -- 1. Tabela planos
 ALTER TABLE planos DROP CONSTRAINT IF EXISTS planos_status_check;
@@ -128,6 +139,7 @@ ALTER TABLE instrutores ADD CONSTRAINT instrutores_status_check
 ```
 
 #### Comandos Executados (PowerShell)
+
 ```powershell
 # Planos
 docker-compose exec -T db psql -U fitway_user -d fitway_db -c "ALTER TABLE planos DROP CONSTRAINT IF EXISTS planos_status_check; ALTER TABLE planos ADD CONSTRAINT planos_status_check CHECK (status IN ('ativo', 'inativo', 'excluido'));"
@@ -143,7 +155,7 @@ docker-compose exec -T db psql -U fitway_user -d fitway_db -c "ALTER TABLE instr
 
 ---
 
-### 3. Frontend - Sem Mudanças!
+### 3. Frontend - Sem Mudanças
 
 O frontend **não precisa saber** da mudança! 🎉
 
@@ -153,6 +165,7 @@ O frontend **não precisa saber** da mudança! 🎉
 - Componentes React continuam funcionando normalmente
 
 **Arquivos não modificados**:
+
 - `web/src/pages/admin/Plans.tsx`
 - `web/src/pages/admin/Users.tsx`
 - `web/src/pages/admin/Instructors.tsx`
@@ -163,6 +176,7 @@ O frontend **não precisa saber** da mudança! 🎉
 ## 🔄 Fluxo Completo (Soft Delete)
 
 ### Antes (Hard Delete)
+
 ```
 1. Frontend: DELETE /api/admin/planos/1
 2. Backend: PlanoController@destroy()
@@ -172,6 +186,7 @@ O frontend **não precisa saber** da mudança! 🎉
 ```
 
 ### Depois (Soft Delete)
+
 ```
 1. Frontend: DELETE /api/admin/planos/1 (sem mudança!)
 2. Backend: PlanoController@destroy()
@@ -186,37 +201,45 @@ O frontend **não precisa saber** da mudança! 🎉
 ## 🧪 Como Testar
 
 ### Teste 1: Excluir um Plano
+
 1. Acesse: `http://localhost:5173/admin/plans`
 2. Clique em "Excluir" em qualquer plano
 3. Confirme a exclusão
 4. ✅ Plano desaparece da lista
 5. Verifique no banco:
+
    ```sql
    SELECT id_plano, nome, status FROM planos WHERE status = 'excluido';
    ```
+
    **Esperado**: Registro com `status = 'excluido'`
 
 ### Teste 2: Excluir um Usuário
+
 1. Acesse: `http://localhost:5173/admin/users`
 2. Clique em "Excluir" (não pode ser você mesmo)
 3. Confirme
 4. ✅ Usuário desaparece
 5. Verifique no banco:
+
    ```sql
    SELECT id_usuario, nome, email, status FROM usuarios WHERE status = 'excluido';
    ```
 
 ### Teste 3: Excluir um Instrutor
+
 1. Acesse: `http://localhost:5173/admin/instructors`
 2. Clique em "Excluir"
 3. Confirme
 4. ✅ Instrutor desaparece
 5. Verifique no banco:
+
    ```sql
    SELECT id_instrutor, nome, email, status FROM instrutores WHERE status = 'excluido';
    ```
 
 ### Teste 4: Verificar que Não Aparece em Listagens
+
 1. Acesse qualquer tela de listagem (planos/users/instructors)
 2. ✅ Registros com `status = 'excluido'` NÃO devem aparecer
 3. Verifique com filtro "Todos" no status
@@ -231,6 +254,7 @@ O frontend **não precisa saber** da mudança! 🎉
 Se quiser implementar recuperação de registros "excluídos":
 
 **Backend - Adicionar método no Controller**:
+
 ```php
 // PlanoController.php
 public function restore($id) {
@@ -245,12 +269,14 @@ public function restore($id) {
 ```
 
 **Rota**:
+
 ```php
 // routes/api.php
 Route::patch('/admin/planos/{id}/restore', [PlanoController::class, 'restore']);
 ```
 
 **Frontend - Botão de Restaurar**:
+
 ```tsx
 // Adicionar aba "Excluídos" na tela de listagem
 // Listar registros com status='excluido'
@@ -260,6 +286,7 @@ Route::patch('/admin/planos/{id}/restore', [PlanoController::class, 'restore']);
 ### Listar Registros Excluídos
 
 **Backend - Novo método**:
+
 ```php
 public function deleted(Request $request) {
     $query = Plano::where('status', 'excluido');
@@ -269,6 +296,7 @@ public function deleted(Request $request) {
 ```
 
 **Rota**:
+
 ```php
 Route::get('/admin/planos/deleted', [PlanoController::class, 'deleted']);
 ```
@@ -278,6 +306,7 @@ Route::get('/admin/planos/deleted', [PlanoController::class, 'deleted']);
 ## 📊 Comparação de Arquivos
 
 ### Arquivos Modificados
+
 | Arquivo | Linhas Modificadas | Mudança |
 |---------|-------------------|---------|
 | `PlanoController.php` | 20, 113 | Filtro + soft delete |
@@ -286,6 +315,7 @@ Route::get('/admin/planos/deleted', [PlanoController::class, 'deleted']);
 | **Database** (3 tabelas) | - | CHECK constraints atualizados |
 
 ### Arquivos NÃO Modificados
+
 - ✅ Rotas (`api/routes/api.php`) - inalteradas
 - ✅ Models - inalterados
 - ✅ Frontend - inalterado
@@ -296,9 +326,11 @@ Route::get('/admin/planos/deleted', [PlanoController::class, 'deleted']);
 ## 📚 Documentação Atualizada
 
 ### Copilot Instructions
+
 Arquivo atualizado: `.github/copilot-instructions.md`
 
 **Seções adicionadas**:
+
 1. **Soft Delete (Exclusão Lógica)** - Nova seção antes de "Contrato API ↔ Frontend"
    - Regra importante de sempre usar soft delete
    - Padrão de implementação (Controller, Database, Frontend)
@@ -311,6 +343,7 @@ Arquivo atualizado: `.github/copilot-instructions.md`
    - Adicionado item: "Database: Atualizar CHECK constraint para incluir 'excluido'"
 
 **Status HTTP**:
+
 - Atualizado `204 No Content`: sucesso sem retorno (ex: DELETE **com soft delete**)
 
 ---
@@ -346,6 +379,7 @@ Arquivo atualizado: `.github/copilot-instructions.md`
 ## 🚀 Próximos Passos
 
 ### Fase 7: Quadras (CRUD + Reservas)
+
 - [ ] Backend: CRUD de quadras (admin)
 - [ ] Backend: Bloqueios de quadras
 - [ ] Backend: Reservas com anti-overlap (GIST)
@@ -353,6 +387,7 @@ Arquivo atualizado: `.github/copilot-instructions.md`
 - [ ] **IMPORTANTE**: Aplicar soft delete desde o início!
 
 ### Fase 8: Aulas (CRUD + Ocorrências)
+
 - [ ] Backend: CRUD de aulas (turmas)
 - [ ] Backend: Gerar ocorrências automáticas
 - [ ] Backend: Inscrições com limite de vagas
@@ -360,6 +395,7 @@ Arquivo atualizado: `.github/copilot-instructions.md`
 - [ ] **IMPORTANTE**: Aplicar soft delete desde o início!
 
 ### Fase 9: Sessões Personal (CRUD + Agendamento)
+
 - [ ] Backend: Disponibilidade de instrutores
 - [ ] Backend: Agendamento 1:1 com anti-overlap
 - [ ] Frontend: Conectar páginas de personal

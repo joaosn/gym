@@ -1,4 +1,4 @@
-# ✅ Fase 1: Autenticação - CONCLUÍDA!
+# ✅ Fase 1: Autenticação - CONCLUÍDA
 
 ## 🎉 Status: IMPLEMENTADO E FUNCIONANDO
 
@@ -11,6 +11,7 @@ Data: 15 de outubro de 2025
 ### Backend (Laravel + Sanctum)
 
 #### ✅ 1. Model Usuario
+
 - **Arquivo**: `api/app/Models/Usuario.php`
 - **Características**:
   - Extends `Authenticatable` (Laravel Auth)
@@ -20,6 +21,7 @@ Data: 15 de outubro de 2025
   - Override de `getAuthPassword()` para usar `senha_hash`
 
 #### ✅ 2. Form Requests (Validação)
+
 - **LoginRequest**: `api/app/Http/Requests/LoginRequest.php`
   - Valida email e password
   - Mensagens customizadas em pt-BR
@@ -30,6 +32,7 @@ Data: 15 de outubro de 2025
   - Mensagens customizadas em pt-BR
 
 #### ✅ 3. AuthController
+
 - **Arquivo**: `api/app/Http/Controllers/AuthController.php`
 - **Métodos**:
   - `login(LoginRequest)` → retorna user + access_token
@@ -38,11 +41,13 @@ Data: 15 de outubro de 2025
   - `logout()` → revoga token atual
 
 #### ✅ 4. Middleware CheckRole
+
 - **Arquivo**: `api/app/Http/Middleware/CheckRole.php`
 - **Funcionalidade**: Valida papel do usuário
 - **Registrado em**: `api/app/Http/Kernel.php` como `'role'`
 
 #### ✅ 5. Rotas da API
+
 - **Arquivo**: `api/routes/api.php`
 - **Rotas Públicas**:
   - `POST /api/auth/login`
@@ -53,17 +58,19 @@ Data: 15 de outubro de 2025
   - `POST /api/auth/logout`
 
 #### ✅ 6. Seeder de Usuários
+
 - **Arquivo**: `api/database/seeders/UsuariosSeeder.php`
 - **Usuários Criados**:
 
 | Papel | Email | Senha |
 |-------|-------|-------|
-| Admin | admin@fitway.com | admin123 |
-| Personal | personal@fitway.com | personal123 |
-| Aluno | aluno@fitway.com | aluno123 |
-| Instrutor | instrutor@fitway.com | instrutor123 |
+| Admin | <admin@fitway.com> | admin123 |
+| Personal | <personal@fitway.com> | personal123 |
+| Aluno | <aluno@fitway.com> | aluno123 |
+| Instrutor | <instrutor@fitway.com> | instrutor123 |
 
 #### ✅ 7. Configurações
+
 - **config/auth.php**: Model atualizado para `Usuario`
 - **config/sanctum.php**: Stateful domains incluem `localhost:5173`
 - **app/Http/Kernel.php**: Middleware `CheckRole` registrado
@@ -73,6 +80,7 @@ Data: 15 de outubro de 2025
 ### Frontend (React + TypeScript)
 
 #### ✅ 8. AuthService (SEM MOCK!)
+
 - **Arquivo**: `web/src/services/auth.service.ts`
 - **Métodos**:
   - `login()` → chama POST /api/auth/login
@@ -82,6 +90,7 @@ Data: 15 de outubro de 2025
   - `getToken()`, `isAuthenticated()`, `getUserFromStorage()`
 
 #### ✅ 9. RegisterPage Atualizado
+
 - **Arquivo**: `web/src/pages/RegisterPage.tsx`
 - **Alterações**:
   - Campo `password_confirmation` (antes era `confirmPassword`)
@@ -93,21 +102,25 @@ Data: 15 de outubro de 2025
 ## 🚀 Como Testar
 
 ### 1. Verificar Containers
+
 ```powershell
 docker-compose ps
 ```
 
 Devem estar rodando:
+
 - ✅ `fitway-postgres` (db)
 - ✅ `fitway-api` (api)
 - ✅ `fitway-frontend-dev` (frontend-dev)
 
 ### 2. Verificar Rotas da API
+
 ```powershell
 docker-compose exec -T api php artisan route:list
 ```
 
 Devem aparecer:
+
 - ✅ POST /api/auth/login
 - ✅ POST /api/auth/register
 - ✅ GET /api/auth/me
@@ -115,11 +128,13 @@ Devem aparecer:
 - ✅ GET /api/healthz
 
 ### 3. Verificar Usuários no Banco
+
 ```powershell
 docker-compose exec db psql -U fitway_user -d fitway_db -c "SELECT id_usuario, nome, email, papel, status FROM usuarios;"
 ```
 
 ### 4. Testar Login via curl
+
 ```powershell
 # Login como Admin
 curl -X POST http://localhost:8000/api/auth/login `
@@ -139,9 +154,9 @@ curl -X POST http://localhost:8000/api/auth/login `
 
 ### 5. Testar no Frontend (Browser)
 
-1. **Abrir**: http://localhost:5173
+1. **Abrir**: <http://localhost:5173>
 
-2. **Ir para Login**: http://localhost:5173/login
+2. **Ir para Login**: <http://localhost:5173/login>
 
 3. **Testar Credenciais**:
 
@@ -160,7 +175,7 @@ curl -X POST http://localhost:8000/api/auth/login `
    - Senha: `aluno123`
    - Deve redirecionar para: `/aluno/dashboard`
 
-4. **Testar Registro**: http://localhost:5173/register
+4. **Testar Registro**: <http://localhost:5173/register>
    - Criar nova conta
    - Deve criar usuário como "aluno"
    - Deve redirecionar para `/aluno/dashboard`
@@ -175,6 +190,7 @@ curl -X POST http://localhost:8000/api/auth/login `
 ## ✅ Checklist de Validação
 
 ### Backend
+
 - [x] Model `Usuario` criado e configurado
 - [x] Form Requests (`LoginRequest`, `RegisterRequest`) criados
 - [x] `AuthController` implementado (login, register, me, logout)
@@ -185,6 +201,7 @@ curl -X POST http://localhost:8000/api/auth/login `
 - [x] Model configurado em `config/auth.php`
 
 ### Frontend
+
 - [x] Mock removido de `auth.service.ts`
 - [x] Service conectado à API real
 - [x] `RegisterPage` atualizado (password_confirmation)
@@ -192,6 +209,7 @@ curl -X POST http://localhost:8000/api/auth/login `
 - [x] Redirecionamento por role funcionando
 
 ### Testes
+
 - [x] Endpoints de auth respondem corretamente
 - [x] Login retorna token + user
 - [x] Register cria usuário e retorna token
@@ -207,6 +225,7 @@ curl -X POST http://localhost:8000/api/auth/login `
 ### ✅ Curl Tests
 
 **Login Admin**:
+
 ```json
 {
   "user": {
@@ -224,6 +243,7 @@ curl -X POST http://localhost:8000/api/auth/login `
 **Status**: ✅ PASS (200 OK)
 
 **Login com credenciais inválidas**:
+
 ```json
 {
   "message": "Email ou senha incorretos"
@@ -233,6 +253,7 @@ curl -X POST http://localhost:8000/api/auth/login `
 **Status**: ✅ PASS (401 Unauthorized)
 
 **Login com usuário inativo**:
+
 ```json
 {
   "message": "Usuário inativo. Entre em contato com o suporte."
@@ -246,9 +267,11 @@ curl -X POST http://localhost:8000/api/auth/login `
 ## 🎯 Próximos Passos
 
 ### Concluído ✅
+
 - ✅ **Fase 1: Autenticação** (2-3 dias) → CONCLUÍDO!
 
 ### Próxima Fase 🔜
+
 - 🔴 **Fase 2: Admin - Quadras** (2 dias)
   - [ ] Model `Quadra`
   - [ ] `Admin\QuadraController` (CRUD)

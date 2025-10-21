@@ -5,12 +5,25 @@ namespace App\Http\Controllers;
 use App\Models\Assinatura;
 use App\Models\EventoAssinatura;
 use App\Models\Plano;
+use App\Services\PagamentoService;
+use App\Services\NotificacaoService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AssinaturaController extends Controller
 {
+    protected $pagamentoService;
+    protected $notificacaoService;
+
+    public function __construct(
+        PagamentoService $pagamentoService,
+        NotificacaoService $notificacaoService
+    ) {
+        $this->pagamentoService = $pagamentoService;
+        $this->notificacaoService = $notificacaoService;
+    }
     /**
      * ADMIN: Listar todas as assinaturas
      * GET /api/admin/subscriptions
@@ -165,32 +178,63 @@ class AssinaturaController extends Controller
         $dataInicio = Carbon::now();
         $proximoVencimento = $this->calcularProximoVencimento($dataInicio, $plano->ciclo_cobranca);
 
-        // Criar assinatura
-        $assinatura = Assinatura::create([
-            'id_usuario' => $usuario->id_usuario,
-            'id_plano' => $plano->id_plano,
-            'data_inicio' => $dataInicio->toDateString(),
-            'renova_automatico' => $request->renova_automatico ?? true,
-            'status' => 'ativa', // TODO: mudar para 'pendente' quando integrar pagamento
-            'proximo_vencimento' => $proximoVencimento->toDateString(),
-        ]);
-
-        // Registrar evento
-        EventoAssinatura::create([
-            'id_assinatura' => $assinatura->id_assinatura,
-            'tipo' => 'criada',
-            'payload_json' => [
+        // Usar transação para garantir atomicidade
+        DB::beginTransaction();
+        try {
+            // 1. Criar assinatura com status 'pendente' (aguardando pagamento)
+            $assinatura = Assinatura::create([
+                'id_usuario' => $usuario->id_usuario,
                 'id_plano' => $plano->id_plano,
-                'nome_plano' => $plano->nome,
-                'preco' => $plano->preco,
-                'ciclo' => $plano->ciclo_cobranca,
-            ],
-        ]);
+                'data_inicio' => $dataInicio->toDateString(),
+                'renova_automatico' => $request->renova_automatico ?? true,
+                'status' => 'pendente', // Aguardando pagamento
+                'proximo_vencimento' => $proximoVencimento->toDateString(),
+            ]);
 
-        return response()->json([
-            'data' => $assinatura->load('plano'),
-            'message' => 'Assinatura criada com sucesso!',
-        ], 201);
+            // 2. Criar cobrança
+            $cobranca = $this->pagamentoService->criarCobranca(
+                $usuario->id_usuario,
+                'assinatura',
+                $assinatura->id_assinatura,
+                $plano->preco,
+                "Assinatura {$plano->nome}",
+                Carbon::parse($proximoVencimento)
+            );
+
+            // 3. Criar notificação de nova cobrança
+            $parcela = $cobranca->parcelas->first();
+            $this->notificacaoService->notificarNovaCobranca(
+                $usuario->id_usuario,
+                "Assinatura {$plano->nome}",
+                $plano->preco,
+                "/aluno/checkout/{$parcela->id_parcela}"
+            );
+
+            // 4. Registrar evento
+            EventoAssinatura::create([
+                'id_assinatura' => $assinatura->id_assinatura,
+                'tipo' => 'criada',
+                'payload_json' => [
+                    'id_plano' => $plano->id_plano,
+                    'nome_plano' => $plano->nome,
+                    'preco' => $plano->preco,
+                    'ciclo' => $plano->ciclo_cobranca,
+                    'id_cobranca' => $cobranca->id_cobranca,
+                ],
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'data' => $assinatura->load('plano'),
+                'cobranca' => $cobranca->load('parcelas'),
+                'message' => 'Assinatura criada! Realize o pagamento para ativá-la.',
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 
     /**

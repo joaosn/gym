@@ -8,6 +8,7 @@
 ## 🎯 Objetivo
 
 Implementar sistema completo de gerenciamento de assinaturas (planos de usuários), permitindo que:
+
 - **Admin**: Visualize todas assinaturas, crie manualmente assinaturas para qualquer usuário, cancele assinaturas
 - **Aluno**: Visualize sua assinatura ativa, assine planos disponíveis, cancele sua própria assinatura
 
@@ -18,6 +19,7 @@ Implementar sistema completo de gerenciamento de assinaturas (planos de usuário
 ### Backend (Laravel)
 
 #### 1. Models
+
 - **`Assinatura.php`** (já existia, melhorado)
   - Relacionamentos: `belongsTo(Usuario)`, `belongsTo(Plano)`, `hasMany(EventoAssinatura)`
   - Campos: `id_assinatura`, `id_usuario`, `id_plano`, `data_inicio`, `data_fim`, `renova_automatico`, `status`, `proximo_vencimento`
@@ -28,6 +30,7 @@ Implementar sistema completo de gerenciamento de assinaturas (planos de usuário
   - Campos: `id_evento_assinatura`, `id_assinatura`, `tipo`, `payload_json`, `criado_em`
 
 #### 2. Controller - `AssinaturaController.php`
+
 **6 métodos implementados**:
 
 ```php
@@ -43,6 +46,7 @@ DELETE /api/subscriptions/me                 // cancelar() - Cancelar assinatura
 ```
 
 **Validações implementadas**:
+
 - ✅ Usuário só pode ter **1 assinatura ativa** por vez
 - ✅ Plano deve estar ativo para ser assinado
 - ✅ Cálculo automático de `proximo_vencimento` baseado em `ciclo_cobranca` do plano
@@ -50,15 +54,18 @@ DELETE /api/subscriptions/me                 // cancelar() - Cancelar assinatura
 - ✅ Filtros: `status`, `id_usuario`, `id_plano`, `search` (por nome/email do usuário)
 
 **Método auxiliar**:
+
 ```php
 private function calcularProximoVencimento($dataInicio, $cicloCobranca): Carbon
 ```
+
 - `'mensal'` → +1 mês
 - `'trimestral'` → +3 meses
 - `'semestral'` → +6 meses
 - `'anual'` → +1 ano
 
 #### 3. Routes - `api/routes/api.php`
+
 ```php
 // Admin (middleware: auth:sanctum)
 Route::prefix('admin')->group(function () {
@@ -74,7 +81,9 @@ Route::delete('/subscriptions/me', [AssinaturaController::class, 'cancelar']);
 ```
 
 #### 4. Seeder - `AssinaturasSeeder.php`
+
 **15 assinaturas criadas**:
+
 - 13 com status `'ativa'` (80%)
 - 1 com status `'cancelada'` (10%)
 - 1 com status `'expirada'` (10%)
@@ -83,6 +92,7 @@ Route::delete('/subscriptions/me', [AssinaturaController::class, 'cancelar']);
 - Variedade de datas de início e vencimentos
 
 **Comando executado**:
+
 ```bash
 docker-compose exec api php artisan db:seed --class=AssinaturasSeeder
 ```
@@ -92,6 +102,7 @@ docker-compose exec api php artisan db:seed --class=AssinaturasSeeder
 ### Frontend (React + TypeScript)
 
 #### 1. Types - `web/src/types/index.ts`
+
 ```typescript
 export interface Assinatura {
   id_assinatura: string;
@@ -130,6 +141,7 @@ export interface AssinaturaFormData {
 ```
 
 #### 2. Service - `subscriptions.service.ts`
+
 **6 métodos implementados**:
 
 ```typescript
@@ -150,13 +162,16 @@ class SubscriptionsService {
 ```
 
 **Normalização de IDs**:
+
 - Converte `id_assinatura`, `id_usuario`, `id_plano` para `string`
 - Preserva objetos aninhados (`usuario`, `plano`) do backend
 
 #### 3. Páginas
 
 ##### **Admin - `Subscriptions.tsx`** (462 linhas)
+
 **Funcionalidades**:
+
 - ✅ **Listagem** com cards informativos (15 assinaturas)
 - ✅ **Filtros**:
   - Busca por nome/email (debounced 500ms)
@@ -188,6 +203,7 @@ class SubscriptionsService {
   - Renovação automática (Sim/Não)
 
 **Estado gerenciado**:
+
 ```typescript
 subscriptions: Assinatura[]
 plans: Plan[]
@@ -201,7 +217,9 @@ showCancelDialog: boolean
 ```
 
 ##### **Aluno - `MyPlan.tsx`** (378 linhas)
+
 **Funcionalidades**:
+
 - ✅ **Visualização da assinatura ativa**:
   - Card destacado com informações do plano
   - Benefícios listados
@@ -217,12 +235,14 @@ showCancelDialog: boolean
   - Alerta sobre perda de benefícios
 
 **Estados visuais**:
+
 - Loading skeleton
 - Empty state (sem assinatura)
 - Assinatura ativa
 - Lista de planos disponíveis
 
 #### 4. Routing - `App.tsx`
+
 ```tsx
 // Admin
 <Route path="assinaturas" element={<Subscriptions />} />
@@ -232,13 +252,16 @@ showCancelDialog: boolean
 ```
 
 #### 5. Navigation - `Sidebar.tsx`
+
 **Menu Admin**:
+
 ```
 💰 Pagamentos
   └─ Assinaturas → /admin/assinaturas
 ```
 
 **Menu Aluno**:
+
 ```
 🎯 Planos → /aluno/plano
 ```
@@ -248,9 +271,11 @@ showCancelDialog: boolean
 ## 🐛 Bugs Corrigidos Durante Desenvolvimento
 
 ### 1. **Pagination Structure Mismatch**
+
 **Problema**: Service esperava `response.data.data` mas Laravel retorna `response.data` diretamente.
 
 **Solução**:
+
 ```typescript
 // ANTES (errado)
 const paginatedData = response.data;
@@ -268,9 +293,11 @@ return {
 ```
 
 ### 2. **Normalize Function Losing Context**
+
 **Problema**: `this.normalizeSubscription` perdia contexto do `this` dentro do `.map()`.
 
 **Solução**:
+
 ```typescript
 // ANTES (errado)
 .map(this.normalizeSubscription)
@@ -280,9 +307,11 @@ return {
 ```
 
 ### 3. **Nested Objects Lost in Normalization**
+
 **Problema**: `normalizeSubscription` não preservava `usuario` e `plano` vindos do backend.
 
 **Solução**:
+
 ```typescript
 private normalizeSubscription(subscription: any): Assinatura {
   return {
@@ -304,9 +333,11 @@ private normalizeSubscription(subscription: any): Assinatura {
 ### Backend (via Tinker ou API Client)
 
 #### 1. Verificar assinaturas no banco
+
 ```bash
 docker-compose exec api php artisan tinker
 ```
+
 ```php
 // Contar total
 Assinatura::count(); // 15
@@ -319,13 +350,16 @@ Assinatura::where('status', 'ativa')->count(); // 13
 ```
 
 #### 2. Testar rotas (via Postman/Insomnia)
+
 **Admin - Listar todas**:
+
 ```http
 GET http://localhost:8000/api/admin/subscriptions
 Authorization: Bearer {admin_token}
 ```
 
 **Admin - Criar assinatura**:
+
 ```http
 POST http://localhost:8000/api/admin/subscriptions
 Authorization: Bearer {admin_token}
@@ -339,12 +373,14 @@ Content-Type: application/json
 ```
 
 **Aluno - Ver minha assinatura**:
+
 ```http
 GET http://localhost:8000/api/subscriptions/me
 Authorization: Bearer {aluno_token}
 ```
 
 **Aluno - Cancelar minha assinatura**:
+
 ```http
 DELETE http://localhost:8000/api/subscriptions/me
 Authorization: Bearer {aluno_token}
@@ -353,6 +389,7 @@ Authorization: Bearer {aluno_token}
 ### Frontend
 
 #### 1. Admin - Gerenciar Assinaturas
+
 1. Login como admin (`admin@fitway.com` / `password`)
 2. Navegar para **Pagamentos → Assinaturas**
 3. Verificar lista de 15 assinaturas
@@ -374,6 +411,7 @@ Authorization: Bearer {aluno_token}
    - Confirmar que status mudou para "Cancelada"
 
 #### 2. Aluno - Gerenciar Plano
+
 1. Login como aluno **sem assinatura** (criar novo usuário ou usar um sem plano)
 2. Navegar para **Planos**
 3. Verificar lista de planos disponíveis
@@ -393,7 +431,9 @@ Authorization: Bearer {aluno_token}
 ## 📝 Lições Aprendidas
 
 ### 1. **Laravel Pagination Always Returns Root-Level Object**
+
 Laravel `paginate()` **sempre** retorna:
+
 ```json
 {
   "current_page": 1,
@@ -402,17 +442,22 @@ Laravel `paginate()` **sempre** retorna:
   "per_page": 50
 }
 ```
+
 Nunca nested como `{ data: { data: [...] } }`.
 
 ### 2. **Arrow Functions Preserve `this` Context**
+
 Quando usar métodos de classe dentro de `.map()`, **sempre** usar arrow function:
+
 ```typescript
 .map((item) => this.method(item)) // ✅ Correto
 .map(this.method)                 // ❌ Perde contexto
 ```
 
 ### 3. **Object Spread Doesn't Deep Clone**
+
 Quando normalizar objetos com propriedades aninhadas, **preservar explicitamente**:
+
 ```typescript
 return {
   ...obj,
@@ -421,13 +466,17 @@ return {
 ```
 
 ### 4. **Admin Manual Creation is Essential UX**
+
 Permitir admin criar assinaturas manualmente é crucial para:
+
 - Casos especiais (cortesias, testes)
 - Migração de sistemas antigos
 - Resolver problemas de pagamento offline
 
 ### 5. **Status Badges Need Visual Hierarchy**
+
 Cores de badges devem ser consistentes:
+
 - Verde: Sucesso/Ativo
 - Amarelo: Aguardando/Pendente
 - Cinza: Neutro/Cancelado
@@ -438,6 +487,7 @@ Cores de badges devem ser consistentes:
 ## 🎯 Próximos Passos (Sugestões)
 
 ### Melhorias Futuras (Opcional)
+
 1. **Histórico de Eventos**: Exibir timeline de mudanças na assinatura
 2. **Renovação Manual**: Admin forçar renovação de assinatura expirada
 3. **Upgrade/Downgrade**: Aluno trocar de plano mantendo assinatura
@@ -446,6 +496,7 @@ Cores de badges devem ser consistentes:
 6. **Relatórios**: Dashboard de receita recorrente (MRR)
 
 ### Próxima Fase
+
 🎯 **Fase 12**: Pagamentos (integração com gateway, histórico de transações)
 
 ---

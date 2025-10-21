@@ -104,10 +104,25 @@ class PersonalSessionsService {
   }
 
   /**
-   * Obter sessões que ministro (como instrutor)
+   * Obter sessões que ministro (como instrutor logado)
+   * Novo endpoint: GET /api/personal-sessions/me
    */
-  async getMyInstructorSessions(instructorId: string, filters?: { status?: string; periodo?: 'futuras' | 'passadas' }) {
-    return this.list({ ...filters, id_instrutor: instructorId });
+  async getMyInstructorSessions(filters?: { status?: string; periodo?: 'futuras' | 'passadas'; per_page?: number }) {
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.periodo) params.append('periodo', filters.periodo);
+    if (filters?.per_page) params.append('per_page', filters.per_page.toString());
+
+    const queryString = params.toString();
+    const url = queryString ? `${this.baseUrl}/me?${queryString}` : `${this.baseUrl}/me`;
+
+    return await apiClient.get<{
+      data: PersonalSession[];
+      current_page: number;
+      last_page: number;
+      per_page: number;
+      total: number;
+    }>(url);
   }
 }
 

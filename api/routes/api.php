@@ -143,20 +143,38 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // CRUD de Aulas (DEVE vir POR ÚLTIMO para não capturar rotas acima!)
         Route::apiResource('classes', App\Http\Controllers\AulaController::class)->parameters(['classes' => 'id']);
+
+        // Pagamentos (Admin)
+        Route::prefix('payments')->group(function () {
+            Route::get('/', [App\Http\Controllers\PagamentoController::class, 'index']);
+            Route::get('/{id}', [App\Http\Controllers\PagamentoController::class, 'show']);
+            Route::post('/{id}/create-checkout', [App\Http\Controllers\PagamentoController::class, 'adminCreateCheckout']);
+            Route::post('/', [App\Http\Controllers\PagamentoController::class, 'store']);
+            Route::put('/{id}', [App\Http\Controllers\PagamentoController::class, 'update']);
+            Route::patch('/{id}', [App\Http\Controllers\PagamentoController::class, 'update']);
+            Route::delete('/{id}', [App\Http\Controllers\PagamentoController::class, 'destroy']);
+        });
+
+    // Notificações (Admin)
+    Route::post('/notifications', [App\Http\Controllers\Admin\NotificacaoAdminController::class, 'store']);
     });
 
     // =====================================================================
     // SESSÕES PERSONAL 1:1 (Aluno e Instrutor)
     // =====================================================================
     Route::prefix('personal-sessions')->group(function () {
+        // Rotas específicas ANTES das genéricas (evitar conflito com {id})
+        Route::get('/me', [SessaoPersonalController::class, 'mySessions']); // Sessões do instrutor logado
+        Route::post('/check-availability', [SessaoPersonalController::class, 'checkAvailability']);
+        Route::patch('/{id}/confirm', [SessaoPersonalController::class, 'confirm']);
+        
+        // Rotas genéricas (CRUD)
         Route::get('/', [SessaoPersonalController::class, 'index']);
         Route::get('/{id}', [SessaoPersonalController::class, 'show']);
         Route::post('/', [SessaoPersonalController::class, 'store']);
         Route::put('/{id}', [SessaoPersonalController::class, 'update']);
         Route::patch('/{id}', [SessaoPersonalController::class, 'update']);
         Route::delete('/{id}', [SessaoPersonalController::class, 'destroy']);
-        Route::patch('/{id}/confirm', [SessaoPersonalController::class, 'confirm']);
-        Route::post('/check-availability', [SessaoPersonalController::class, 'checkAvailability']);
     });
 
     // =====================================================================
@@ -186,6 +204,33 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [App\Http\Controllers\AssinaturaController::class, 'minhaAssinatura']);
         Route::post('/', [App\Http\Controllers\AssinaturaController::class, 'assinar']);
         Route::delete('/me', [App\Http\Controllers\AssinaturaController::class, 'cancelar']);
+    });
+
+    // =====================================================================
+    // PAGAMENTOS (Aluno)
+    // =====================================================================
+    Route::prefix('payments')->group(function () {
+        Route::get('/pending', [App\Http\Controllers\PagamentoController::class, 'minhasCobrancasPendentes']);
+        Route::get('/history', [App\Http\Controllers\PagamentoController::class, 'meuHistorico']);
+        Route::get('/parcelas/{id_parcela}', [App\Http\Controllers\PagamentoController::class, 'getParcela']);
+        Route::post('/create-charge', [App\Http\Controllers\PagamentoController::class, 'criarCobrancaManual']);
+        Route::post('/checkout/{id_parcela}', [App\Http\Controllers\PagamentoController::class, 'criarCheckout']); // simulação legado
+        Route::post('/checkout/mp/{id_parcela}', [App\Http\Controllers\PagamentoController::class, 'criarCheckoutMercadoPago']);
+        Route::post('/{id_pagamento}/approve', [App\Http\Controllers\PagamentoController::class, 'aprovarSimulacao']);
+    });
+
+    // Webhook Mercado Pago
+    Route::post('/webhooks/mercadopago', [App\Http\Controllers\MercadoPagoWebhookController::class, 'handle']);
+
+    // =====================================================================
+    // NOTIFICAÇÕES (Aluno/Instrutor)
+    // =====================================================================
+    Route::prefix('notifications')->group(function () {
+        Route::get('/', [App\Http\Controllers\NotificacaoController::class, 'index']);
+        Route::get('/unread-count', [App\Http\Controllers\NotificacaoController::class, 'unreadCount']);
+        Route::patch('/{id}/read', [App\Http\Controllers\NotificacaoController::class, 'markAsRead']);
+        Route::post('/mark-all-read', [App\Http\Controllers\NotificacaoController::class, 'markAllAsRead']);
+        Route::delete('/{id}', [App\Http\Controllers\NotificacaoController::class, 'destroy']);
     });
     
 });

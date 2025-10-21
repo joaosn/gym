@@ -79,7 +79,14 @@ class SessaoPersonalController extends Controller
             $sessao = $this->service->criarSessao($request->validated());
             $sessao->load(['instrutor.usuario', 'usuario', 'quadra']);
 
-            return response()->json(['data' => $sessao], 201);
+            // Retornar sessão + cobrança (se criada)
+            $response = ['data' => $sessao];
+            if (isset($sessao->cobranca)) {
+                $response['cobranca'] = $sessao->cobranca;
+                $response['message'] = 'Sessão criada! Realize o pagamento para confirmá-la.';
+            }
+
+            return response()->json($response, 201);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => $e->getMessage(),
@@ -180,5 +187,47 @@ class SessaoPersonalController extends Controller
             'disponivel' => false,
             'motivo' => $resultado['motivo']
         ], 200);
+    }
+
+    /**
+     * Obter sessões do instrutor logado
+     * GET /api/personal-sessions/me
+     */
+    public function mySessions(Request $request)
+    {
+        $user = auth()->user();
+
+        // Buscar instrutor associado ao usuário
+        $instrutor = \App\Models\Instrutor::where('id_usuario', $user->id_usuario)->first();
+
+        if (!$instrutor) {
+            return response()->json([
+                'message' => 'Instrutor não encontrado para este usuário',
+            ], 404);
+        }
+
+        $query = SessaoPersonal::with(['instrutor.usuario', 'usuario', 'quadra'])
+            ->where('id_instrutor', $instrutor->id_instrutor);
+
+        // Filtrar por status
+        if ($request->has('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        // Filtrar por período
+        if ($request->has('periodo')) {
+            if ($request->periodo === 'futuras') {
+                $query->futuras();
+            } elseif ($request->periodo === 'passadas') {
+                $query->passadas();
+            }
+        }
+
+        // Ordenar por data de início (mais recentes primeiro)
+        $query->orderBy('inicio', 'desc');
+
+        $sessoes = $query->paginate($request->get('per_page', 15));
+
+        return response()->json($sessoes, 200);
     }
 }

@@ -21,6 +21,13 @@ return [
         'scheme' => 'https',
     ],
 
+    // Mercado Pago
+    'mercadopago' => [
+        'access_token' => env('MP_ACCESS_TOKEN'),
+        'notification_url' => env('MP_NOTIFICATION_URL'), // opcional: fallback usa APP_URL/api/webhooks/mercadopago
+        'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+    ],
+
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],
