@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { StatCardSkeleton } from '@/components/LoadingSkeletons';
 import { 
   Users, 
   DollarSign, 
@@ -18,6 +19,15 @@ import {
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+
+  // Simula carregamento de dados
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, []);
   
   // Mock KPIs data
   const kpis = {
@@ -125,51 +135,62 @@ const AdminDashboard = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <Card className="bg-dashboard-card border-dashboard-border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-dashboard-fg">Assinaturas Ativas</CardTitle>
-            <Users className="h-4 w-4 text-fitway-green" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-fitway-green">{kpis.activeSubscriptions}</div>
-            <p className="text-xs text-white/70">+{kpis.newMembersThisMonth} novos este mês</p>
-          </CardContent>
-        </Card>
+        {loading ? (
+          <>
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </>
+        ) : (
+          <>
+            <Card className="bg-dashboard-card border-dashboard-border">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-dashboard-fg">Assinaturas Ativas</CardTitle>
+                <Users className="h-4 w-4 text-fitway-green" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-fitway-green">{kpis.activeSubscriptions}</div>
+                <p className="text-xs text-white/70">+{kpis.newMembersThisMonth} novos este mês</p>
+              </CardContent>
+            </Card>
 
-        <Card className="bg-dashboard-card border-dashboard-border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-dashboard-fg">Receita Mensal</CardTitle>
-            <DollarSign className="h-4 w-4 text-fitway-green" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-fitway-green">
-              R$ {kpis.monthlyRevenue.toLocaleString()}
-            </div>
-            <p className="text-xs text-white/70">+12% vs mês anterior</p>
-          </CardContent>
-        </Card>
+            <Card className="bg-dashboard-card border-dashboard-border">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-dashboard-fg">Receita Mensal</CardTitle>
+                <DollarSign className="h-4 w-4 text-fitway-green" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-fitway-green">
+                  R$ {kpis.monthlyRevenue.toLocaleString()}
+                </div>
+                <p className="text-xs text-white/70">+12% vs mês anterior</p>
+              </CardContent>
+            </Card>
 
-        <Card className="bg-dashboard-card border-dashboard-border">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-dashboard-fg">Ocupação Quadras</CardTitle>
-            <Activity className="h-4 w-4 text-fitway-green" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">{kpis.courtOccupancy}%</div>
-            <p className="text-xs text-white/70">{kpis.totalBookingsToday} reservas hoje</p>
-          </CardContent>
-        </Card>
+            <Card className="bg-dashboard-card border-dashboard-border">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-dashboard-fg">Ocupação Quadras</CardTitle>
+                <Activity className="h-4 w-4 text-fitway-green" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-white">{kpis.courtOccupancy}%</div>
+                <p className="text-xs text-white/70">{kpis.totalBookingsToday} reservas hoje</p>
+              </CardContent>
+            </Card>
 
-        <Card className="bg-dashboard-card border-dashboard-border border-orange-500/50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-dashboard-fg">Pagamentos Atrasados</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-500">{kpis.overduePayments}</div>
-            <p className="text-xs text-white/70">requer atenção</p>
-          </CardContent>
-        </Card>
+            <Card className="bg-dashboard-card border-dashboard-border border-orange-500/50">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-dashboard-fg">Pagamentos Atrasados</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-orange-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-500">{kpis.overduePayments}</div>
+                <p className="text-xs text-white/70">requer atenção</p>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6 mb-8">

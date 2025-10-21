@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { EmptyState } from '@/components/EmptyState';
 import { formatCurrency, debounce } from '@/lib/utils';
 import { classesService, classOccurrencesService } from '@/services/classes.service';
 import { ApiError } from '@/lib/api-client';
@@ -501,20 +502,15 @@ const AdminClasses = () => {
 
       {/* Classes Grid */}
       {aulas.length === 0 ? (
-        <Card className="bg-dashboard-card border-dashboard-border">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <BookOpen className="h-12 w-12 text-white/30 mb-4" />
-            <p className="text-white/70 text-lg mb-2">Nenhuma aula encontrada</p>
-            <p className="text-white/50 text-sm mb-4">Comece criando sua primeira aula em grupo</p>
-            <Button 
-              className="bg-fitway-green hover:bg-fitway-green/90"
-              onClick={() => navigate('/admin/aulas/novo')}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Nova Aula
-            </Button>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={BookOpen}
+          title="Nenhuma aula encontrada"
+          description="Comece criando sua primeira aula em grupo para organizar turmas de alunos."
+          action={{
+            label: "Nova Aula",
+            onClick: () => navigate('/admin/aulas/novo')
+          }}
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {aulas.map((aula) => (
