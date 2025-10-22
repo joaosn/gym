@@ -14,7 +14,22 @@ interface ListInstructorsResponse {
 
 class InstructorsService {
   /**
-   * Listar instrutores com filtros
+   * Listar instrutores publicamente (para alunos)
+   * GET /api/public/instructors
+   */
+  async listPublic(params?: Omit<ListInstructorsParams, 'status'>): Promise<ListInstructorsResponse> {
+    const queryParams = new URLSearchParams();
+    
+    if (params?.especialidade) queryParams.append('especialidade', params.especialidade);
+    if (params?.search) queryParams.append('search', params.search);
+    queryParams.append('status', 'ativo'); // Sempre apenas ativos
+    
+    const url = `/public/instructors${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    return apiClient.get<ListInstructorsResponse>(url);
+  }
+
+  /**
+   * Listar instrutores com filtros (admin)
    */
   async listInstructors(params?: ListInstructorsParams): Promise<ListInstructorsResponse> {
     const queryParams = new URLSearchParams();

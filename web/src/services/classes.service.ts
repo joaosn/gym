@@ -42,6 +42,10 @@ const normalizeOcorrenciaAula = (ocorrencia: any): OcorrenciaAula => ({
   id_aula: String(ocorrencia.id_aula),
   id_instrutor: String(ocorrencia.id_instrutor),
   id_quadra: String(ocorrencia.id_quadra),
+  // Mapear contadores quando vierem do backend
+  numero_inscritos: typeof ocorrencia.numero_inscritos === 'number'
+    ? ocorrencia.numero_inscritos
+    : (typeof ocorrencia.inscricoes_count === 'number' ? ocorrencia.inscricoes_count : undefined),
   aula: ocorrencia.aula ? normalizeAula(ocorrencia.aula) : undefined,
 });
 
@@ -62,6 +66,7 @@ const normalizeInscricaoAula = (inscricao: any): InscricaoAula => ({
 class ClassesService {
   /**
    * Listar aulas (admin ou aluno)
+   * Usa rota pública para homepage
    */
   async list(filters?: {
     status?: string;
@@ -70,6 +75,15 @@ class ClassesService {
     search?: string;
     per_page?: number;
   }) {
+    // Para homepage (sem filtros ou apenas status ativo), usar rota pública
+    if (!filters || (filters.status === 'ativo' && !filters.esporte && !filters.nivel && !filters.search && !filters.per_page)) {
+      const response = await apiClient.get<{ data: any[] }>('/public/classes');
+      return {
+        data: response.data.map(normalizeAula),
+      };
+    }
+
+    // Para admin/aluno autenticado, usar rota protegida
     const response = await apiClient.get<{ data: any[]; meta?: any }>('/classes', filters);
     return {
       data: response.data.map(normalizeAula),
@@ -152,6 +166,29 @@ class ClassSchedulesService {
 
 class ClassOccurrencesService {
   /**
+   * Listar ocorrências para o aluno (rota autenticada do aluno)
+   * GET /classes/occurrences
+   */
+  async listForStudent(filters?: {
+    id_aula?: string;
+    id_instrutor?: string;
+    id_quadra?: string;
+    status?: string; // padrão do backend: exclui canceladas quando omitido
+    data_inicio?: string; // YYYY-MM-DD
+    data_fim?: string; // YYYY-MM-DD
+    per_page?: number;
+  }) {
+    const response = await apiClient.get<{ data: any[]; meta?: any }>(
+      '/classes/occurrences',
+      filters
+    );
+
+    return {
+      data: (response.data || []).map(normalizeOcorrenciaAula),
+      meta: (response as any).meta,
+    };
+  }
+  /**
    * Listar ocorrências (ADMIN)
    */
   async list(filters?: {
@@ -225,15 +262,28 @@ class ClassEnrollmentsService {
    * Inscrever-se em uma ocorrência
    */
   async enroll(data: InscricaoAulaRequest) {
-    const response = await apiClient.post<{ data: any }>('/class-enrollments', data);
-    return normalizeInscricaoAula(response.data);
+    const response = await apiClient.post<{ 
+      data: any;
+      cobranca?: {
+        id: number;
+        valor: number;
+        vencimento: string;
+        status: string;
+      };
+    }>('/class-enrollments', data);
+    
+    return {
+      inscricao: normalizeInscricaoAula(response.data),
+      cobranca: response.cobranca,
+    };
   }
 
   /**
    * Cancelar inscrição
    */
-  async cancel(id: string) {
-    await apiClient.delete(`/class-enrollments/${id}`);
+  async cancel(id: string): Promise<{ data: any; message: string }> {
+    const response = await apiClient.delete<{ data: any; message: string }>(`/class-enrollments/${id}`);
+    return response;
   }
 
   /**

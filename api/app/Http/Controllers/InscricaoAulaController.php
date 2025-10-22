@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\InscricaoAula;
 use App\Models\OcorrenciaAula;
+use App\Models\Cobranca;
+use App\Services\PagamentoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class InscricaoAulaController extends Controller
 {
@@ -44,7 +47,7 @@ class InscricaoAulaController extends Controller
     /**
      * Inscrever-se em uma ocorrência de aula
      */
-    public function inscrever(Request $request)
+    public function inscrever(Request $request, PagamentoService $pagamentoService)
     {
         $validated = $request->validate([
             'id_ocorrencia_aula' => 'required|exists:ocorrencias_aula,id_ocorrencia_aula',
@@ -66,13 +69,13 @@ class InscricaoAulaController extends Controller
             ], 400);
         }
 
-        // Verificar se já está inscrito
+        // Verificar se já está inscrito (ativo ou cancelado)
         $inscricaoExistente = InscricaoAula::where('id_ocorrencia_aula', $ocorrencia->id_ocorrencia_aula)
             ->where('id_usuario', $idUsuario)
-            ->where('status', 'inscrito')
-            ->first();
+            ->first(); // Buscar qualquer inscrição (inscrito ou cancelado)
 
-        if ($inscricaoExistente) {
+        if ($inscricaoExistente && $inscricaoExistente->status === 'inscrito') {
+            // Já está inscrito ativamente
             return response()->json([
                 'message' => 'Você já está inscrito nesta aula',
             ], 409);
@@ -89,24 +92,73 @@ class InscricaoAulaController extends Controller
             ], 409);
         }
 
-        // Criar inscrição
-        $inscricao = InscricaoAula::create([
-            'id_ocorrencia_aula' => $ocorrencia->id_ocorrencia_aula,
-            'id_aula' => $ocorrencia->id_aula,
-            'id_usuario' => $idUsuario,
-            'status' => 'inscrito',
-        ]);
+        // ✅ Criar inscrição + cobrança em transação (ou reativar se existia cancelada)
+        try {
+            $result = DB::transaction(function () use ($ocorrencia, $idUsuario, $pagamentoService, $inscricaoExistente) {
+                // Se já existe inscrição cancelada, reativar
+                if ($inscricaoExistente && $inscricaoExistente->status === 'cancelado') {
+                    $inscricaoExistente->update(['status' => 'inscrito']);
+                    $inscricao = $inscricaoExistente;
+                } else {
+                    // Criar nova inscrição
+                    $inscricao = InscricaoAula::create([
+                        'id_ocorrencia_aula' => $ocorrencia->id_ocorrencia_aula,
+                        'id_aula' => $ocorrencia->id_aula,
+                        'id_usuario' => $idUsuario,
+                        'status' => 'inscrito',
+                    ]);
+                }
 
-        $inscricao->load(['aula', 'ocorrencia']);
+                // 2. ✅ Gerar cobrança
+                $descricao = sprintf(
+                    'Aula: %s - %s',
+                    $ocorrencia->aula->nome,
+                    $ocorrencia->inicio->format('d/m/Y H:i')
+                );
 
-        return response()->json([
-            'message' => 'Inscrição realizada com sucesso',
-            'data' => $inscricao,
-        ], 201);
+                $cobranca = $pagamentoService->criarCobranca(
+                    idUsuario: $idUsuario,
+                    tipo: 'inscricao_aula',
+                    idReferencia: $inscricao->id_inscricao_aula,
+                    valor: $ocorrencia->aula->preco_unitario,
+                    descricao: $descricao,
+                    vencimento: now()->addDays(7) // Vence em 7 dias
+                );
+
+                $inscricao->load(['aula', 'ocorrencia']);
+
+                return [
+                    'inscricao' => $inscricao,
+                    'cobranca' => $cobranca,
+                ];
+            });
+
+            $mensagem = ($inscricaoExistente && $inscricaoExistente->status === 'cancelado')
+                ? 'Inscrição reativada com sucesso. Uma cobrança foi gerada.'
+                : 'Inscrição realizada com sucesso. Uma cobrança foi gerada.';
+
+            return response()->json([
+                'message' => $mensagem,
+                'data' => $result['inscricao'],
+                'cobranca' => [
+                    'id' => $result['cobranca']->id_cobranca,
+                    'valor' => $result['cobranca']->valor_total,
+                    'vencimento' => $result['cobranca']->vencimento->format('Y-m-d'),
+                    'status' => $result['cobranca']->status,
+                ],
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erro ao criar inscrição: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
      * Cancelar inscrição
+     * DELETE /api/class-enrollments/{id}
+     * 
+     * ✨ NOVO: Se houver cobrança NÃO PAGA, cancela também!
      */
     public function cancelar(int $id)
     {
@@ -129,10 +181,28 @@ class InscricaoAulaController extends Controller
             ], 400);
         }
 
+        // ✨ NOVO: Verifica se tem cobrança não paga antes de cancelar
+        $cobranca = Cobranca::where('referencia_tipo', 'inscricao_aula')
+            ->where('referencia_id', $inscricao->id_inscricao_aula)
+            ->where('status', '!=', 'pago')
+            ->first();
+
+        // Se tem cobrança não paga, cancelar também
+        if ($cobranca) {
+            $cobranca->update(['status' => 'cancelado']);
+        }
+
         $inscricao->update(['status' => 'cancelado']);
 
         return response()->json([
-            'message' => 'Inscrição cancelada com sucesso',
+            'data' => [
+                'id_inscricao_aula' => (string) $inscricao->id_inscricao_aula,
+                'status' => 'cancelado',
+                'cobranca_cancelada' => $cobranca ? true : false,
+            ],
+            'message' => $cobranca 
+                ? 'Inscrição e cobrança canceladas com sucesso'
+                : 'Inscrição cancelada com sucesso',
         ], 200);
     }
 

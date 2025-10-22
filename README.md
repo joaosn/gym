@@ -116,9 +116,9 @@ Após rodar seeders, você pode fazer login com:
 
 | Email | Senha | Papel |
 |-------|-------|-------|
-| `admin@fitway.com` | `senha123` | **Admin** (acesso total) |
-| `joao.silva@example.com` | `senha123` | **Aluno** (pode reservar, inscrever) |
-| `personal1@fitway.com` | `senha123` | **Instrutor** (gerencia agenda) |
+| `admin@fitway.com` | `123456` | **Admin** (acesso total) |
+| `aluno@fitway.com` | `123456` | **Aluno** (pode reservar, inscrever) |
+| `personal@fitway.com` | `123456` | **Personal** (gerencia agenda) |
 
 ---
 

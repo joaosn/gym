@@ -1,6 +1,15 @@
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { StatCardSkeleton, CardSkeleton } from '@/components/LoadingSkeletons';
+import { AvailabilityModal } from '@/components/AvailabilityModal';
+import { courtsService } from '@/services/courts.service';
+import { plansService } from '@/services/plans.service';
+import { classesService } from '@/services/classes.service';
+import { formatCurrency } from '@/lib/utils';
+import { ApiError } from '@/lib/api-client';
 import { 
   MapPin, 
   Phone, 
@@ -13,73 +22,65 @@ import {
   MessageCircle,
   Calendar,
   CreditCard,
-  Instagram
+  Instagram,
+  Loader2
 } from 'lucide-react';
 import heroImage from '@/assets/hero-image.jpg';
 
 const HomePage = () => {
-  const courts = [
-    { name: 'Quadra Alecrim', location: 'Setor Alecrim' },
-    { name: 'Quadra Cotafacil', location: 'Próx. Cotafacil' },
-    { name: 'Quadra Castelini', location: 'Bairro Castelini' }
-  ];
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [courts, setCourts] = useState<any[]>([]);
+  const [plans, setPlans] = useState<any[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
+  
+  // Modal de disponibilidade
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<'court' | 'class'>('court');
+  const [selectedItem, setSelectedItem] = useState<any>(null);
 
-  const plans = [
-    {
-      name: 'Fit Básico',
-      price: 89,
-      benefits: [
-        '1 reserva futura',
-        'Aulas e personais à parte',
-        'Desconto nas reservas',
-        'Suporte prioritário'
-      ]
-    },
-    {
-      name: 'Fit Plus',
-      price: 129,
-      benefits: [
-        '2 reservas futuras',
-        '1 aula/semana incluída',
-        'Desconto em personais',
-        'Acesso exclusivo'
-      ],
-      popular: true
-    }
-  ];
+  useEffect(() => {
+    loadData();
+  }, []);
 
-  const classes = [
-    {
-      name: 'Beach Tennis Kids',
-      duration: '1h',
-      capacity: 6,
-      level: 'Infantil'
-    },
-    {
-      name: 'Beach Tennis Iniciante',
-      duration: '1h', 
-      capacity: 6,
-      level: 'Iniciante'
-    },
-    {
-      name: 'Beach Tennis Avançado',
-      duration: '1h',
-      capacity: 6, 
-      level: 'Avançado'
-    },
-    {
-      name: 'FTV Iniciante',
-      duration: '1h',
-      capacity: 6,
-      level: 'Iniciante'
-    },
-    {
-      name: 'FTV Avançado', 
-      duration: '1h',
-      capacity: 6,
-      level: 'Avançado'
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      
+      // Carregar dados em paralelo
+      const [courtsData, plansData, classesData] = await Promise.all([
+        courtsService.getCourts().catch(() => []),
+        plansService.listPublicPlans().catch(() => ({ data: [] })),
+        classesService.list({ status: 'ativa' }).catch(() => ({ data: [] }))
+      ]);
+
+      setCourts(courtsData || []);
+      setPlans(plansData.data || []);
+      setClasses(classesData.data || []);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        toast({
+          title: 'Erro ao carregar dados',
+          description: error.message,
+          variant: 'destructive',
+        });
+      }
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const openCourtModal = (court: any) => {
+    setSelectedItem(court);
+    setModalType('court');
+    setModalOpen(true);
+  };
+
+  const openClassModal = (classItem: any) => {
+    setSelectedItem(classItem);
+    setModalType('class');
+    setModalOpen(true);
+  };
 
   const testimonials = [
     {
@@ -231,36 +232,70 @@ const HomePage = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-6">Nossas Quadras</h2>
-            <div className="flex flex-col sm:flex-row gap-8 justify-center items-center mb-8">
-              <div className="text-center p-6 bg-fitway-green/10 rounded-xl border border-fitway-green/30">
-                <span className="text-4xl font-bold text-fitway-green block">R$ 40/h</span>
-                <p className="text-white/80 font-medium">Aluno</p>
-              </div>
-              <div className="text-center p-6 bg-card rounded-xl border border-fitway-green/20">
-                <span className="text-4xl font-bold text-white block">R$ 45/h</span>
-                <p className="text-white/80 font-medium">Não aluno</p>
-              </div>
-            </div>
+            <p className="text-xl text-white/90 mb-8">Quadras profissionais com areia premium e iluminação LED</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {courts.map((court, index) => (
-              <Card key={index} className="sport-card bg-card/90 backdrop-blur-sm border-fitway-green/30">
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-center gap-2 text-white">
-                    <MapPin className="h-5 w-5 text-fitway-green" />
-                    {court.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-center text-white/80 mb-4">{court.location}</p>
-                  <Button variant="sport" className="w-full" onClick={() => window.location.href = '/reserve'}>
-                    Reservar Agora
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {loading ? (
+            <div className="grid md:grid-cols-3 gap-8">
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+            </div>
+          ) : courts.length > 0 ? (
+            <div className="grid md:grid-cols-3 gap-8">
+              {courts.map((court) => (
+                <Card key={court.id_quadra} className="sport-card bg-card/90 backdrop-blur-sm border-fitway-green/30 hover:border-fitway-green transition-all">
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-center gap-2 text-white">
+                      <MapPin className="h-5 w-5 text-fitway-green" />
+                      {court.nome}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3 mb-4">
+                      <p className="text-center text-white/80">{court.localizacao}</p>
+                      <div className="text-center p-4 bg-fitway-green/10 rounded-lg border border-fitway-green/30">
+                        <span className="text-3xl font-bold text-fitway-green block">
+                          {formatCurrency(court.preco_hora)}
+                        </span>
+                        <p className="text-white/80 text-sm">por hora</p>
+                      </div>
+                      {court.caracteristicas_json && (
+                        <div className="flex flex-wrap gap-2 justify-center">
+                          {court.caracteristicas_json.cobertura && (
+                            <Badge variant="outline" className="border-fitway-green/50 text-fitway-green">
+                              Coberta
+                            </Badge>
+                          )}
+                          {court.caracteristicas_json.iluminacao && (
+                            <Badge variant="outline" className="border-fitway-green/50 text-fitway-green">
+                              Iluminada
+                            </Badge>
+                          )}
+                          {court.caracteristicas_json.vestiario && (
+                            <Badge variant="outline" className="border-fitway-green/50 text-fitway-green">
+                              Vestiário
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <Button variant="sport" className="w-full" onClick={() => openCourtModal(court)}>
+                      <Calendar className="mr-2 h-4 w-4" />
+                      Ver Horários e Reservar
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="bg-card/90 backdrop-blur-sm border-fitway-green/30">
+              <CardContent className="py-12 text-center">
+                <MapPin className="h-12 w-12 text-white/30 mx-auto mb-4" />
+                <p className="text-white/70 text-lg">Nenhuma quadra disponível no momento</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </section>
 
@@ -272,37 +307,82 @@ const HomePage = () => {
             <p className="text-xl text-white/90">Escolha o plano ideal para seu estilo de vida esportivo</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {plans.map((plan, index) => (
-              <Card key={index} className={`sport-card bg-card/90 backdrop-blur-sm relative ${plan.popular ? 'ring-2 ring-fitway-green shadow-glow' : 'border-fitway-green/30'}`}>
-                {plan.popular && (
-                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-fitway-green text-fitway-dark font-bold">
-                    Mais Popular
-                  </Badge>
-                )}
-                <CardHeader>
-                  <CardTitle className="text-center text-2xl text-white">{plan.name}</CardTitle>
-                  <div className="text-center">
-                    <span className="text-5xl font-bold text-fitway-green">R$ {plan.price}</span>
-                    <span className="text-white/80 text-lg">/mês</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-4 mb-8">
-                    {plan.benefits.map((benefit, i) => (
-                      <li key={i} className="flex items-center gap-3">
-                        <Zap className="h-5 w-5 text-fitway-green flex-shrink-0" />
-                        <span className="text-white/90">{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button variant={plan.popular ? "neon" : "sport"} className="w-full" size="lg">
-                    Escolher Plano
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {loading ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+            </div>
+          ) : plans.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {plans.map((plan, index) => (
+                <Card key={plan.id_plano} className={`sport-card bg-card/90 backdrop-blur-sm relative ${index === 1 ? 'ring-2 ring-fitway-green shadow-glow' : 'border-fitway-green/30'}`}>
+                  {index === 1 && (
+                    <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-fitway-green text-fitway-dark font-bold">
+                      Mais Popular
+                    </Badge>
+                  )}
+                  <CardHeader>
+                    <CardTitle className="text-center text-2xl text-white">{plan.nome}</CardTitle>
+                    <div className="text-center">
+                      <span className="text-5xl font-bold text-fitway-green">{formatCurrency(plan.preco, false)}</span>
+                      <span className="text-white/80 text-lg">
+                        /{plan.ciclo_cobranca === 'mensal' ? 'mês' : plan.ciclo_cobranca === 'trimestral' ? 'trimestre' : plan.ciclo_cobranca === 'semestral' ? 'semestre' : 'ano'}
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-4 mb-8">
+                      {plan.beneficios_json && Array.isArray(plan.beneficios_json) ? (
+                        plan.beneficios_json.map((benefit: string, i: number) => (
+                          <li key={i} className="flex items-center gap-3">
+                            <Zap className="h-5 w-5 text-fitway-green flex-shrink-0" />
+                            <span className="text-white/90">{benefit}</span>
+                          </li>
+                        ))
+                      ) : (
+                        <>
+                          <li className="flex items-center gap-3">
+                            <Zap className="h-5 w-5 text-fitway-green flex-shrink-0" />
+                            <span className="text-white/90">{plan.max_reservas_futuras} reservas futuras</span>
+                          </li>
+                          {plan.max_sessoes_personal_mes > 0 && (
+                            <li className="flex items-center gap-3">
+                              <Zap className="h-5 w-5 text-fitway-green flex-shrink-0" />
+                              <span className="text-white/90">{plan.max_sessoes_personal_mes} sessões personal/mês</span>
+                            </li>
+                          )}
+                          {plan.desconto_aulas_grupo > 0 && (
+                            <li className="flex items-center gap-3">
+                              <Zap className="h-5 w-5 text-fitway-green flex-shrink-0" />
+                              <span className="text-white/90">{plan.desconto_aulas_grupo}% off em aulas</span>
+                            </li>
+                          )}
+                          {plan.desconto_reservas_quadra > 0 && (
+                            <li className="flex items-center gap-3">
+                              <Zap className="h-5 w-5 text-fitway-green flex-shrink-0" />
+                              <span className="text-white/90">{plan.desconto_reservas_quadra}% off em reservas</span>
+                            </li>
+                          )}
+                        </>
+                      )}
+                    </ul>
+                    <Button variant={index === 1 ? "neon" : "sport"} className="w-full" size="lg" onClick={() => window.location.href = '/login'}>
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Escolher Plano
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="bg-card/90 backdrop-blur-sm border-fitway-green/30 max-w-2xl mx-auto">
+              <CardContent className="py-12 text-center">
+                <CreditCard className="h-12 w-12 text-white/30 mx-auto mb-4" />
+                <p className="text-white/70 text-lg">Nenhum plano disponível no momento</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </section>
 
@@ -314,33 +394,65 @@ const HomePage = () => {
             <p className="text-xl text-white/90">Aulas especializadas com professores certificados</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {classes.map((classItem, index) => (
-              <Card key={index} className="sport-card bg-card/90 backdrop-blur-sm border-fitway-green/30">
-                <CardHeader>
-                  <CardTitle className="text-lg text-white">{classItem.name}</CardTitle>
-                  <Badge variant="outline" className="w-fit border-fitway-green text-fitway-green">
-                    {classItem.level}
-                  </Badge>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-fitway-green" />
-                      <span className="text-white/80">{classItem.duration}</span>
+          {loading ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+            </div>
+          ) : classes.length > 0 ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {classes.map((classItem) => (
+                <Card key={classItem.id_aula} className="sport-card bg-card/90 backdrop-blur-sm border-fitway-green/30 hover:border-fitway-green transition-all">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-white">{classItem.nome}</CardTitle>
+                    <Badge variant="outline" className="w-fit border-fitway-green text-fitway-green capitalize">
+                      {classItem.nivel}
+                    </Badge>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3 mb-4">
+                      {classItem.descricao && (
+                        <p className="text-white/70 text-sm">{classItem.descricao}</p>
+                      )}
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-fitway-green" />
+                          <span className="text-white/80">{classItem.duracao_min} min</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-fitway-green" />
+                          <span className="text-white/80">{classItem.capacidade_max} vagas</span>
+                        </div>
+                      </div>
+                      {classItem.preco_unitario > 0 && (
+                        <div className="text-center p-3 bg-fitway-green/10 rounded-lg border border-fitway-green/30">
+                          <span className="text-2xl font-bold text-fitway-green">
+                            {formatCurrency(classItem.preco_unitario)}
+                          </span>
+                          <p className="text-white/80 text-xs">por aula</p>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-fitway-green" />
-                      <span className="text-white/80">{classItem.capacity} vagas</span>
-                    </div>
-                  </div>
-                  <Button variant="outline" className="w-full border-fitway-green text-fitway-green hover:bg-fitway-green hover:text-fitway-dark">
-                    Ver Horários
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    <Button variant="outline" className="w-full border-fitway-green text-fitway-green hover:bg-fitway-green hover:text-fitway-dark" onClick={() => openClassModal(classItem)}>
+                      <Calendar className="mr-2 h-4 w-4" />
+                      Ver Horários e Inscrever-se
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="bg-card/90 backdrop-blur-sm border-fitway-green/30 max-w-2xl mx-auto">
+              <CardContent className="py-12 text-center">
+                <Users className="h-12 w-12 text-white/30 mx-auto mb-4" />
+                <p className="text-white/70 text-lg">Nenhuma aula disponível no momento</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </section>
 
@@ -502,6 +614,14 @@ const HomePage = () => {
           </div>
         </div>
       </footer>
+
+      {/* Modal de Disponibilidade */}
+      <AvailabilityModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        type={modalType}
+        item={selectedItem}
+      />
     </div>
   );
 };

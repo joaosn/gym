@@ -17,9 +17,9 @@ class CreateReservaQuadraRequest extends FormRequest
     {
         return [
             'id_quadra' => 'required|integer|exists:quadras,id_quadra',
-            'id_usuario' => 'required|integer|exists:usuarios,id_usuario',
-            'inicio' => 'required|date|after:now', // ← Voltando a validação
-            'fim' => 'required|date|after:inicio',
+            'id_usuario' => 'nullable|integer|exists:usuarios,id_usuario', // ← Nullable para alunos
+            'inicio' => 'required|date_format:Y-m-d\TH:i:s.000\Z|after_or_equal:today', // ← Aceita hoje
+            'fim' => 'required|date_format:Y-m-d\TH:i:s.000\Z|after:inicio',
             'observacoes' => 'nullable|string|max:500',
         ];
     }
@@ -29,12 +29,12 @@ class CreateReservaQuadraRequest extends FormRequest
         return [
             'id_quadra.required' => 'A quadra é obrigatória',
             'id_quadra.exists' => 'Quadra não encontrada',
-            'id_usuario.required' => 'O usuário é obrigatório',
             'id_usuario.exists' => 'Usuário não encontrado',
             'inicio.required' => 'A data/hora de início é obrigatória',
-            'inicio.date' => 'Data/hora de início inválida',
-            'inicio.after' => 'A reserva deve ser para uma data/hora futura', // ← Mensagem clara
+            'inicio.date_format' => 'Formato de data/hora inválido',
+            'inicio.after_or_equal' => 'A reserva deve ser para hoje ou futura',
             'fim.required' => 'A data/hora de término é obrigatória',
+            'fim.date_format' => 'Formato de data/hora inválido',
             'fim.after' => 'O horário de término deve ser após o início',
             'observacoes.max' => 'As observações não podem ter mais de 500 caracteres',
         ];

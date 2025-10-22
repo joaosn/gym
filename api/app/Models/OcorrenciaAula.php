@@ -54,20 +54,4 @@ class OcorrenciaAula extends Model
     {
         return $this->hasMany(InscricaoAula::class, 'id_ocorrencia_aula', 'id_ocorrencia_aula');
     }
-
-    /**
-     * Conta inscritos confirmados nesta ocorrência
-     */
-    public function getNumeroInscritosAttribute(): int
-    {
-        return $this->inscricoes()->where('status', 'inscrito')->count();
-    }
-
-    /**
-     * Verifica se a ocorrência está cheia
-     */
-    public function isCheiaAttribute(): bool
-    {
-        return $this->numero_inscritos >= $this->aula->capacidade_max;
-    }
 }

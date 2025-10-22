@@ -277,7 +277,7 @@ export interface PersonalSession {
 
 export interface PersonalSessionFormData {
   id_instrutor: string;
-  id_usuario: string;
+  id_usuario?: string; // Opcional: backend auto-preenche com auth()->id()
   id_quadra?: string;
   inicio: string; // ISO datetime
   fim: string; // ISO datetime
@@ -554,7 +554,7 @@ export interface AdminPaymentFilters {
   page?: number;
   per_page?: number;
 }// =====================================================================
-// NOTIFICAÇÕES
+// NOTIFICAï¿½ï¿½ES
 // =====================================================================
 export interface Notificacao {
   id_notificacao: string;

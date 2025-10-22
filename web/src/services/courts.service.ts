@@ -132,7 +132,9 @@ class CourtsService {
   
   async getPublicCourts(): Promise<Court[]> {
     // TODO: Implementar na Fase 3
-    return apiClient.get<Court[]>('/public/courts');
+    const response = await apiClient.get<any>('/public/courts');
+    const courts = (response.data || response || []) as any[];
+    return courts.map(normalizeCourt);
   }
 
   async getPublicCourtAvailability(courtId: string, date: string): Promise<CourtAvailability> {
@@ -150,7 +152,8 @@ class CourtsService {
   // =====================================================================
   
   async getCourts(): Promise<Court[]> {
-    const response = await apiClient.get<{ data: Court[] }>('/admin/courts');
+    // Usar rota pública para homepage
+    const response = await apiClient.get<{ data: Court[] }>('/public/courts');
     return response.data;
   }
 

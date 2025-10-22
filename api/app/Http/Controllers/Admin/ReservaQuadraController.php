@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateReservaQuadraRequest;
 use App\Http\Requests\UpdateReservaQuadraRequest;
+use App\Models\Cobranca;
 use App\Models\ReservaQuadra;
 use App\Services\ReservaQuadraService;
 use Illuminate\Http\JsonResponse;
@@ -137,7 +138,13 @@ class ReservaQuadraController extends Controller
     public function store(CreateReservaQuadraRequest $request): JsonResponse
     {
         try {
-            $reserva = $this->service->criarReserva($request->validated());
+            // Se for aluno (não admin), usar seu próprio ID
+            $dados = $request->validated();
+            if (auth()->user()->papel !== 'admin') {
+                $dados['id_usuario'] = auth()->id();
+            }
+
+            $reserva = $this->service->criarReserva($dados);
 
             return response()->json([
                 'data' => [
@@ -233,6 +240,27 @@ class ReservaQuadraController extends Controller
      * 
      * POST /api/admin/court-bookings/check-availability
      */
+    /**
+     * Retorna todos os horários disponíveis de um dia
+     * 
+     * POST /api/court-bookings/available-slots
+     * Body: { id_quadra: int, data: "YYYY-MM-DD" }
+     */
+    public function availableSlots(Request $request): JsonResponse
+    {
+        $request->validate([
+            'id_quadra' => 'required|integer|exists:quadras,id_quadra',
+            'data' => 'required|date_format:Y-m-d|after_or_equal:today',
+        ]);
+
+        $resultado = $this->service->listarHorariosDisponiveisDoDia(
+            $request->id_quadra,
+            $request->data
+        );
+
+        return response()->json(['data' => $resultado], 200);
+    }
+
     public function checkAvailability(Request $request): JsonResponse
     {
         $request->validate([
@@ -248,5 +276,94 @@ class ReservaQuadraController extends Controller
         );
 
         return response()->json(['data' => $resultado], 200);
+    }
+
+    /**
+     * Minhas reservas (usuário logado)
+     * 
+     * GET /api/court-bookings/me?status=pendente
+     */
+    public function minhasReservas(Request $request): JsonResponse
+    {
+        $usuarioId = auth()->id();
+
+        $query = ReservaQuadra::with(['quadra', 'usuario'])
+            ->where('id_usuario', $usuarioId);
+
+        // Aplicar filtro de status se fornecido
+        if ($request->filled('status')) {
+            $query->where('status', $request->get('status'));
+        } else {
+            // Padrão: não incluir canceladas
+            $query->where('status', '!=', 'cancelada');
+        }
+
+        $reservas = $query->orderBy('inicio', 'desc')->get();
+
+        // Mapear para formato frontend
+        $data = $reservas->map(function ($reserva) {
+            return [
+                'id_reserva_quadra' => (string) $reserva->id_reserva_quadra,
+                'id_quadra' => (string) $reserva->id_quadra,
+                'id_usuario' => (string) $reserva->id_usuario,
+                'inicio' => $reserva->inicio->toISOString(),
+                'fim' => $reserva->fim->toISOString(),
+                'preco_total' => (float) $reserva->preco_total,
+                'status' => $reserva->status,
+                'observacoes' => $reserva->observacoes,
+                'quadra' => $reserva->quadra ? [
+                    'id_quadra' => (string) $reserva->quadra->id_quadra,
+                    'nome' => $reserva->quadra->nome,
+                    'localizacao' => $reserva->quadra->localizacao,
+                ] : null,
+                'criado_em' => $reserva->criado_em->toISOString(),
+                'atualizado_em' => $reserva->atualizado_em->toISOString(),
+            ];
+        });
+
+        return response()->json(['data' => $data], 200);
+    }
+
+    /**
+     * Cancelar minha reserva (aluno)
+     * 
+     * PATCH /api/court-bookings/{id}/cancel
+     * 
+     * ✨ NOVO: Se houver cobrança NÃO PAGA, cancela também!
+     */
+    public function cancel(string $id): JsonResponse
+    {
+        $reserva = ReservaQuadra::findOrFail($id);
+        
+        // Validar se é o próprio usuário (exceto admin)
+        if (auth()->user()->papel !== 'admin' && $reserva->id_usuario != auth()->id()) {
+            return response()->json([
+                'message' => 'Você não tem permissão para cancelar essa reserva',
+            ], 403);
+        }
+
+        // ✨ NOVO: Cancelar cobrança se não foi paga
+        $cobranca = Cobranca::where('referencia_tipo', 'reserva_quadra')
+            ->where('referencia_id', $reserva->id_reserva_quadra)
+            ->where('status', '!=', 'pago') // Só cancela se NÃO foi pago
+            ->first();
+
+        if ($cobranca) {
+            $cobranca->update(['status' => 'cancelado']);
+        }
+
+        // Cancelar reserva
+        $reserva->update(['status' => 'cancelada']);
+
+        return response()->json([
+            'data' => [
+                'id_reserva_quadra' => (string) $reserva->id_reserva_quadra,
+                'status' => 'cancelada',
+                'cobranca_cancelada' => $cobranca ? true : false,
+            ],
+            'message' => $cobranca 
+                ? 'Reserva e cobrança canceladas com sucesso'
+                : 'Reserva cancelada com sucesso',
+        ], 200);
     }
 }

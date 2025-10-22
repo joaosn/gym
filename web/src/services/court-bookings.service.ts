@@ -47,29 +47,29 @@ function normalizeBooking(booking: any): CourtBooking {
 }
 
 class CourtBookingsService {
-  private basePath = '/admin/court-bookings';
+  // Para alunos: /court-bookings (autenticado)
+  // Para admin: /admin/court-bookings (admin only)
+  private basePath = '/court-bookings';
 
   /**
-   * Listar reservas com filtros
+   * Listar minhas reservas (do usuário logado)
+   * Para alunos: GET /court-bookings/me
    */
   async list(filters?: CourtBookingFilters): Promise<{ data: CourtBooking[]; total: number }> {
     const params = new URLSearchParams();
     
-    if (filters?.id_quadra) params.append('id_quadra', filters.id_quadra);
-    if (filters?.id_usuario) params.append('id_usuario', filters.id_usuario);
     if (filters?.status) params.append('status', filters.status);
     if (filters?.data_inicio) params.append('data_inicio', filters.data_inicio);
     if (filters?.data_fim) params.append('data_fim', filters.data_fim);
-    if (filters?.search) params.append('search', filters.search);
 
     const queryString = params.toString();
-    const url = queryString ? `${this.basePath}?${queryString}` : this.basePath;
+    const url = queryString ? `${this.basePath}/me?${queryString}` : `${this.basePath}/me`;
     
-    const response = await apiClient.get<{ data: any[]; total: number }>(url);
+    const response = await apiClient.get<{ data: any[] }>(url);
     
     return {
-      data: response.data.map(normalizeBooking),
-      total: response.total,
+      data: Array.isArray(response.data) ? response.data.map(normalizeBooking) : [],
+      total: Array.isArray(response.data) ? response.data.length : 0,
     };
   }
 
@@ -114,8 +114,12 @@ class CourtBookingsService {
   /**
    * Cancelar reserva (soft delete)
    */
-  async cancel(id: string): Promise<void> {
-    await apiClient.delete(`${this.basePath}/${id}`);
+  async cancel(id: string): Promise<{ data: any; message: string }> {
+    const response = await apiClient.patch<{ data: any; message: string }>(
+      `${this.basePath}/${id}/cancel`,
+      {}
+    );
+    return response;
   }
 
   /**
@@ -139,6 +143,39 @@ class CourtBookingsService {
     return await apiClient.post<{ data: AvailabilityCheckResponse }>(
       `${this.basePath}/check-availability`,
       data
+    );
+  }
+
+  /**
+   * ✨ NOVO: Listar todos os horários disponíveis de um dia
+   * POST /court-bookings/available-slots
+   * Body: { id_quadra: number, data: "YYYY-MM-DD" }
+   * Retorna: array com todos os slots (disponíveis e indisponíveis)
+   */
+  async getAvailableSlots(idQuadra: number | string, data: string): Promise<{ 
+    data: {
+      disponivel: boolean;
+      slots: Array<{
+        hora: string;
+        inicio: string;
+        fim: string;
+        disponivel: boolean;
+        preco: number;
+      }>;
+      quadra: {
+        id_quadra: number;
+        nome: string;
+        preco_hora: number;
+      };
+      motivo?: string;
+    }
+  }> {
+    return await apiClient.post<any>(
+      `${this.basePath}/available-slots`,
+      {
+        id_quadra: typeof idQuadra === 'string' ? parseInt(idQuadra) : idQuadra,
+        data,
+      }
     );
   }
 }

@@ -225,8 +225,14 @@ export default function CourtBookingsPage() {
     if (!selectedBooking) return;
 
     try {
-      await courtBookingsService.cancel(selectedBooking.id_reserva_quadra);
-      toast({ title: 'Reserva cancelada!' });
+      const response = await courtBookingsService.cancel(selectedBooking.id_reserva_quadra);
+      
+      // Se cobrança foi cancelada junto, mostrar mensagem diferente
+      const description = response.data?.cobranca_cancelada 
+        ? 'Reserva e cobrança pendente canceladas com sucesso.'
+        : 'Reserva cancelada com sucesso.';
+      
+      toast({ title: 'Sucesso!', description });
       
       setCancelModalOpen(false);
       setSelectedBooking(null);

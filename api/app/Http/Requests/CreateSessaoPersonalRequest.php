@@ -3,12 +3,42 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class CreateSessaoPersonalRequest extends FormRequest
 {
     public function authorize()
     {
         return true;
+    }
+
+    /**
+     * Preparar dados ANTES da validação
+     * Se id_usuario estiver vazio, usar o usuário autenticado
+     */
+    public function prepareForValidation()
+    {
+        // Se id_usuario não foi informado ou está vazio, usar auth()->id()
+        if (empty($this->id_usuario)) {
+            $this->merge([
+                'id_usuario' => auth()->id(),
+            ]);
+        }
+    }
+
+    /**
+     * ⚠️ OBRIGATÓRIO em APIs REST!
+     * Força retorno JSON 422 em vez de redirect 302
+     */
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(
+            response()->json([
+                'message' => 'Dados inválidos',
+                'errors' => $validator->errors()
+            ], 422)
+        );
     }
 
     public function rules()

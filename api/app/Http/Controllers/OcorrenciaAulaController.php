@@ -21,7 +21,13 @@ class OcorrenciaAulaController extends Controller
      */
     public function index(Request $request)
     {
-        $query = OcorrenciaAula::with(['aula', 'instrutor', 'quadra'])->withCount('inscricoes');
+        $query = OcorrenciaAula::query()
+            ->with(['aula', 'instrutor', 'quadra'])
+            ->withCount([
+                'inscricoes as numero_inscritos' => function ($q) {
+                    $q->where('status', 'ativa');
+                }
+            ]);
 
         // Filtros
         if ($request->filled('id_aula')) {
@@ -46,6 +52,9 @@ class OcorrenciaAulaController extends Controller
         // Filtro por data (início)
         if ($request->filled('data_inicio')) {
             $query->whereDate('inicio', '>=', $request->data_inicio);
+        } elseif (!$request->filled('data_fim')) {
+            // Padrão: mostrar apenas futuras (se não especificar data_inicio nem data_fim)
+            $query->where('inicio', '>=', now());
         }
 
         if ($request->filled('data_fim')) {

@@ -42,6 +42,16 @@ Route::prefix('auth')->group(function () {
 });
 
 // =====================================================================
+// ROTAS PÚBLICAS (SEM AUTENTICAÇÃO)
+// =====================================================================
+Route::prefix('public')->group(function () {
+    Route::get('/courts', [\App\Http\Controllers\PublicController::class, 'courts']);
+    Route::get('/plans', [\App\Http\Controllers\PublicController::class, 'plans']);
+    Route::get('/classes', [\App\Http\Controllers\PublicController::class, 'classes']);
+    Route::get('/instructors', [\App\Http\Controllers\PublicController::class, 'instructors']);
+});
+
+// =====================================================================
 // ROTAS AUTENTICADAS (SANCTUM)
 // =====================================================================
 Route::middleware('auth:sanctum')->group(function () {
@@ -51,6 +61,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/logout', [AuthController::class, 'logout']);
     });
+
+    // =====================================================================
+    // DASHBOARDS (por role)
+    // =====================================================================
+    Route::get('/admin/dashboard', [App\Http\Controllers\DashboardController::class, 'adminDashboard'])->middleware('role:admin');
+    Route::get('/student/dashboard', [App\Http\Controllers\DashboardController::class, 'studentDashboard'])->middleware('role:aluno');
+    Route::get('/instructor/dashboard', [App\Http\Controllers\DashboardController::class, 'instructorDashboard'])->middleware('role:instrutor');
 
     // =====================================================================
     // ADMIN: QUADRAS (CRUD)
@@ -95,10 +112,12 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // RESERVAS DE QUADRAS (CRUD)
         // ⚠️ IMPORTANTE: Rotas específicas ANTES das genéricas!
+        Route::post('/court-bookings/available-slots', [ReservaQuadraController::class, 'availableSlots'])->name('court-bookings.slots');
         Route::post('/court-bookings/check-availability', [ReservaQuadraController::class, 'checkAvailability'])->name('court-bookings.check');
         Route::patch('/court-bookings/{id}/confirm', [ReservaQuadraController::class, 'confirm'])->name('court-bookings.confirm');
         Route::patch('/court-bookings/{id}/cancel', [ReservaQuadraController::class, 'cancel'])->name('court-bookings.cancel');
-        Route::post('/court-blockings', [App\Http\Controllers\BloqueioQuadraController::class, 'store'])->name('court-blockings.store');
+        // TODO: Implementar BloqueioQuadraController
+        // Route::post('/court-blockings', [App\Http\Controllers\BloqueioQuadraController::class, 'store'])->name('court-blockings.store');
         
         // Rotas CRUD normais
         Route::get('/court-bookings', [ReservaQuadraController::class, 'index'])->name('court-bookings.index');
@@ -168,8 +187,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // =====================================================================
     Route::prefix('personal-sessions')->group(function () {
         // Rotas específicas ANTES das genéricas (evitar conflito com {id})
-        Route::get('/me', [SessaoPersonalController::class, 'mySessions']); // Sessões do instrutor logado
-        Route::get('/my-sessions', [SessaoPersonalController::class, 'mySessions']); // Alias para compatibilidade com testes
+        Route::get('/me', [SessaoPersonalController::class, 'myStudentSessions']); // ✨ Sessões do ALUNO logado
+        Route::get('/instructor/me', [SessaoPersonalController::class, 'mySessions']); // Sessões do INSTRUTOR logado
+        Route::get('/availability/daily/{id_instrutor}', [SessaoPersonalController::class, 'getDailyAvailability']); // ✨ NOVO: Todos horários do dia
         Route::post('/check-availability', [SessaoPersonalController::class, 'checkAvailability']);
         Route::patch('/{id}/confirm', [SessaoPersonalController::class, 'confirm']);
         
@@ -186,13 +206,15 @@ Route::middleware('auth:sanctum')->group(function () {
     // AULAS (TURMAS EM GRUPO) - Aluno
     // =====================================================================
     Route::prefix('classes')->group(function () {
-        // Listar aulas disponíveis
-        Route::get('/', [App\Http\Controllers\AulaController::class, 'index']);
-        Route::get('/{id}', [App\Http\Controllers\AulaController::class, 'show']);
-
-        // Listar ocorrências futuras
+        // ⚠️ IMPORTANTE: Rotas específicas ANTES das genéricas!
+        
+        // Listar ocorrências futuras (DEVE vir ANTES de /{id})
         Route::get('/occurrences', [App\Http\Controllers\OcorrenciaAulaController::class, 'index']);
         Route::get('/occurrences/{id}', [App\Http\Controllers\OcorrenciaAulaController::class, 'show']);
+        
+        // Listar aulas disponíveis (rotas genéricas por último)
+        Route::get('/', [App\Http\Controllers\AulaController::class, 'index']);
+        Route::get('/{id}', [App\Http\Controllers\AulaController::class, 'show']);
     });
 
     // Inscrições em aulas
@@ -226,6 +248,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Webhook Mercado Pago
     Route::post('/webhooks/mercadopago', [App\Http\Controllers\MercadoPagoWebhookController::class, 'handle']);
+
+    // =====================================================================
+    // RESERVAS DE QUADRAS (Aluno)
+    // =====================================================================
+    Route::prefix('court-bookings')->group(function () {
+        Route::post('/available-slots', [ReservaQuadraController::class, 'availableSlots']);
+        Route::post('/check-availability', [ReservaQuadraController::class, 'checkAvailability']);
+        Route::get('/me', [ReservaQuadraController::class, 'minhasReservas']);
+        Route::post('/', [ReservaQuadraController::class, 'store']);
+        Route::get('/{id}', [ReservaQuadraController::class, 'show']);
+        Route::patch('/{id}/cancel', [ReservaQuadraController::class, 'cancel']);
+    });
 
     // =====================================================================
     // NOTIFICAÇÕES (Aluno/Instrutor)

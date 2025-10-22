@@ -1,97 +1,115 @@
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Search, 
-  Calendar, 
-  Clock, 
-  Users,
-  User,
-  BookOpen,
-  Filter,
-  Star
-} from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Search, Calendar, Clock, User, BookOpen, AlertCircle, Loader2 } from 'lucide-react';
+import { classEnrollmentsService, classOccurrencesService } from '@/services/classes.service';
+import type { OcorrenciaAula, InscricaoAula } from '@/types';
+import { formatCurrency, formatDate, formatTime, getErrorMessage } from '@/lib/utils';
+import { toast } from '@/hooks/use-toast';
 
 const StudentClasses = () => {
-  // Mock data - would come from API
-  const enrolledClasses = [
-    {
-      id: '1',
-      name: 'Beach Tennis Iniciante',
-      sport: 'Beach Tennis',
-      level: 'iniciante',
-      instructor: 'Prof. Carlos Silva',
-      nextOccurrence: '2024-01-28T18:00:00Z',
-      weeklySchedule: ['Segunda 18:00', 'Quarta 18:00'],
-      enrolledStudents: 6,
-      capacity: 8,
-      status: 'enrolled'
-    }
-  ];
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [occurrences, setOccurrences] = useState<OcorrenciaAula[]>([]);
+  const [enrollingId, setEnrollingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>(''); // Data única selecionada
+  
+  // Estado do diálogo de confirmação
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    occurrence: OcorrenciaAula | null;
+  }>({
+    open: false,
+    occurrence: null,
+  });
+  const [myEnrollments, setMyEnrollments] = useState<InscricaoAula[]>([]);
+  const [loadingEnrollments, setLoadingEnrollments] = useState(false);
+  const [cancelDialog, setCancelDialog] = useState<{
+    open: boolean;
+    enrollment: InscricaoAula | null;
+  }>({
+    open: false,
+    enrollment: null,
+  });
+  const [cancellingEnrollment, setCancellingEnrollment] = useState(false);
 
-  const availableClasses = [
-    {
-      id: '2',
-      name: 'FTV Avançado',
-      sport: 'FTV',
-      level: 'avancado',
-      instructor: 'Prof. Ana Santos',
-      duration: 90,
-      capacity: 12,
-      enrolledStudents: 10,
-      price: 60.00,
-      nextOccurrence: '2024-01-29T19:00:00Z',
-      weeklySchedule: ['Terça 19:00', 'Quinta 19:00'],
-      rating: 4.9,
-      description: 'Aula de FTV para alunos avançados com foco em técnicas e táticas.'
-    },
-    {
-      id: '3',
-      name: 'Tênis Intermediário',
-      sport: 'Tênis',
-      level: 'intermediario',
-      instructor: 'Prof. Maria Costa',
-      duration: 75,
-      capacity: 8,
-      enrolledStudents: 5,
-      price: 55.00,
-      nextOccurrence: '2024-01-30T17:00:00Z',
-      weeklySchedule: ['Terça 17:00', 'Quinta 17:00'],
-      rating: 4.7,
-      description: 'Aperfeiçoe sua técnica de tênis com exercícios específicos.'
-    },
-    {
-      id: '4',
-      name: 'Beach Tennis Kids',
-      sport: 'Beach Tennis',
-      level: 'kids',
-      instructor: 'Prof. João Mendes',
-      duration: 45,
-      capacity: 6,
-      enrolledStudents: 3,
-      price: 35.00,
-      nextOccurrence: '2024-01-31T16:00:00Z',
-      weeklySchedule: ['Quarta 16:00', 'Sexta 16:00'],
-      rating: 4.8,
-      description: 'Aula especial para crianças aprenderem beach tennis de forma divertida.'
-    },
-    {
-      id: '5',
-      name: 'FTV Iniciante',
-      sport: 'FTV',
-      level: 'iniciante',
-      instructor: 'Prof. Pedro Oliveira',
-      duration: 60,
-      capacity: 10,
-      enrolledStudents: 8,
-      price: 40.00,
-      nextOccurrence: '2024-02-01T19:00:00Z',
-      weeklySchedule: ['Segunda 19:00', 'Sexta 19:00'],
-      rating: 4.5,
-      description: 'Introdução ao FTV com foco nos fundamentos básicos.'
+  const loadMyEnrollments = useCallback(async () => {
+    try {
+      setLoadingEnrollments(true);
+      const data = await classEnrollmentsService.myEnrollments({ apenas_futuras: true });
+      setMyEnrollments(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      toast({
+        title: 'Erro ao carregar minhas inscrições',
+        description: getErrorMessage(err),
+        variant: 'destructive',
+      });
+    } finally {
+      setLoadingEnrollments(false);
     }
-  ];
+  }, []);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const filters: any = {};
+        
+        // Se data selecionada, filtrar aulas daquele dia específico
+        if (selectedDate) {
+          filters.data_inicio = selectedDate;
+          filters.data_fim = selectedDate;
+        }
+        
+        const { data } = await classOccurrencesService.listForStudent(filters);
+        setOccurrences(data);
+      } catch (err: any) {
+        setError(getErrorMessage(err));
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [selectedDate]);
+
+  useEffect(() => {
+    loadMyEnrollments();
+  }, [loadMyEnrollments]);
+
+  const filteredOccurrences = useMemo(() => {
+    if (!search.trim()) return occurrences;
+    const term = search.toLowerCase();
+    return occurrences.filter((o) => {
+      const aulaNome = o.aula?.nome?.toLowerCase() || '';
+      const esporte = o.aula?.esporte?.toLowerCase() || '';
+      const instrutor = (o as any).instrutor?.nome?.toLowerCase?.() || '';
+      return aulaNome.includes(term) || esporte.includes(term) || instrutor.includes(term);
+    });
+  }, [occurrences, search]);
+
+  const enrollmentByOccurrence = useMemo(() => {
+    const map: Record<string, InscricaoAula> = {};
+    myEnrollments.forEach((enrollment) => {
+      if (enrollment.id_ocorrencia_aula) {
+        map[enrollment.id_ocorrencia_aula] = enrollment;
+      }
+    });
+    return map;
+  }, [myEnrollments]);
 
   const getLevelColor = (level: string) => {
     switch (level) {
@@ -113,6 +131,118 @@ const StudentClasses = () => {
     }
   };
 
+  const handleOpenConfirmDialog = (occ: OcorrenciaAula) => {
+    setConfirmDialog({
+      open: true,
+      occurrence: occ,
+    });
+  };
+
+  const handleCloseConfirmDialog = () => {
+    setConfirmDialog({
+      open: false,
+      occurrence: null,
+    });
+  };
+
+  const handleOpenCancelDialog = (enrollment: InscricaoAula) => {
+    setCancelDialog({
+      open: true,
+      enrollment,
+    });
+  };
+
+  const handleCloseCancelDialog = () => {
+    setCancelDialog({
+      open: false,
+      enrollment: null,
+    });
+  };
+
+  const handleConfirmEnroll = async () => {
+    const occ = confirmDialog.occurrence;
+    if (!occ) return;
+
+    try {
+      setEnrollingId(occ.id_ocorrencia_aula);
+      handleCloseConfirmDialog();
+
+      const { inscricao, cobranca } = await classEnrollmentsService.enroll({ id_ocorrencia_aula: occ.id_ocorrencia_aula });
+      const valorCobranca = cobranca?.valor ?? cobranca?.valor_total;
+      const vencimentoCobranca = cobranca?.vencimento;
+      const cobrancaDescricao = [
+        valorCobranca ? `Valor: ${formatCurrency(valorCobranca)}` : null,
+        vencimentoCobranca ? `Vencimento: ${formatDate(vencimentoCobranca)}` : null,
+      ]
+        .filter(Boolean)
+        .join(' | ');
+
+      toast({
+        title: 'Inscricao realizada com sucesso!',
+        description: `${cobrancaDescricao || 'Uma cobranca foi gerada.'}
+
+Acesse "Pagamentos" para concluir o pagamento.`,
+      });
+
+      setOccurrences(prev => prev.map(o =>
+        o.id_ocorrencia_aula === occ.id_ocorrencia_aula
+          ? { ...o, numero_inscritos: (o.numero_inscritos || 0) + 1 }
+          : o
+      ));
+
+      setMyEnrollments(prev => {
+        const filtered = prev.filter((enrollment) => enrollment.id_inscricao_aula !== inscricao.id_inscricao_aula);
+        return [inscricao, ...filtered];
+      });
+      await loadMyEnrollments();
+    } catch (err: any) {
+      toast({
+        title: 'Erro ao inscrever',
+        description: getErrorMessage(err),
+        variant: 'destructive'
+      });
+    } finally {
+      setEnrollingId(null);
+    }
+  };
+
+  const handleConfirmCancelEnrollment = async () => {
+    const enrollment = cancelDialog.enrollment;
+    if (!enrollment) return;
+
+    try {
+      setCancellingEnrollment(true);
+      const response = await classEnrollmentsService.cancel(enrollment.id_inscricao_aula);
+
+      // Se cobrança foi cancelada junto, mostrar mensagem diferente
+      const description = response.data?.cobranca_cancelada 
+        ? 'Inscrição e cobrança pendente canceladas com sucesso.'
+        : 'Inscrição cancelada com sucesso.';
+
+      toast({
+        title: 'Sucesso!',
+        description,
+      });
+
+      setOccurrences(prev => prev.map(o =>
+        o.id_ocorrencia_aula === enrollment.id_ocorrencia_aula
+          ? { ...o, numero_inscritos: Math.max((o.numero_inscritos || 1) - 1, 0) }
+          : o
+      ));
+
+      handleCloseCancelDialog();
+      await loadMyEnrollments();
+    } catch (err: any) {
+      toast({
+        title: 'Erro ao cancelar inscrição',
+        description: getErrorMessage(err),
+        variant: 'destructive'
+      });
+    } finally {
+      setCancellingEnrollment(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-dashboard-bg text-dashboard-fg">
       <div className="p-6">
@@ -121,122 +251,101 @@ const StudentClasses = () => {
           <p className="text-white/80">Participe das aulas em grupo do FITWAY</p>
         </div>
 
-        {/* My Classes Section */}
-        {enrolledClasses.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xl font-bold text-white mb-4">Minhas Aulas</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {enrolledClasses.map((classItem) => (
-                <Card key={classItem.id} className="bg-dashboard-card border-dashboard-border border-fitway-green/50">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-white text-lg">{classItem.name}</CardTitle>
-                        <p className="text-white/60 mt-1">{classItem.sport}</p>
-                      </div>
-                      <Badge variant="outline" className="border-fitway-green text-fitway-green">
-                        Inscrito
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-fitway-green" />
-                        <span className="text-white">{classItem.instructor}</span>
-                      </div>
-
-                      <div>
-                        <span className="text-white/70 text-sm block mb-1">Próxima aula:</span>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-fitway-green" />
-                          <span className="text-white">
-                            {new Date(classItem.nextOccurrence).toLocaleDateString('pt-BR')} às{' '}
-                            {new Date(classItem.nextOccurrence).toLocaleTimeString('pt-BR', { 
-                              hour: '2-digit', 
-                              minute: '2-digit' 
-                            })}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div>
-                        <span className="text-white/70 text-sm block mb-1">Horários semanais:</span>
-                        <div className="flex flex-wrap gap-1">
-                          {classItem.weeklySchedule.map((schedule, index) => (
-                            <Badge key={index} variant="outline" className="text-xs border-dashboard-border text-white">
-                              {schedule}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-
-                      <Button variant="outline" className="w-full border-red-500 text-red-500 hover:bg-red-500/10">
-                        Cancelar Inscrição
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
+        {error && (
+          <Card className="bg-dashboard-card border-dashboard-border mb-6">
+            <CardContent className="text-red-400 py-4">{error}</CardContent>
+          </Card>
         )}
 
         {/* Search and Filters */}
-        <div className="mb-6 flex gap-4">
+        <div className="mb-6 flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-white/50" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/50" />
             <Input
               placeholder="Buscar aulas por esporte, nível ou instrutor..."
               className="pl-10 bg-dashboard-card border-dashboard-border text-white placeholder:text-white/50"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
           </div>
-          <Button variant="outline" className="border-dashboard-border text-white hover:bg-dashboard-border">
-            <Filter className="mr-2 h-4 w-4" />
-            Filtros
-          </Button>
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-white/50" />
+              <Input
+                type="date"
+                placeholder="Selecionar data"
+                className="w-44 bg-dashboard-card border-dashboard-border text-white"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+              />
+            </div>
+            {selectedDate && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-dashboard-border text-white hover:bg-dashboard-border"
+                onClick={() => setSelectedDate('')}
+              >
+                Limpar
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Available Classes */}
         <div>
           <h2 className="text-xl font-bold text-white mb-4">Aulas Disponíveis</h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {availableClasses.map((classItem) => (
-              <Card key={classItem.id} className="bg-dashboard-card border-dashboard-border">
+            {loading && (
+              <Card className="bg-dashboard-card border-dashboard-border">
+                <CardContent className="text-white/70 py-8">Carregando aulas...</CardContent>
+              </Card>
+            )}
+            {!loading && filteredOccurrences.map((occ) => {
+              const enrollment = enrollmentByOccurrence[occ.id_ocorrencia_aula];
+              const isEnrolled = enrollment?.status === 'inscrito';
+              const isFull = (occ.numero_inscritos || 0) >= (occ.aula?.capacidade_max || 0);
+              const isCurrentEnrolling = enrollingId === occ.id_ocorrencia_aula;
+              const isCancelingThis = cancellingEnrollment && cancelDialog.enrollment?.id_ocorrencia_aula === occ.id_ocorrencia_aula;
+              return (
+              <Card key={occ.id_ocorrencia_aula} className="bg-dashboard-card border-dashboard-border">
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-white text-lg">{classItem.name}</CardTitle>
-                      <p className="text-white/60 mt-1">{classItem.sport}</p>
+                      <CardTitle className="text-white text-lg">{occ.aula?.nome}</CardTitle>
+                      <p className="text-white/60 mt-1">{occ.aula?.esporte}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={`text-xs ${getLevelColor(classItem.level)}`}>
-                        {getLevelText(classItem.level)}
-                      </Badge>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                        <span className="text-white text-sm">{classItem.rating}</span>
-                      </div>
+                      {isEnrolled && (
+                        <Badge className="bg-fitway-green text-fitway-dark">Minha inscricao</Badge>
+                      )}
+                      {occ.aula?.nivel && (
+                        <Badge variant="outline" className={`text-xs ${getLevelColor(occ.aula.nivel)}`}>
+                          {getLevelText(occ.aula.nivel)}
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    <p className="text-white/80 text-sm">{classItem.description}</p>
+                    {occ.aula?.descricao && (
+                      <p className="text-white/80 text-sm">{occ.aula.descricao}</p>
+                    )}
 
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <span className="text-white/70">Instrutor:</span>
                         <div className="flex items-center gap-2 mt-1">
                           <User className="h-4 w-4 text-fitway-green" />
-                          <span className="text-white">{classItem.instructor}</span>
+                          <span className="text-white">{(occ as any).instrutor?.nome || '-'}</span>
                         </div>
                       </div>
                       <div>
                         <span className="text-white/70">Duração:</span>
                         <div className="flex items-center gap-2 mt-1">
                           <Clock className="h-4 w-4 text-fitway-green" />
-                          <span className="text-white">{classItem.duration} min</span>
+                          <span className="text-white">{occ.aula?.duracao_min} min</span>
                         </div>
                       </div>
                     </div>
@@ -244,60 +353,270 @@ const StudentClasses = () => {
                     <div>
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-white/70 text-sm">Vagas:</span>
-                        <span className="text-white text-sm">{classItem.enrolledStudents}/{classItem.capacity}</span>
+                        <span className="text-white text-sm">{occ.numero_inscritos || 0}/{occ.aula?.capacidade_max}</span>
                       </div>
                       <div className="w-full bg-dashboard-bg rounded-full h-2">
                         <div 
                           className={`h-2 rounded-full transition-all duration-300 ${
-                            classItem.enrolledStudents === classItem.capacity ? 'bg-red-500' : 'bg-fitway-green'
+                            (occ.numero_inscritos || 0) === (occ.aula?.capacidade_max || 0) ? 'bg-red-500' : 'bg-fitway-green'
                           }`}
-                          style={{ width: `${(classItem.enrolledStudents / classItem.capacity) * 100}%` }}
+                          style={{ width: `${(((occ.numero_inscritos || 0) / (occ.aula?.capacidade_max || 1)) * 100)}%` }}
                         />
                       </div>
                     </div>
 
-                    <div>
-                      <span className="text-white/70 text-sm block mb-1">Horários semanais:</span>
-                      <div className="flex flex-wrap gap-1">
-                        {classItem.weeklySchedule.map((schedule, index) => (
-                          <Badge key={index} variant="outline" className="text-xs border-dashboard-border text-white">
-                            {schedule}
-                          </Badge>
-                        ))}
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-white/70">Data:</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Calendar className="h-4 w-4 text-fitway-green" />
+                          <span className="text-white">{formatDate(occ.inicio)} às {formatTime(occ.inicio)}</span>
+                        </div>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center pt-4 border-t border-dashboard-border">
                       <div>
-                        <span className="text-fitway-green font-bold text-lg">
-                          R$ {classItem.price.toFixed(2)}
-                        </span>
-                        <span className="text-white/60 text-sm ml-1">/aula</span>
+                        {occ.aula?.preco_unitario ? (
+                          <>
+                            <span className="text-fitway-green font-bold text-lg">
+                              {formatCurrency(occ.aula.preco_unitario)}
+                            </span>
+                            <span className="text-white/60 text-sm ml-1">/aula</span>
+                          </>
+                        ) : (
+                          <span className="text-white/70 text-sm">Incluso no plano</span>
+                        )}
                       </div>
-                      <Button 
-                        className="bg-fitway-green hover:bg-fitway-green/90 text-white"
-                        disabled={classItem.enrolledStudents === classItem.capacity}
+                      <Button
+                        className={isEnrolled
+                          ? 'bg-red-600 hover:bg-red-700 text-white'
+                          : 'bg-fitway-green hover:bg-fitway-green/90 text-white'}
+                        disabled={isEnrolled ? isCancelingThis : isFull || isCurrentEnrolling}
+                        onClick={() => {
+                          if (isEnrolled && enrollment) {
+                            handleOpenCancelDialog(enrollment);
+                          } else {
+                            handleOpenConfirmDialog(occ);
+                          }
+                        }}
                       >
-                        {classItem.enrolledStudents === classItem.capacity ? 'Esgotado' : 'Inscrever-se'}
+                        {isEnrolled
+                          ? (isCancelingThis ? 'Cancelando...' : 'Cancelar inscricao')
+                          : isFull
+                            ? 'Esgotado'
+                            : (isCurrentEnrolling ? 'Inscrevendo...' : 'Inscrever-se')}
                       </Button>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            );
+          })}
           </div>
         </div>
-
-        {availableClasses.length === 0 && (
+        {!loading && filteredOccurrences.length === 0 && (
           <Card className="bg-dashboard-card border-dashboard-border">
             <CardContent className="text-center py-12">
               <BookOpen className="h-16 w-16 text-white/50 mx-auto mb-4" />
-              <h3 className="text-white text-lg font-medium mb-2">Nenhuma aula disponível</h3>
-              <p className="text-white/60">Novas aulas serão adicionadas em breve</p>
+              <p className="text-white/70 text-lg mb-2">Nenhuma aula disponível</p>
+              <p className="text-white/50 text-sm">
+                {selectedDate
+                  ? 'Nenhuma aula encontrada para esta data. Tente outra data.'
+                  : 'Novas aulas serão adicionadas em breve'}
+              </p>
             </CardContent>
           </Card>
         )}
       </div>
+
+        <div className="mt-10">
+          <h2 className="text-xl font-bold text-white mb-4">Minhas Inscricoes</h2>
+          {loadingEnrollments ? (
+            <Card className="bg-dashboard-card border-dashboard-border">
+              <CardContent className="py-8 text-center text-white/70">Carregando inscricoes...</CardContent>
+            </Card>
+          ) : myEnrollments.length > 0 ? (
+            <div className="space-y-4">
+              {myEnrollments.map((enrollment) => {
+                const occ = enrollment.ocorrencia;
+                const aula = enrollment.aula || occ?.aula;
+                const dataInicio = occ?.inicio;
+                const valor = aula?.preco_unitario ?? occ?.aula?.preco_unitario;
+                const isCancelingThisEnrollment = cancellingEnrollment && cancelDialog.enrollment?.id_inscricao_aula === enrollment.id_inscricao_aula;
+
+                return (
+                  <Card key={enrollment.id_inscricao_aula} className="bg-dashboard-card border-dashboard-border">
+                    <CardContent className="space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-white font-semibold text-lg">{aula?.nome || 'Aula'}</p>
+                          <p className="text-white/60 text-sm">{aula?.esporte || occ?.aula?.esporte || '---'}</p>
+                        </div>
+                        <Badge className="bg-fitway-green text-fitway-dark capitalize">{enrollment.status}</Badge>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                        <div className="text-white/70">
+                          <p>Data</p>
+                          <p className="flex items-center gap-2 text-white mt-1">
+                            <Calendar className="h-4 w-4 text-fitway-green" />
+                            {dataInicio ? `${formatDate(dataInicio)} as ${formatTime(dataInicio)}` : '--'}
+                          </p>
+                        </div>
+                        <div className="text-white/70">
+                          <p>Valor</p>
+                          <p className="text-fitway-green font-semibold mt-1">
+                            {valor ? formatCurrency(valor) : 'Incluso no plano'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end">
+                        <Button
+                          variant="outline"
+                          className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
+                          onClick={() => handleOpenCancelDialog(enrollment)}
+                          disabled={isCancelingThisEnrollment}
+                        >
+                          {isCancelingThisEnrollment ? 'Cancelando...' : 'Cancelar inscricao'}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <Card className="bg-dashboard-card border-dashboard-border">
+              <CardContent className="py-8 text-center text-white/70">
+                Voce ainda nao possui inscricoes futuras.
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+      {/* Diálogo de Confirmação */}
+      <AlertDialog open={confirmDialog.open} onOpenChange={handleCloseConfirmDialog}>
+        <AlertDialogContent className="bg-dashboard-card border-dashboard-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-yellow-500" />
+              Confirmar Inscrição
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/80">
+              {confirmDialog.occurrence && (
+                <div className="space-y-3 pt-2">
+                  <p className="font-medium text-white">
+                    {confirmDialog.occurrence.aula?.nome}
+                  </p>
+                  <p>
+                    Data: <span className="text-fitway-green">{formatDate(confirmDialog.occurrence.inicio)}</span> às{' '}
+                    <span className="text-fitway-green">{formatTime(confirmDialog.occurrence.inicio)}</span>
+                  </p>
+                  <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg mt-4">
+                    <p className="text-yellow-200 font-medium mb-2">
+                      ⚠️ Atenção: Esta ação gerará uma cobrança
+                    </p>
+                    {confirmDialog.occurrence.aula?.preco_unitario ? (
+                      <p className="text-white/90">
+                        Será gerada uma cobrança de{' '}
+                        <span className="font-bold text-fitway-green">
+                          {formatCurrency(confirmDialog.occurrence.aula.preco_unitario)}
+                        </span>
+                        {' '}que deverá ser paga para confirmar sua inscrição.
+                      </p>
+                    ) : (
+                      <p className="text-white/90">
+                        Esta aula está inclusa no seu plano, mas uma cobrança será gerada para controle.
+                      </p>
+                    )}
+                  </div>
+                  <p className="text-sm text-white/60 mt-3">
+                    Após confirmar, você poderá pagar a cobrança na área de Pagamentos.
+                  </p>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-dashboard-border text-white hover:bg-dashboard-border">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              className="bg-fitway-green hover:bg-fitway-green/90 text-white"
+              onClick={handleConfirmEnroll}
+            >
+              Confirmar e Gerar Cobrança
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={cancelDialog.open}
+        onOpenChange={(open) => {
+          if (!open && !cancellingEnrollment) {
+            handleCloseCancelDialog();
+          }
+        }}
+      >
+        <AlertDialogContent className="bg-dashboard-card border-dashboard-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-red-400" />
+              Cancelar Inscricao
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-white/80">
+              Ao cancelar, sua vaga sera liberada e cobrancas pendentes serao anuladas automaticamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {cancelDialog.enrollment && (
+            <div className="space-y-3 bg-dashboard-bg/60 p-4 rounded-lg">
+              <p className="text-white font-semibold text-lg">
+                {cancelDialog.enrollment.aula?.nome || cancelDialog.enrollment.ocorrencia?.aula?.nome || 'Aula'}
+              </p>
+              <p className="text-white/70 text-sm">
+                {cancelDialog.enrollment.ocorrencia?.inicio
+                  ? `${formatDate(cancelDialog.enrollment.ocorrencia.inicio)} as ${formatTime(cancelDialog.enrollment.ocorrencia.inicio)}`
+                  : 'Horario nao disponivel'}
+              </p>
+              <div className="flex justify-between text-sm text-white/70 border-t border-dashboard-border pt-2">
+                <span>Valor previsto</span>
+                <span className="text-fitway-green font-semibold">
+                  {cancelDialog.enrollment.aula?.preco_unitario
+                    ? formatCurrency(cancelDialog.enrollment.aula.preco_unitario)
+                    : 'Incluso no plano'}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              className="bg-transparent border-dashboard-border text-white hover:bg-dashboard-border"
+              disabled={cancellingEnrollment}
+            >
+              Manter inscricao
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={handleConfirmCancelEnrollment}
+              disabled={cancellingEnrollment}
+            >
+              {cancellingEnrollment ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Cancelando...
+                </>
+              ) : (
+                'Confirmar cancelamento'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

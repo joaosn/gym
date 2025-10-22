@@ -52,7 +52,7 @@ export default function MyPlan() {
     try {
       const [subResponse, plansResponse] = await Promise.all([
         subscriptionsService.getMySubscription(),
-        plansService.listPlans(),
+        plansService.listPublicPlans(),
       ]);
 
       setSubscription(subResponse);
@@ -218,16 +218,15 @@ export default function MyPlan() {
               <div>
                 <p className="text-sm font-medium mb-2">Benefícios inclusos:</p>
                 <ul className="space-y-1">
-                  {Object.entries(subscription.plano.beneficios_json).map(
-                    ([key, value]) => (
-                      <li key={key} className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 text-green-500" />
-                        <span>
-                          {key}: {String(value)}
-                        </span>
-                      </li>
-                    )
-                  )}
+                  {(Array.isArray(subscription.plano.beneficios_json) 
+                    ? subscription.plano.beneficios_json 
+                    : []
+                  ).map((benefit, idx) => (
+                    <li key={idx} className="flex items-center gap-2 text-sm">
+                      <Check className="h-4 w-4 text-green-500" />
+                      <span>{benefit}</span>
+                    </li>
+                  ))}
                 </ul>
               </div>
             )}
@@ -279,14 +278,28 @@ export default function MyPlan() {
       )}
 
       {/* Planos Disponíveis */}
-      {(!subscription || subscription.status !== 'ativa') && (
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Planos Disponíveis</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {plans.map((plan) => (
-              <Card key={plan.id_plano} className="hover:shadow-lg transition">
+      <div>
+        <h2 className="text-2xl font-bold mb-4">
+          {subscription?.status === 'ativa' ? 'Outros Planos Disponíveis' : 'Planos Disponíveis'}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {plans.map((plan) => {
+            const isCurrentPlan = subscription?.id_plano === plan.id_plano && subscription?.status === 'ativa';
+            
+            return (
+              <Card 
+                key={plan.id_plano} 
+                className={`hover:shadow-lg transition ${isCurrentPlan ? 'border-2 border-fitway-green' : ''}`}
+              >
                 <CardHeader>
-                  <CardTitle>{plan.nome}</CardTitle>
+                  <CardTitle className="flex items-center justify-between">
+                    {plan.nome}
+                    {isCurrentPlan && (
+                      <span className="text-xs bg-fitway-green text-white px-2 py-1 rounded">
+                        Plano Atual
+                      </span>
+                    )}
+                  </CardTitle>
                   <div className="text-3xl font-bold text-fitway-green">
                     {formatCurrency(plan.preco)}
                     <span className="text-lg text-muted-foreground">
@@ -298,34 +311,31 @@ export default function MyPlan() {
                   {/* Benefícios */}
                   {plan.beneficios_json && (
                     <ul className="space-y-2">
-                      {Object.entries(plan.beneficios_json).map(
-                        ([key, value]) => (
-                          <li
-                            key={key}
-                            className="flex items-center gap-2 text-sm"
-                          >
-                            <Check className="h-4 w-4 text-green-500" />
-                            <span>
-                              {key}: {String(value)}
-                            </span>
-                          </li>
-                        )
-                      )}
+                      {(Array.isArray(plan.beneficios_json)
+                        ? plan.beneficios_json
+                        : []
+                      ).map((benefit, idx) => (
+                        <li key={idx} className="flex items-center gap-2 text-sm">
+                          <Check className="h-4 w-4 text-green-500" />
+                          <span>{benefit}</span>
+                        </li>
+                      ))}
                     </ul>
                   )}
 
                   <Button
                     className="w-full"
                     onClick={() => setSelectedPlan(plan)}
+                    disabled={isCurrentPlan}
                   >
-                    Assinar este plano
+                    {isCurrentPlan ? 'Seu plano atual' : 'Assinar este plano'}
                   </Button>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      )}
+      </div>
 
       {/* Dialog: Confirmar Assinatura */}
       <Dialog open={!!selectedPlan} onOpenChange={() => setSelectedPlan(null)}>

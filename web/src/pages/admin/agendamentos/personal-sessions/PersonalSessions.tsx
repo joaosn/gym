@@ -246,8 +246,14 @@ export default function PersonalSessionsPage() {
 
     try {
       setSubmitting(true);
-      await personalSessionsService.cancel(selectedSession.id_sessao_personal);
-      toast({ title: 'Sessão cancelada com sucesso!' });
+      const response = await personalSessionsService.cancel(selectedSession.id_sessao_personal);
+      
+      // Se cobrança foi cancelada junto, mostrar mensagem diferente
+      const description = response.data?.cobranca_cancelada 
+        ? 'Sessão e cobrança pendente canceladas com sucesso.'
+        : 'Sessão cancelada com sucesso.';
+      
+      toast({ title: 'Sucesso!', description });
       setDeleteModalOpen(false);
       setSelectedSession(null);
       loadSessions();

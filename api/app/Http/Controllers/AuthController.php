@@ -17,7 +17,6 @@ class AuthController extends Controller
     public function login(LoginRequest $request): JsonResponse
     {
         $usuario = Usuario::where('email', $request->email)->first();
-
         if (!$usuario || !Hash::check($request->password, $usuario->senha_hash)) {
             return response()->json([
                 'message' => 'Email ou senha incorretos',

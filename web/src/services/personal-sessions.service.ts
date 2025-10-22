@@ -71,8 +71,9 @@ class PersonalSessionsService {
   /**
    * Cancelar sessão (soft delete)
    */
-  async cancel(id: string) {
-    await apiClient.delete(`${this.baseUrl}/${id}`);
+  async cancel(id: string): Promise<{ data: any; message: string }> {
+    const response = await apiClient.delete<{ data: any; message: string }>(`${this.baseUrl}/${id}`);
+    return response;
   }
 
   /**
@@ -84,7 +85,42 @@ class PersonalSessionsService {
   }
 
   /**
-   * Verificar disponibilidade do instrutor
+   * ✨ NOVO: Obter TODOS os horários disponíveis de um instrutor em um dia
+   * Uma única requisição ao invés de 18!
+   * 
+   * GET /api/personal-sessions/availability/daily/{id_instrutor}?date=YYYY-MM-DD
+   */
+  async getDailyAvailability(
+    idInstrutor: string,
+    date: string // formato: YYYY-MM-DD
+  ): Promise<{
+    horarios_disponiveis: Array<{
+      inicio: string;
+      fim: string;
+      inicio_iso: string;
+      fim_iso: string;
+    }>;
+    horarios_ocupados: Array<{
+      inicio: string;
+      fim: string;
+      inicio_iso: string;
+      fim_iso: string;
+    }>;
+    data: string;
+    instrutor_id: string;
+    instrutor_nome: string;
+    total_slots: number;
+    total_disponiveis: number;
+    total_ocupados: number;
+  }> {
+    const response = await apiClient.get<any>(
+      `/personal-sessions/availability/daily/${idInstrutor}?date=${date}`
+    );
+    return response;
+  }
+
+  /**
+   * Verificar disponibilidade do instrutor (DEPRECATED - usar getDailyAvailability)
    */
   async checkAvailability(data: AvailabilityCheckRequest): Promise<AvailabilityCheckResponse> {
     const response = await apiClient.post<AvailabilityCheckResponse>(
@@ -98,9 +134,22 @@ class PersonalSessionsService {
    * Obter minhas sessões (como aluno)
    */
   async getMySessions(filters?: { status?: string; periodo?: 'futuras' | 'passadas' }) {
-    // O backend irá filtrar automaticamente pelo id_usuario do token
-    // Mas por enquanto, precisa passar o id_usuario manualmente ou implementar endpoint /me/sessions
-    return this.list(filters);
+    // Usar endpoint /me que retorna APENAS sessões do aluno logado
+    // Filtra automaticamente pelo id_usuario do token
+    const params = new URLSearchParams();
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.periodo) params.append('periodo', filters.periodo);
+
+    const queryString = params.toString();
+    const url = queryString ? `${this.baseUrl}/me?${queryString}` : `${this.baseUrl}/me`;
+
+    return await apiClient.get<{
+      data: PersonalSession[];
+      current_page: number;
+      last_page: number;
+      per_page: number;
+      total: number;
+    }>(url);
   }
 
   /**

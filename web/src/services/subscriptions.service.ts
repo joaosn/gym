@@ -43,13 +43,24 @@ class SubscriptionsService {
    * ALUNO: Ver minha assinatura ativa
    */
   async getMySubscription(): Promise<Assinatura | null> {
-    const response = await apiClient.get('/subscriptions/me') as any;
-    
-    if (!response.data.data) {
-      return null;
-    }
+    try {
+      const response = await apiClient.get('/subscriptions/me') as any;
+      
+      // O backend retorna: { data: { ... } } quando tem assinatura
+      const subscription = response.data || response;
+      
+      if (!subscription) {
+        return null;
+      }
 
-    return this.normalizeSubscription(response.data.data);
+      return this.normalizeSubscription(subscription);
+    } catch (error: any) {
+      // Se retornar 404, significa que não tem assinatura ativa
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   /**

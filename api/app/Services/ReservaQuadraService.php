@@ -241,4 +241,98 @@ class ReservaQuadraService
             ];
         }
     }
+
+    /**
+     * Retorna todos os horários disponíveis de um dia inteiro (intervalos de 1 hora)
+     * 
+     * @param int $idQuadra
+     * @param string $data (formato: YYYY-MM-DD)
+     * @return array com slots disponíveis
+     */
+    public function listarHorariosDisponiveisDoDia(int $idQuadra, string $data): array
+    {
+        try {
+            // 1. Verificar se quadra existe e está ativa
+            $quadra = Quadra::findOrFail($idQuadra);
+            if ($quadra->status !== 'ativa') {
+                return [
+                    'disponivel' => false,
+                    'motivo' => 'Quadra não está disponível',
+                    'slots' => [],
+                ];
+            }
+
+            // 2. Gerar slots de 1 hora no dia (08:00 às 22:00)
+            $dataCarbon = Carbon::parse($data);
+            $slots = [];
+            
+            for ($hora = 8; $hora < 22; $hora++) {
+                $inicio = $dataCarbon->clone()->setHour($hora)->setMinute(0)->setSecond(0);
+                $fim = $dataCarbon->clone()->setHour($hora + 1)->setMinute(0)->setSecond(0);
+
+                // Skip slots no passado
+                if ($fim->isPast()) {
+                    continue;
+                }
+
+                // Verificar se este slot está disponível
+                $temConflito = ReservaQuadra::where('id_quadra', $idQuadra)
+                    ->whereIn('status', ['pendente', 'confirmada'])
+                    ->where(function ($query) use ($inicio, $fim) {
+                        $query->where(function ($q) use ($inicio, $fim) {
+                            $q->where('inicio', '<=', $inicio)
+                              ->where('fim', '>', $inicio);
+                        })->orWhere(function ($q) use ($inicio, $fim) {
+                            $q->where('inicio', '<', $fim)
+                              ->where('fim', '>=', $fim);
+                        })->orWhere(function ($q) use ($inicio, $fim) {
+                            $q->where('inicio', '>=', $inicio)
+                              ->where('fim', '<=', $fim);
+                        });
+                    })->exists();
+
+                // Verificar conflito com sessões personal
+                $temConflitoPessoal = SessaoPersonal::where('id_quadra', $idQuadra)
+                    ->whereIn('status', ['pendente', 'confirmada'])
+                    ->where(function ($query) use ($inicio, $fim) {
+                        $query->where(function ($q) use ($inicio, $fim) {
+                            $q->where('inicio', '<=', $inicio)
+                              ->where('fim', '>', $inicio);
+                        })->orWhere(function ($q) use ($inicio, $fim) {
+                            $q->where('inicio', '<', $fim)
+                              ->where('fim', '>=', $fim);
+                        })->orWhere(function ($q) use ($inicio, $fim) {
+                            $q->where('inicio', '>=', $inicio)
+                              ->where('fim', '<=', $fim);
+                        });
+                    })->exists();
+
+                $disponivel = !$temConflito && !$temConflitoPessoal;
+                
+                $slots[] = [
+                    'hora' => $inicio->format('H:00'),
+                    'inicio' => $inicio->toIso8601String(),
+                    'fim' => $fim->toIso8601String(),
+                    'disponivel' => $disponivel,
+                    'preco' => $disponivel ? $quadra->preco_hora : 0,
+                ];
+            }
+
+            return [
+                'disponivel' => count(array_filter($slots, fn($s) => $s['disponivel'])) > 0,
+                'slots' => $slots,
+                'quadra' => [
+                    'id_quadra' => $quadra->id_quadra,
+                    'nome' => $quadra->nome,
+                    'preco_hora' => $quadra->preco_hora,
+                ],
+            ];
+        } catch (\Exception $e) {
+            return [
+                'disponivel' => false,
+                'motivo' => $e->getMessage(),
+                'slots' => [],
+            ];
+        }
+    }
 }

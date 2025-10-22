@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Plus, Search, Calendar, Clock, MapPin, DollarSign, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +44,24 @@ export default function StudentCourtBookingsPage() {
   const [courts, setCourts] = useState<Court[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [confirmCreateModal, setConfirmCreateModal] = useState<{
+    open: boolean;
+    court: Court | null;
+    inicio: string;
+    fim: string;
+    price: number;
+    observacoes?: string;
+    userId?: string;
+  }>({
+    open: false,
+    court: null,
+    inicio: '',
+    fim: '',
+    price: 0,
+    observacoes: '',
+    userId: undefined,
+  });
+  const [confirmingCreate, setConfirmingCreate] = useState(false);
   
   // Filtros
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -57,7 +75,7 @@ export default function StudentCourtBookingsPage() {
   // Form data - campos separados
   const [formData, setFormData] = useState({
     id_quadra: '',
-    data: new Date().toISOString().split('T')[0], // Data padrão: hoje
+    data: new Date().toISOString().split('T')[0], // Data padrÃ£o: hoje
     horaInicio: '08:00',
     horaFim: '09:00',
     observacoes: '',
@@ -73,8 +91,8 @@ export default function StudentCourtBookingsPage() {
 
   const loadInitialData = async () => {
     try {
-      const courtsData = await courtsService.getAdminCourts({ status: 'ativa' });
-      setCourts(courtsData.data || []);
+      const courtsData = await courtsService.getPublicCourts();
+      setCourts(courtsData || []);
       await loadMyBookings();
     } catch (error: any) { toast({ title: 'Erro ao processar', description: getErrorMessage(error), variant: 'destructive' }); 
     } finally {
@@ -85,10 +103,8 @@ export default function StudentCourtBookingsPage() {
   const loadMyBookings = async () => {
     try {
       setLoading(true);
-      const currentUser = await authService.getCurrentUser();
-      if (!currentUser) return;
-
-      const filters: any = { id_usuario: currentUser.id };
+      
+      const filters: any = {};
       if (statusFilter !== 'all') filters.status = statusFilter;
 
       const response = await courtBookingsService.list(filters);
@@ -102,8 +118,8 @@ export default function StudentCourtBookingsPage() {
   const handleCreate = async () => {
     if (!formData.id_quadra || !formData.data || !formData.horaInicio || !formData.horaFim) {
       toast({
-        title: 'Campos obrigatórios',
-        description: 'Preencha todos os campos obrigatórios',
+        title: 'Campos obrigatorios',
+        description: 'Preencha todos os campos obrigatorios',
         variant: 'destructive',
       });
       return;
@@ -112,59 +128,93 @@ export default function StudentCourtBookingsPage() {
     const currentUser = await authService.getCurrentUser();
     if (!currentUser) return;
 
-    // Validar que horaFim > horaInicio
     if (formData.horaFim <= formData.horaInicio) {
       toast({
-        title: 'Horário inválido',
-        description: 'O horário de término deve ser após o horário de início',
+        title: 'Horario invalido',
+        description: 'O horario de termino deve ser apos o horario de inicio',
         variant: 'destructive',
       });
       return;
     }
 
-    // Montar datetime ISO
     const inicio = `${formData.data}T${formData.horaInicio}:00`;
     const fim = `${formData.data}T${formData.horaFim}:00`;
+    const durationHours = Math.max(1, (new Date(fim).getTime() - new Date(inicio).getTime()) / (1000 * 60 * 60));
+
     try {
       setSubmitting(true);
-      
-      // Verificar disponibilidade
+
       const availabilityResponse = await courtBookingsService.checkAvailability({
-        id_quadra: parseInt(formData.id_quadra), // ← Converter para número
+        id_quadra: parseInt(formData.id_quadra, 10),
         inicio,
         fim,
       });
 
       if (!availabilityResponse.data.disponivel) {
         toast({
-          title: 'Quadra indisponível',
-          description: availabilityResponse.data.motivo || 'A quadra não está disponível neste horário',
+          title: 'Quadra indisponivel',
+          description: availabilityResponse.data.motivo || 'A quadra nao esta disponivel neste horario',
           variant: 'destructive',
         });
         setSubmitting(false);
         return;
       }
 
-      // Criar reserva
-      await courtBookingsService.create({
-        id_quadra: parseInt(formData.id_quadra), // ← Converter para número
-        id_usuario: parseInt(currentUser.id), // ← Converter para número
+      const selectedCourt = courts.find(c => String(c.id_quadra) === formData.id_quadra) || null;
+      const precoCalculado = availabilityResponse.data.preco_total
+        ?? ((selectedCourt?.preco_hora || 0) * durationHours);
+
+      setConfirmCreateModal({
+        open: true,
+        court: selectedCourt,
         inicio,
         fim,
+        price: precoCalculado,
         observacoes: formData.observacoes,
+        userId: currentUser.id,
+      });
+    } catch (error: any) {
+      toast({ title: 'Erro ao processar', description: getErrorMessage(error), variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleConfirmCreate = async () => {
+    if (!confirmCreateModal.open || !confirmCreateModal.court) return;
+
+    try {
+      setConfirmingCreate(true);
+
+      await courtBookingsService.create({
+        id_quadra: parseInt(String(confirmCreateModal.court.id_quadra), 10),
+        id_usuario: parseInt(confirmCreateModal.userId || '0', 10),
+        inicio: confirmCreateModal.inicio,
+        fim: confirmCreateModal.fim,
+        observacoes: confirmCreateModal.observacoes,
       });
 
       toast({
         title: 'Reserva criada!',
-        description: `Preço: ${formatCurrency(availabilityResponse.data.preco_total || 0)}`,
+        description: `Valor: ${formatCurrency(confirmCreateModal.price)}`,
       });
-      
+
+      setConfirmCreateModal({
+        open: false,
+        court: null,
+        inicio: '',
+        fim: '',
+        price: 0,
+        observacoes: '',
+        userId: undefined,
+      });
       setCreateModalOpen(false);
       resetForm();
       loadMyBookings();
-    } catch (error: any) { toast({ title: 'Erro ao processar', description: getErrorMessage(error), variant: 'destructive' }); 
+    } catch (error: any) {
+      toast({ title: 'Erro ao processar', description: getErrorMessage(error), variant: 'destructive' });
     } finally {
-      setSubmitting(false);
+      setConfirmingCreate(false);
     }
   };
 
@@ -172,13 +222,24 @@ export default function StudentCourtBookingsPage() {
     if (!selectedBooking) return;
 
     try {
-      await courtBookingsService.cancel(selectedBooking.id_reserva_quadra);
-      toast({ title: 'Reserva cancelada!' });
+      const response = await courtBookingsService.cancel(selectedBooking.id_reserva_quadra);
+      
+      // Se cobrança foi cancelada junto, mostrar mensagem diferente
+      const description = response.data?.cobranca_cancelada 
+        ? 'Reserva e cobrança pendente canceladas com sucesso.'
+        : 'Reserva cancelada com sucesso.';
+      
+      toast({ title: 'Sucesso!', description });
       
       setCancelModalOpen(false);
       setSelectedBooking(null);
       loadMyBookings();
-    } catch (error: any) { toast({ title: 'Erro ao processar', description: getErrorMessage(error), variant: 'destructive' }); 
+    } catch (error: any) {
+      toast({ 
+        title: 'Erro ao cancelar', 
+        description: getErrorMessage(error), 
+        variant: 'destructive' 
+      });
     }
   };
 
@@ -216,8 +277,8 @@ export default function StudentCourtBookingsPage() {
       pendente: 'Pendente',
       confirmada: 'Confirmada',
       cancelada: 'Cancelada',
-      no_show: 'Não Compareceu',
-      concluida: 'Concluída',
+      no_show: 'Nao Compareceu',
+      concluida: 'ConcluÃ­da',
     };
 
     return (
@@ -264,16 +325,16 @@ export default function StudentCourtBookingsPage() {
             <SelectItem value="all">Todos os status</SelectItem>
             <SelectItem value="pendente">Pendente</SelectItem>
             <SelectItem value="confirmada">Confirmada</SelectItem>
-            <SelectItem value="concluida">Concluída</SelectItem>
+            <SelectItem value="concluida">ConcluÃ­da</SelectItem>
             <SelectItem value="cancelada">Cancelada</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Próximas Reservas */}
+      {/* PrÃ³ximas Reservas */}
       {futureBookings.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Próximas Reservas</h2>
+          <h2 className="text-xl font-semibold mb-4">PrÃ³ximas Reservas</h2>
           <div className="grid gap-4">
             {futureBookings.map((booking) => (
               <Card key={booking.id_reserva_quadra} className="hover:shadow-md transition-shadow">
@@ -325,10 +386,10 @@ export default function StudentCourtBookingsPage() {
         </div>
       )}
 
-      {/* Histórico */}
+      {/* HistÃ³rico */}
       {pastBookings.length > 0 && (
         <div>
-          <h2 className="text-xl font-semibold mb-4">Histórico</h2>
+          <h2 className="text-xl font-semibold mb-4">HistÃ³rico</h2>
           <div className="grid gap-4">
             {pastBookings.map((booking) => (
               <Card key={booking.id_reserva_quadra} className="opacity-75">
@@ -427,10 +488,10 @@ export default function StudentCourtBookingsPage() {
               />
             </div>
 
-            {/* Horários */}
+            {/* HorÃ¡rios */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="horaInicio">Hora Início *</Label>
+                <Label htmlFor="horaInicio">Hora InÃ­cio *</Label>
                 <Input
                   id="horaInicio"
                   type="time"
@@ -449,14 +510,14 @@ export default function StudentCourtBookingsPage() {
               </div>
             </div>
 
-            {/* Observações */}
+            {/* Observacoes */}
             <div>
-              <Label htmlFor="observacoes">Observações</Label>
+              <Label htmlFor="observacoes">Observacoes</Label>
               <Textarea
                 id="observacoes"
                 value={formData.observacoes}
                 onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                placeholder="Observações adicionais..."
+                placeholder="Observacoes adicionais..."
                 rows={3}
               />
             </div>
@@ -480,7 +541,7 @@ export default function StudentCourtBookingsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Visualização */}
+      {/* Modal de VisualizaÃ§Ã£o */}
       <Dialog open={viewModalOpen} onOpenChange={setViewModalOpen}>
         <DialogContent>
           <DialogHeader>
@@ -498,7 +559,7 @@ export default function StudentCourtBookingsPage() {
                   <p className="font-semibold">{formatDate(selectedBooking.inicio)}</p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Horário</Label>
+                  <Label className="text-muted-foreground">HorÃ¡rio</Label>
                   <p className="font-semibold">
                     {formatTime(selectedBooking.inicio)} - {formatTime(selectedBooking.fim)}
                   </p>
@@ -506,7 +567,7 @@ export default function StudentCourtBookingsPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-muted-foreground">Preço</Label>
+                  <Label className="text-muted-foreground">Preco</Label>
                   <p className="font-semibold text-fitway-green">
                     {formatCurrency(selectedBooking.preco_total)}
                   </p>
@@ -518,7 +579,7 @@ export default function StudentCourtBookingsPage() {
               </div>
               {selectedBooking.observacoes && (
                 <div>
-                  <Label className="text-muted-foreground">Observações</Label>
+                  <Label className="text-muted-foreground">Observacoes</Label>
                   <p className="text-sm">{selectedBooking.observacoes}</p>
                 </div>
               )}
@@ -527,6 +588,66 @@ export default function StudentCourtBookingsPage() {
         </DialogContent>
       </Dialog>
 
+      <AlertDialog
+        open={confirmCreateModal.open}
+        onOpenChange={(open) => {
+          if (!open && !confirmingCreate) {
+            setConfirmCreateModal({
+              open: false,
+              court: null,
+              inicio: '',
+              fim: '',
+              price: 0,
+              observacoes: '',
+              userId: undefined,
+            });
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Reserva</AlertDialogTitle>
+            <AlertDialogDescription>
+              Revise os detalhes antes de confirmar. Uma cobranca sera gerada automaticamente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {confirmCreateModal.court && (
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm text-muted-foreground">Quadra</p>
+                <p className="font-semibold">{confirmCreateModal.court.nome}</p>
+                <p className="text-sm text-muted-foreground">{confirmCreateModal.court.localizacao}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Inicio</p>
+                  <p className="font-semibold">{formatDate(confirmCreateModal.inicio)} as {formatTime(confirmCreateModal.inicio)}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Fim</p>
+                  <p className="font-semibold">{formatDate(confirmCreateModal.fim)} as {formatTime(confirmCreateModal.fim)}</p>
+                </div>
+              </div>
+              <div className="flex justify-between items-center text-sm border-t pt-2">
+                <span className="text-muted-foreground">Valor</span>
+                <span className="text-fitway-green font-bold">{formatCurrency(confirmCreateModal.price)}</span>
+              </div>
+              {confirmCreateModal.observacoes && (
+                <div className="text-sm text-muted-foreground">
+                  <p className="font-semibold text-white">Observacoes</p>
+                  <p>{confirmCreateModal.observacoes}</p>
+                </div>
+              )}
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={confirmingCreate}>Voltar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCreate} disabled={confirmingCreate}>
+              {confirmingCreate ? 'Processando...' : 'Confirmar e gerar cobranca'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       {/* Modal de Cancelamento */}
       <AlertDialog open={cancelModalOpen} onOpenChange={setCancelModalOpen}>
         <AlertDialogContent>
@@ -538,7 +659,7 @@ export default function StudentCourtBookingsPage() {
                 <div className="mt-4 p-4 bg-muted rounded-lg">
                   <p className="font-semibold">{selectedBooking.quadra?.nome}</p>
                   <p className="text-sm">
-                    {formatDate(selectedBooking.inicio)} • {formatTime(selectedBooking.inicio)} - {formatTime(selectedBooking.fim)}
+                    {formatDate(selectedBooking.inicio)} as {formatTime(selectedBooking.inicio)} - {formatTime(selectedBooking.fim)}
                   </p>
                   <p className="text-sm font-semibold text-fitway-green">
                     {formatCurrency(selectedBooking.preco_total)}
@@ -548,7 +669,7 @@ export default function StudentCourtBookingsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Não, manter</AlertDialogCancel>
+            <AlertDialogCancel>Nao, manter</AlertDialogCancel>
             <AlertDialogAction onClick={handleCancel} className="bg-destructive">
               Sim, cancelar
             </AlertDialogAction>
@@ -558,3 +679,4 @@ export default function StudentCourtBookingsPage() {
     </div>
   );
 }
+

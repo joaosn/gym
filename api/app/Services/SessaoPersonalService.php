@@ -396,4 +396,105 @@ class SessaoPersonalService
     {
         ReservaQuadra::where('id_sessao_personal', $sessao->id_sessao_personal)->delete();
     }
+
+    /**
+     * ✨ NOVO: Obter todos os horários disponíveis de um instrutor em um dia
+     * 
+     * Retorna lista de horários (6am-11pm) com status:
+     * - disponivel: true/false
+     * - preco: valor da hora
+     * 
+     * Muito mais eficiente que fazer 18 requisições!
+     */
+    public function obterHorariosDisponiveisNoDia(int $idInstrutor, string $dateStr): array
+    {
+        $instrutor = Instrutor::findOrFail($idInstrutor);
+        $data = Carbon::createFromFormat('Y-m-d', $dateStr)->startOfDay();
+        
+        $slots = [];
+        
+        // Verificar cada hora do dia (6am-11pm = 18 horários)
+        for ($hour = 6; $hour <= 23; $hour++) {
+            $inicio = $data->clone()->setHour($hour)->setMinute(0)->setSecond(0);
+            $fim = $inicio->clone()->addHour();
+            
+            // Validar disponibilidade (sem lançar exceção)
+            $validacao = $this->validarDisponibilidade(
+                $idInstrutor,
+                $inicio,
+                $fim,
+                null, // sem quadra
+                null  // sem usuário (apenas verificando instrutor)
+            );
+            
+            $timeStr = $inicio->format('H:00');
+            
+            $slots[] = [
+                'time' => $timeStr,
+                'available' => $validacao['disponivel'],
+                'price' => $instrutor->valor_hora,
+                'motivo' => $validacao['motivo'] ?? null,
+            ];
+        }
+        
+        return $slots;
+    }
+
+    /**
+     * Cancelar sessão + cobrança automaticamente
+     * 
+     * - Marca sessão como cancelada
+     * - Cancela reserva de quadra vinculada (se existe)
+     * - Cancela cobrança pendente (se ainda não foi paga)
+     */
+    public function cancelarSessaoComCobranca(SessaoPersonal $sessao): void
+    {
+        DB::transaction(function () use ($sessao) {
+            // 1. Cancelar sessão
+            $sessao->update(['status' => 'cancelada']);
+
+            // 2. Cancelar reserva de quadra vinculada
+            if ($sessao->reservaQuadra) {
+                $sessao->reservaQuadra->update(['status' => 'cancelada']);
+            }
+
+            // 3. Cancelar cobrança pendente
+            $cobranca = \App\Models\Cobranca::where('referencia_tipo', 'sessao_personal')
+                ->where('referencia_id', $sessao->id_sessao_personal)
+                ->first();
+
+            if ($cobranca && $cobranca->status !== 'pago') {
+                // Cancelar todas as parcelas pendentes
+                $parcelasPendentes = $cobranca->parcelas()
+                    ->whereIn('status', ['pendente', 'aguardando'])
+                    ->get();
+
+                foreach ($parcelasPendentes as $parcela) {
+                    // Cancelar pagamentos vinculados à parcela
+                    $pagamentos = \App\Models\Pagamento::where('id_parcela', $parcela->id_parcela)
+                        ->whereIn('status', ['pendente', 'aguardando'])
+                        ->get();
+
+                    foreach ($pagamentos as $pagamento) {
+                        try {
+                            $this->pagamentoService->cancelarPagamento($pagamento);
+                        } catch (\Exception $e) {
+                            // Log do erro mas continua
+                            \Log::warning("Erro ao cancelar pagamento {$pagamento->id_pagamento}: {$e->getMessage()}");
+                        }
+                    }
+
+                    // Marcar parcela como cancelada
+                    $parcela->update(['status' => 'cancelado']);
+                }
+
+                // Marcar cobrança como cancelada
+                $cobranca->update(['status' => 'cancelado']);
+            }
+
+            // 4. Enviar notificação simples (sem usar método inexistente)
+            // Apenas log para agora
+            \Log::info("Sessão {$sessao->id_sessao_personal} cancelada pelo usuário {$sessao->id_usuario}");
+        });
+    }
 }

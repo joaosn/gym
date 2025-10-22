@@ -3,11 +3,29 @@ import { Plan, PlanFormData } from '@/types';
 
 class PlansService {
   // ========================================
+  // PUBLIC ENDPOINTS (SEM AUTENTICAÇÃO)
+  // ========================================
+  
+  /**
+   * Listar planos disponíveis (público - para homepage e alunos)
+   */
+  async listPublicPlans(): Promise<{ data: Plan[] }> {
+    const response = await apiClient.get<{ data: Plan[] }>('/public/plans');
+    const normalized = response.data.map(plan => ({
+      ...plan,
+      beneficios_json: typeof plan.beneficios_json === 'string' 
+        ? JSON.parse(plan.beneficios_json) 
+        : plan.beneficios_json
+    }));
+    return { data: normalized };
+  }
+
+  // ========================================
   // ADMIN ENDPOINTS
   // ========================================
   
   /**
-   * Listar todos os planos (com filtros opcionais)
+   * Listar todos os planos (com filtros opcionais) - ADMIN ONLY
    */
   async listPlans(params?: {
     ciclo?: 'mensal' | 'trimestral' | 'anual';
@@ -15,7 +33,6 @@ class PlansService {
     search?: string;
     page?: number;
   }): Promise<{ data: Plan[], total?: number }> {
-    // Construir query string
     const queryParams = new URLSearchParams();
     if (params?.ciclo) queryParams.append('ciclo', params.ciclo);
     if (params?.status) queryParams.append('status', params.status);
@@ -87,6 +104,64 @@ class PlansService {
   async toggleStatus(id: string): Promise<Plan> {
     const response = await apiClient.patch<{ data: Plan }>(`/admin/plans/${id}/status`, {});
     return response.data;
+  }
+
+  // ========================================
+  // STUDENT ENDPOINTS
+  // ========================================
+
+  /**
+   * Buscar assinatura do aluno logado
+   */
+  async getMySubscription(): Promise<{ data: any | null }> {
+    try {
+      const response = await apiClient.get<{ data: any }>('/subscriptions/me');
+      return { data: response.data };
+    } catch (error: any) {
+      // Se retornar 404, significa que não tem assinatura ativa
+      if (error.response?.status === 404) {
+        return { data: null };
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Assinar um plano
+   */
+  async subscribe(idPlano: number): Promise<{
+    data: any;
+    cobranca?: {
+      id_cobranca: string;
+      valor_total: number;
+      valor?: number;
+      vencimento?: string;
+      status?: string;
+      [key: string]: any;
+    };
+    message?: string;
+  }> {
+    return apiClient.post<{
+      data: any;
+      cobranca?: {
+        id_cobranca: string;
+        valor_total: number;
+        valor?: number;
+        vencimento?: string;
+        status?: string;
+        [key: string]: any;
+      };
+      message?: string;
+    }>('/subscriptions', {
+      id_plano: idPlano
+    });
+  }
+
+  /**
+   * Cancelar assinatura
+   */
+  async cancelSubscription(idAssinatura: number): Promise<void> {
+    await apiClient.patch(`/subscriptions/${idAssinatura}/cancel`, {});
   }
 }
 
