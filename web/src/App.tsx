@@ -23,10 +23,8 @@ import PaymentHistory from "./pages/student/PaymentHistory";
 import CheckoutPage from "./pages/student/CheckoutPage";
 
 import InstrutorDashboard from "./pages/personal/Dashboard";
-import InstrutorSchedule from "./pages/personal/Schedule";
 import InstrutorSlots from "./pages/personal/Slots";
-import InstrutorClasses from "./pages/personal/Classes";
-import InstrutorCourtBookings from "./pages/personal/CourtBookings";
+import InstrutorProfile from "./pages/personal/Profile";
 
 // Admin Pages - Organized by context
 import AdminDashboard from "./pages/admin/dashboard/Dashboard";
@@ -93,10 +91,8 @@ const App = () => (
           <Route path="/instrutor" element={<ProtectedRoute allowedRoles={['instrutor']} />}>
             <Route index element={<Navigate to="/instrutor/dashboard" replace />} />
             <Route path="dashboard" element={<InstrutorDashboard />} />
-            <Route path="agenda" element={<InstrutorSchedule />} />
             <Route path="slots" element={<InstrutorSlots />} />
-            <Route path="turmas" element={<InstrutorClasses />} />
-            <Route path="reservas" element={<InstrutorCourtBookings />} />
+            <Route path="perfil" element={<InstrutorProfile />} />
             <Route path="notificacoes" element={<NotificationList />} />
           </Route>
           

@@ -33,6 +33,13 @@ export interface UserFormData {
   status?: 'ativo' | 'inativo';
 }
 
+export interface Student {
+  id_usuario: number;
+  nome: string;
+  email: string;
+  telefone?: string;
+}
+
 export interface Court {
   id_quadra: string;
   nome: string;

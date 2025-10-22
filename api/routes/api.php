@@ -8,6 +8,8 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\InstrutorController;
 use App\Http\Controllers\Admin\ReservaQuadraController;
 use App\Http\Controllers\SessaoPersonalController;
+use App\Http\Controllers\Instrutor\InstructorProfileController;
+use App\Http\Controllers\Instrutor\InstructorSessionsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -68,6 +70,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/dashboard', [App\Http\Controllers\DashboardController::class, 'adminDashboard'])->middleware('role:admin');
     Route::get('/student/dashboard', [App\Http\Controllers\DashboardController::class, 'studentDashboard'])->middleware('role:aluno');
     Route::get('/instructor/dashboard', [App\Http\Controllers\DashboardController::class, 'instructorDashboard'])->middleware('role:instrutor');
+
+    // =====================================================================
+    // INSTRUTOR: PERFIL (apenas role instrutor)
+    // =====================================================================
+    Route::middleware('role:instrutor')->prefix('instructor')->group(function () {
+        Route::get('/profile', [InstructorProfileController::class, 'show']);
+        Route::put('/profile', [InstructorProfileController::class, 'update']);
+        
+        // =====================================================================
+        // INSTRUTOR: SESSÕES PERSONAL (gerenciamento)
+        // =====================================================================
+        Route::get('/my-sessions', [InstructorSessionsController::class, 'mySessions']);
+        Route::patch('/sessions/{id}/cancel', [InstructorSessionsController::class, 'cancelarSessao']);
+        Route::patch('/sessions/{id}/complete', [InstructorSessionsController::class, 'concluirSessao']);
+        
+        // INSTRUTOR: LISTAR ALUNOS (para criar nova sessão)
+        Route::get('/students', [InstructorSessionsController::class, 'getStudents']);
+    });
 
     // =====================================================================
     // ADMIN: QUADRAS (CRUD)

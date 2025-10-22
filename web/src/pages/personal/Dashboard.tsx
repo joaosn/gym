@@ -1,320 +1,305 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Calendar, 
   Clock, 
-  Users, 
-  Trophy, 
-  Star,
-  DollarSign,
-  TrendingUp,
-  User,
-  BookOpen
+  User, 
+  TrendingUp, 
+  DollarSign, 
+  AlertCircle,
+  ChevronRight
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { dashboardService } from '@/services/dashboard.service';
+import { 
+  formatCurrency, 
+  formatDate, 
+  formatTime, 
+  getErrorMessage 
+} from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
-const PersonalDashboard = () => {
-  // Mock data - would come from API
-  const personalStats = {
-    totalClients: 15,
-    activeSlots: 8,
-    monthlyRevenue: 2400,
-    averageRating: 4.8,
-    sessionsThisWeek: 12
+// Skeleton loader para cards de estatística
+const StatCardSkeleton = () => (
+  <Card className="animate-pulse">
+    <CardContent className="pt-6">
+      <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
+      <div className="h-6 bg-gray-100 rounded w-1/2"></div>
+    </CardContent>
+  </Card>
+);
+
+export default function PersonalDashboard() {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    loadDashboard();
+  }, []);
+
+  const loadDashboard = async () => {
+    try {
+      setLoading(true);
+      const dashboardData = await dashboardService.getInstructorDashboard();
+      setData(dashboardData);
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao carregar dashboard',
+        description: getErrorMessage(error),
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const todaySchedule = [
-    {
-      id: '1',
-      client: 'João Silva',
-      time: '08:00',
-      duration: '60min',
-      type: 'Personal Training',
-      status: 'confirmed'
-    },
-    {
-      id: '2',
-      client: 'Maria Santos',
-      time: '09:30',
-      duration: '60min',
-      type: 'Beach Tennis',
-      status: 'confirmed'
-    },
-    {
-      id: '3',
-      client: 'Carlos Oliveira',
-      time: '16:00',
-      duration: '60min',
-      type: 'Personal Training',
-      status: 'pending'
-    }
-  ];
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        {/* Cards de estatística */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+        </div>
+      </div>
+    );
+  }
 
-  const upcomingClasses = [
-    {
-      id: '1',
-      name: 'Beach Tennis Avançado',
-      date: '2024-01-29',
-      time: '18:00',
-      enrolled: 4,
-      capacity: 6
-    },
-    {
-      id: '2',
-      name: 'FTV Iniciante',
-      date: '2024-01-30',
-      time: '19:00',
-      enrolled: 6,
-      capacity: 6
-    }
-  ];
+  if (!data) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Nenhum dado disponível. Tente recarregar a página.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
-  const recentRatings = [
+  const statCards = [
     {
-      id: '1',
-      client: 'Ana Costa',
-      rating: 5,
-      comment: 'Excelente personal! Muito dedicado e profissional.',
-      date: '2024-01-25'
+      title: 'Alunos',
+      value: data.alunos?.total_atendidos || 0,
+      icon: User,
+      color: 'bg-blue-100 dark:bg-blue-900',
+      iconColor: 'text-blue-700 dark:text-blue-400',
+      textColor: 'text-blue-950 dark:text-blue-50',
+      titleColor: 'text-blue-800 dark:text-blue-300',
     },
     {
-      id: '2',
-      client: 'Pedro Lima',
-      rating: 5,
-      comment: 'Ótima metodologia, resultados visíveis.',
-      date: '2024-01-24'
-    }
+      title: 'Sessões Hoje',
+      value: data.sessoes_personal?.hoje || 0,
+      icon: Calendar,
+      color: 'bg-green-100 dark:bg-green-900',
+      iconColor: 'text-green-700 dark:text-green-400',
+      textColor: 'text-green-950 dark:text-green-50',
+      titleColor: 'text-green-800 dark:text-green-300',
+    },
+    {
+      title: 'Receita do Mês',
+      value: formatCurrency(data.financeiro?.receita_mes || 0, false),
+      icon: DollarSign,
+      color: 'bg-purple-100 dark:bg-purple-900',
+      iconColor: 'text-purple-700 dark:text-purple-400',
+      textColor: 'text-purple-950 dark:text-purple-50',
+      titleColor: 'text-purple-800 dark:text-purple-300',
+    },
+    {
+      title: 'Turmas Ativas',
+      value: data.aulas?.turmas || 0,
+      icon: TrendingUp,
+      color: 'bg-orange-100 dark:bg-orange-900',
+      iconColor: 'text-orange-700 dark:text-orange-400',
+      textColor: 'text-orange-950 dark:text-orange-50',
+      titleColor: 'text-orange-800 dark:text-orange-300',
+    },
+    {
+      title: 'Valor/Hora',
+      value: formatCurrency(data.financeiro?.valor_hora || 0, false),
+      icon: Clock,
+      color: 'bg-red-100 dark:bg-red-900',
+      iconColor: 'text-red-700 dark:text-red-400',
+      textColor: 'text-red-950 dark:text-red-50',
+      titleColor: 'text-red-800 dark:text-red-300',
+    },
   ];
 
   return (
-    <div className="p-6">
-      <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">Dashboard Personal</h1>
-          <p className="text-white/80">Gerencie seus treinos, aulas e clientes.</p>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-          <Card className="bg-dashboard-card border-dashboard-border">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-dashboard-fg">Clientes Ativos</CardTitle>
-              <User className="h-4 w-4 text-fitway-green" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{personalStats.totalClients}</div>
-              <p className="text-xs text-white/70">+2 este mês</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-dashboard-card border-dashboard-border">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-dashboard-fg">Slots Ativos</CardTitle>
-              <Calendar className="h-4 w-4 text-fitway-green" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{personalStats.activeSlots}</div>
-              <p className="text-xs text-white/70">esta semana</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-dashboard-card border-dashboard-border">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-dashboard-fg">Receita Mensal</CardTitle>
-              <DollarSign className="h-4 w-4 text-fitway-green" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-fitway-green">R$ {personalStats.monthlyRevenue}</div>
-              <p className="text-xs text-white/70">+15% vs mês anterior</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-dashboard-card border-dashboard-border">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-dashboard-fg">Avaliação</CardTitle>
-              <Star className="h-4 w-4 text-fitway-green" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{personalStats.averageRating}</div>
-              <p className="text-xs text-white/70">média geral</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-dashboard-card border-dashboard-border">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-dashboard-fg">Sessões</CardTitle>
-              <TrendingUp className="h-4 w-4 text-fitway-green" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-white">{personalStats.sessionsThisWeek}</div>
-              <p className="text-xs text-white/70">esta semana</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Today's Schedule */}
-          <Card className="lg:col-span-2 bg-dashboard-card border-dashboard-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-white">
-                <Clock className="h-5 w-5 text-fitway-green" />
-                Agenda de Hoje
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {todaySchedule.length > 0 ? (
-                <div className="space-y-4">
-                  {todaySchedule.map((session) => (
-                    <div key={session.id} className="flex items-center justify-between p-4 bg-dashboard-bg/50 rounded-lg">
-                      <div className="flex items-center gap-4">
-                        <div className="text-center">
-                          <p className="text-lg font-bold text-fitway-green">{session.time}</p>
-                          <p className="text-xs text-white/60">{session.duration}</p>
-                        </div>
-                        <div>
-                          <p className="font-medium text-white">{session.client}</p>
-                          <p className="text-sm text-white/80">{session.type}</p>
-                        </div>
-                      </div>
-                      <Badge 
-                        variant={session.status === 'confirmed' ? 'default' : 'outline'}
-                        className={session.status === 'confirmed' ? 'bg-fitway-green text-fitway-dark' : 'border-fitway-green text-fitway-green'}
-                      >
-                        {session.status === 'confirmed' ? 'Confirmado' : 'Pendente'}
-                      </Badge>
-                    </div>
-                  ))}
-                  <Button variant="sport" className="w-full">
-                    Ver Agenda Completa
-                  </Button>
+    <div className="space-y-6">
+      {/* Grid de estatísticas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        {statCards.map((stat, index) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={index} className="overflow-hidden border-0 shadow-md hover:shadow-lg transition">
+              <CardContent className={`pt-6 ${stat.color}`}>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className={`text-sm font-semibold ${stat.titleColor} mb-2`}>
+                      {stat.title}
+                    </p>
+                    <p className={`text-3xl font-bold ${stat.textColor}`}>
+                      {stat.value}
+                    </p>
+                  </div>
+                  <Icon className={`h-8 w-8 ${stat.iconColor}`} />
                 </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Calendar className="h-12 w-12 text-white/50 mx-auto mb-4" />
-                  <p className="text-white/70">Nenhuma sessão agendada para hoje</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
-          {/* Upcoming Classes */}
-          <Card className="bg-dashboard-card border-dashboard-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-white">
-                <BookOpen className="h-5 w-5 text-fitway-green" />
-                Próximas Aulas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {upcomingClasses.length > 0 ? (
-                <div className="space-y-4">
-                  {upcomingClasses.map((classItem) => (
-                    <div key={classItem.id} className="p-3 bg-dashboard-bg/50 rounded-lg">
-                      <p className="font-medium text-white">{classItem.name}</p>
-                      <p className="text-sm text-white/80 mb-2">
-                        {new Date(classItem.date).toLocaleDateString('pt-BR')} às {classItem.time}
-                      </p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1">
-                          <Users className="h-4 w-4 text-fitway-green" />
-                          <span className="text-sm text-white/80">
-                            {classItem.enrolled}/{classItem.capacity}
+      {/* Próximas Sessões e Estatísticas */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Próximas Sessões (2/3) */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Próximas Sessões Personal
+            </CardTitle>
+            <CardDescription>
+              Seus próximos atendimentos 1:1
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {data.proximas_sessoes && data.proximas_sessoes.length > 0 ? (
+              <div className="space-y-4">
+                {data.proximas_sessoes.slice(0, 5).map((sessao: any) => {
+                  const duracao = new Date(sessao.fim).getTime() - new Date(sessao.inicio).getTime();
+                  const minutos = Math.floor(duracao / 60000);
+                  
+                  return (
+                    <div
+                      key={sessao.id_sessao_personal}
+                      className="flex items-start justify-between p-4 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                    >
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                          <span className="font-mono text-sm font-bold text-blue-800 dark:text-blue-200">
+                            {formatTime(sessao.inicio)}
+                          </span>
+                          <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">
+                            ({minutos} min)
                           </span>
                         </div>
-                        <Badge 
-                          variant={classItem.enrolled === classItem.capacity ? 'default' : 'outline'}
-                          className={classItem.enrolled === classItem.capacity ? 'bg-fitway-green text-fitway-dark' : 'border-fitway-green text-fitway-green'}
-                        >
-                          {classItem.enrolled === classItem.capacity ? 'Lotada' : 'Vagas'}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                  <Button variant="sport" className="w-full" size="sm">
-                    Gerenciar Aulas
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <BookOpen className="h-12 w-12 text-white/50 mx-auto mb-4" />
-                  <p className="text-white/70">Nenhuma aula agendada</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Recent Ratings */}
-          <Card className="lg:col-span-2 bg-dashboard-card border-dashboard-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-white">
-                <Star className="h-5 w-5 text-fitway-green" />
-                Avaliações Recentes
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {recentRatings.length > 0 ? (
-                <div className="space-y-4">
-                  {recentRatings.map((rating) => (
-                    <div key={rating.id} className="p-4 bg-dashboard-bg/50 rounded-lg">
-                      <div className="flex items-start justify-between mb-2">
-                        <p className="font-medium text-white">{rating.client}</p>
-                        <div className="flex items-center gap-1">
-                          {[...Array(rating.rating)].map((_, i) => (
-                            <Star key={i} className="h-4 w-4 fill-fitway-green text-fitway-green" />
-                          ))}
+                        <p className="font-semibold text-gray-900 dark:text-white mb-1 text-base">
+                          {sessao.aluno_nome}
+                        </p>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 font-medium">
+                          {formatDate(sessao.inicio, true)}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <Badge
+                            variant={
+                              sessao.status === 'confirmada'
+                                ? 'default'
+                                : 'secondary'
+                            }
+                          >
+                            {sessao.status === 'confirmada'
+                              ? '✓ Confirmada'
+                              : '○ Pendente'}
+                          </Badge>
                         </div>
                       </div>
-                      <p className="text-sm text-white/80 mb-2">"{rating.comment}"</p>
-                      <p className="text-xs text-white/60">
-                        {new Date(rating.date).toLocaleDateString('pt-BR')}
-                      </p>
+                      <ChevronRight className="h-5 w-5 text-gray-600 dark:text-gray-300 mt-1" />
                     </div>
-                  ))}
-                  <Button variant="outline" className="w-full border-fitway-green text-fitway-green hover:bg-fitway-green hover:text-fitway-dark">
-                    Ver Todas as Avaliações
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Star className="h-12 w-12 text-white/50 mx-auto mb-4" />
-                  <p className="text-white/70">Nenhuma avaliação ainda</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card className="bg-dashboard-card border-dashboard-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-white">
-                <Trophy className="h-5 w-5 text-fitway-green" />
-                Ações Rápidas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <Button variant="sport" className="w-full justify-start">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Criar Novo Slot
-                </Button>
-                <Button variant="outline" className="w-full justify-start border-fitway-green text-fitway-green hover:bg-fitway-green hover:text-fitway-dark">
-                  <Users className="mr-2 h-4 w-4" />
-                  Ver Meus Clientes
-                </Button>
-                <Button variant="outline" className="w-full justify-start border-fitway-green text-fitway-green hover:bg-fitway-green hover:text-fitway-dark">
-                  <BookOpen className="mr-2 h-4 w-4" />
-                  Minhas Turmas
-                </Button>
-                <Button variant="outline" className="w-full justify-start border-fitway-green text-fitway-green hover:bg-fitway-green hover:text-fitway-dark">
-                  <DollarSign className="mr-2 h-4 w-4" />
-                  Relatório Financeiro
-                </Button>
+                  );
+                })}
+                {data.proximas_sessoes.length === 0 && (
+                  <p className="text-center text-gray-500 py-8">
+                    Nenhuma sessão agendada
+                  </p>
+                )}
               </div>
-            </CardContent>
+            ) : (
+              <p className="text-center text-gray-500 py-8">
+                Nenhuma sessão agendada
+              </p>
+            )}
+            <Button
+              variant="outline"
+              className="w-full mt-4"
+              onClick={() => navigate('/instrutor/agenda')}
+            >
+              Ver Agenda Completa
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Estatísticas (1/3) */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Estatísticas
+            </CardTitle>
+            <CardDescription>
+              Métricas gerais
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                  Sessões este mês
+                </p>
+                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                  {data.sessoes_personal?.mes || 0}
+                </p>
+              </div>
+
+              <div className="pt-4 border-t-2 border-gray-300 dark:border-gray-600">
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                  Total de sessões
+                </p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                  {data.sessoes_personal?.total || 0}
+                </p>
+              </div>
+
+              <div className="pt-4 border-t-2 border-gray-300 dark:border-gray-600">
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                  Aulas este mês
+                </p>
+                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                  {data.aulas?.aulas_mes || 0}
+                </p>
+              </div>
+
+              <div className="pt-4 border-t-2 border-gray-300 dark:border-gray-600">
+                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                  Horários configurados
+                </p>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                  {data.disponibilidade?.horarios_configurados || 0}
+                </p>
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => navigate('/instrutor/slots')}
+            >
+              Gerenciar Horários
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          </CardContent>
         </Card>
       </div>
     </div>
   );
-};
-
-export default PersonalDashboard;
+}

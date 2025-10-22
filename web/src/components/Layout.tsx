@@ -10,9 +10,9 @@ const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   
   // Determine user role based on current path
-  const getUserRole = (): 'admin' | 'personal' | 'aluno' => {
+  const getUserRole = (): 'admin' | 'instrutor' | 'aluno' => {
     if (location.pathname.startsWith('/admin')) return 'admin';
-    if (location.pathname.startsWith('/personal')) return 'personal';
+    if (location.pathname.startsWith('/instrutor')) return 'instrutor';
     if (location.pathname.startsWith('/aluno')) return 'aluno';
     return 'aluno'; // default
   };

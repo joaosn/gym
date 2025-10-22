@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { NotificationBell } from '@/components/NotificationBell';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Home,
   Users,
@@ -44,6 +45,7 @@ interface NavItem {
 const Sidebar = ({ userRole }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout: authLogout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
@@ -88,10 +90,8 @@ const Sidebar = ({ userRole }: SidebarProps) => {
       case 'instrutor':
         return [
           { title: 'Dashboard', href: '/instrutor/dashboard', icon: Home },
-          { title: 'Agenda', href: '/instrutor/agenda', icon: Calendar },
           { title: 'Horários', href: '/instrutor/slots', icon: Clock },
-          { title: 'Turmas', href: '/instrutor/turmas', icon: BookOpen },
-          { title: 'Reservas Quadra', href: '/instrutor/reservas', icon: MapPin },
+          { title: 'Perfil', href: '/instrutor/perfil', icon: Settings },
         ];
       case 'aluno':
         return [
@@ -115,9 +115,8 @@ const Sidebar = ({ userRole }: SidebarProps) => {
     navigate(href);
   };
 
-  const handleLogout = () => {
-    // Implement logout logic
-    navigate('/login');
+  const handleLogout = async () => {
+    await authLogout();
   };
 
   const getRoleTitle = () => {
@@ -149,10 +148,14 @@ const Sidebar = ({ userRole }: SidebarProps) => {
           {!isCollapsed && (
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-fitway-green rounded-lg flex items-center justify-center">
-                <span className="text-fitway-dark font-bold text-sm">F</span>
+                <span className="text-fitway-dark font-bold text-sm">
+                  {user?.name?.charAt(0).toUpperCase() || 'F'}
+                </span>
               </div>
               <div>
-                <h2 className="text-white font-semibold text-sm">FITWAY</h2>
+                <h2 className="text-white font-semibold text-sm">
+                  {user?.name || 'FITWAY'}
+                </h2>
                 <Badge className={cn("text-xs", getRoleColor())}>
                   {getRoleTitle()}
                 </Badge>
