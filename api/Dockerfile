@@ -63,9 +63,10 @@ COPY docker/default.conf /etc/nginx/conf.d/default.conf
 # Copiar configuração do Supervisor
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Copiar script de inicialização
+# Copiar scripts de inicialização
 COPY docker/start.sh /usr/local/bin/start.sh
-RUN chmod +x /usr/local/bin/start.sh
+COPY init-db.sh /usr/local/bin/init-db.sh
+RUN chmod +x /usr/local/bin/start.sh /usr/local/bin/init-db.sh
 
 # Expor porta
 EXPOSE 80
