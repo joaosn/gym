@@ -49,9 +49,7 @@ php artisan config:cache
 php artisan route:cache
 # Nem todo projeto API tem views; só faça cache se a pasta existir
 
-# Rodar script de inicialização do banco (migrations + seeders)
-echo "🗄️ Inicializando banco de dados..."
-bash /usr/local/bin/init-db.sh
+# Cache de views
 if [ -d "resources/views" ]; then
   php artisan view:cache
 else
