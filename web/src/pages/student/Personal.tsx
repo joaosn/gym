@@ -84,9 +84,10 @@ const StudentPersonal = () => {
     try {
       setLoading(true);
       
-      // Carregar minhas sessões (ATIVAS apenas - exclui canceladas)
-      const sessionsResponse = await personalSessionsService.getMySessions({ 
-        status: 'ativa' // ← IMPORTANTE: Filtra apenas ativas, exclui canceladas
+      // Carregar minhas sessões (exclui canceladas por padrão no backend)
+      // ✅ NÃO passar 'status' - backend retorna todas exceto canceladas
+      const sessionsResponse = await personalSessionsService.getMySessions({
+        // Sem filtro de status - backend retorna pendente, confirmada, concluida, no_show
       });
       const sessionsList = sessionsResponse?.data || [];
       setMySessions(Array.isArray(sessionsList) ? sessionsList : []);

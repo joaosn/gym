@@ -47,7 +47,6 @@ php artisan package:discover --ansi || true
 echo "🧹 Configurando cache..."
 php artisan config:cache
 php artisan route:cache
-# Nem todo projeto API tem views; só faça cache se a pasta existir
 
 # Cache de views
 if [ -d "resources/views" ]; then
@@ -56,27 +55,50 @@ else
   echo "ℹ️ Sem resources/views, pulando view:cache."
 fi
 
-# Executar DDL completo no primeiro start, se existir o seeder e o arquivo ddl.sql
-if [ -f "database/ddl.sql" ] && php -r "include 'vendor/autoload.php'; echo class_exists('Database\\\\Seeders\\\\RunDdlSeeder') ? '1' : '0';" | grep -q 1; then
-  if [ ! -f "/var/www/html/storage/app/.ddl_ran" ]; then
-    echo "🧱 Executando DDL inicial (RunDdlSeeder)..."
-    php artisan db:seed --class=RunDdlSeeder --force || true
+# ============================================================
+# ETAPA 1: EXECUTAR DDL (APENAS UMA VEZ)
+# ============================================================
+DDL_FLAG="/var/www/html/storage/app/.ddl_executed"
+
+if [ ! -f "$DDL_FLAG" ]; then
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "🗄️  PRIMEIRA EXECUÇÃO: Criando estrutura do banco"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  
+  if [ -f "database/ddl.sql" ]; then
+    echo "📋 Executando DDL completo..."
+    php artisan db:seed --class=RunDdlSeeder --force
+    
+    # Marcar DDL como executado
     mkdir -p /var/www/html/storage/app
-    touch /var/www/html/storage/app/.ddl_ran
+    touch "$DDL_FLAG"
+    echo "✅ DDL executado com sucesso!"
   else
-    echo "ℹ️ DDL já executado anteriormente, pulando..."
+    echo "❌ ERRO: database/ddl.sql não encontrado!"
+    exit 1
   fi
+  
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "🌱 Executando seeders de dados iniciais"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  php artisan db:seed --force
+  echo "✅ Seeders executados!"
+  
 else
-  echo "ℹ️ DDL não encontrado ou seeder ausente, pulando etapa de DDL."
+  echo "ℹ️  DDL já foi executado anteriormente (pulando)"
+  echo "💡 Para recriar o banco, delete o volume: docker-compose down -v"
 fi
 
-# Executar migrações após DDL
-echo "📊 Executando migrações..."
-php artisan migrate --force
+# ============================================================
+# ⚠️  MIGRATIONS DESABILITADAS
+# ============================================================
+# Motivo: Todas as tabelas já estão no DDL completo
+# Se precisar de migrations no futuro, descomente a linha abaixo:
+# php artisan migrate --force
 
-# Executar seeders padrão
-echo "🌱 Executando seeders..."
-php artisan db:seed --force
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # Criar link simbólico para storage público (ignorar se já existir)
 php artisan storage:link || true

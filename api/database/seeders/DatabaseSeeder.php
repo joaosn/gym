@@ -13,7 +13,20 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            // Usuários primeiro (dependência de outros seeders)
             UserSeeder::class,
+            
+            // Cadastros básicos
+            PlanosSeeder::class,
+            QuadrasSeeder::class,
+            InstrutoresSeeder::class,
+            
+            // Dados relacionados (dependem dos cadastros acima)
+            AulaSeeder::class,
+            AssinaturasSeeder::class,
+            ReservaQuadraSeeder::class,
+            SessaoPersonalSeeder::class,
+            CobrancasSeeder::class,
         ]);
     }
 }
