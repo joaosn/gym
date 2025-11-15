@@ -137,6 +137,33 @@ class CourtsService {
     return courts.map(normalizeCourt);
   }
 
+  /**
+   * Obter horários disponíveis de uma quadra em um dia específico
+   * POST /api/court-bookings/available-slots
+   */
+  async getCourtAvailableSlots(courtId: string, date: string): Promise<{
+    disponivel: boolean;
+    motivo?: string;
+    slots: Array<{
+      hora: string;
+      inicio: string;
+      fim: string;
+      disponivel: boolean;
+      preco: number;
+    }>;
+    quadra: {
+      id_quadra: number;
+      nome: string;
+      preco_hora: number;
+    };
+  }> {
+    const response = await apiClient.post<{ data: any }>('/court-bookings/available-slots', {
+      id_quadra: parseInt(courtId),
+      data: date,
+    });
+    return response.data;
+  }
+
   async getPublicCourtAvailability(courtId: string, date: string): Promise<CourtAvailability> {
     // TODO: Implementar na Fase 3
     return apiClient.get<CourtAvailability>(`/public/courts/${courtId}/availability?date=${date}`);

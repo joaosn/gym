@@ -160,7 +160,7 @@ const HomePage = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button variant="hero" size="xl" onClick={() => window.location.href = '/reserve'}>
+            <Button variant="hero" size="xl" onClick={() => window.location.href = '#quadras'}>
               <Calendar className="mr-2 h-5 w-5" />
               Reservar Quadra
             </Button>

@@ -138,12 +138,13 @@ class ReservaQuadraController extends Controller
     public function store(CreateReservaQuadraRequest $request): JsonResponse
     {
         try {
+    
+
             // Se for aluno (não admin), usar seu próprio ID
             $dados = $request->validated();
             if (auth()->user()->papel !== 'admin') {
                 $dados['id_usuario'] = auth()->id();
             }
-
             $reserva = $this->service->criarReserva($dados);
 
             return response()->json([

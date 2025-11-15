@@ -38,6 +38,7 @@ import {
   MessageSquare,
   Plus
 } from 'lucide-react';
+import { authService } from '@/services/auth.service';
 
 interface Sessao {
   id_sessao_personal: number;
@@ -87,6 +88,9 @@ export default function InstructorSlots() {
   });
 
   useEffect(() => {
+    let personal = authService.getCurrentUserPersonal();
+    console.log("Usuario personal:", personal);
+
     loadSessoes();
   }, []);
 
@@ -165,12 +169,13 @@ export default function InstructorSlots() {
 
       setCriando(true);
 
+      const usuarioLogado = await authService.getCurrentUser();
       const inicio = `${novaFormData.data}T${novaFormData.horaInicio}:00`;
       const fim = new Date(new Date(inicio).getTime() + novaFormData.duracao * 60000).toISOString();
 
       const response: any = await apiClient.post('/personal-sessions', {
         id_usuario: novaFormData.id_usuario,
-        id_instrutor: 0, // TODO: pegar do auth
+        id_instrutor: usuarioLogado.id,
         inicio,
         fim,
       });

@@ -16,12 +16,13 @@ class CreateReservaQuadraRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id_quadra' => 'required|integer|exists:quadras,id_quadra',
-            'id_usuario' => 'nullable|integer|exists:usuarios,id_usuario', // ← Nullable para alunos
-            'inicio' => 'required|date_format:Y-m-d\TH:i:s.000\Z|after_or_equal:today', // ← Aceita hoje
-            'fim' => 'required|date_format:Y-m-d\TH:i:s.000\Z|after:inicio',
+            'id_quadra'   => 'required|integer|exists:quadras,id_quadra',
+            'id_usuario'  => 'nullable|integer|exists:usuarios,id_usuario',
+            'inicio'      => 'required|date_format:Y-m-d\TH:i:s|after_or_equal:today',
+            'fim'         => 'required|date_format:Y-m-d\TH:i:s|after:inicio',
             'observacoes' => 'nullable|string|max:500',
         ];
+
     }
 
     public function messages(): array

@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, MapPin, Users, Zap } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Zap, CheckCircle2, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency } from '@/lib/utils';
 import { CardSkeleton } from '@/components/LoadingSkeletons';
+import { courtsService } from '@/services/courts.service';
+import { useToast } from '@/hooks/use-toast';
 
 interface AvailabilityModalProps {
   isOpen: boolean;
@@ -18,9 +20,16 @@ interface AvailabilityModalProps {
 
 export function AvailabilityModal({ isOpen, onClose, type, item }: AvailabilityModalProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
-  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<Array<{
+    hora: string;
+    inicio: string;
+    fim: string;
+    disponivel: boolean;
+    preco: number;
+  }>>([]);
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,30 +40,41 @@ export function AvailabilityModal({ isOpen, onClose, type, item }: AvailabilityM
 
   const loadAvailability = async () => {
     setLoading(true);
+    setSelectedSlot(null);
     try {
       if (type === 'court') {
-        // TODO: Chamar API /api/public/courts/{id}/availability?date=YYYY-MM-DD
-        // Por enquanto, mock de horários disponíveis
-        const slots: string[] = [];
-        for (let hour = 6; hour <= 22; hour++) {
-          slots.push(`${hour.toString().padStart(2, '0')}:00`);
-          if (hour < 22) {
-            slots.push(`${hour.toString().padStart(2, '0')}:30`);
+        // Buscar horários disponíveis da API
+        const result = await courtsService.getCourtAvailableSlots(
+          String(item.id_quadra),
+          selectedDate
+        );
+        
+        if (result.disponivel) {
+          // Filtrar apenas slots disponíveis
+          const slotsDisponiveis = result.slots.filter(slot => slot.disponivel);
+          setAvailableSlots(slotsDisponiveis);
+        } else {
+          setAvailableSlots([]);
+          if (result.motivo) {
+            toast({
+              title: 'Quadra indisponível',
+              description: result.motivo,
+              variant: 'destructive',
+            });
           }
         }
-        setAvailableSlots(slots);
       } else {
-        // Para aulas, mostrar horários semanais fixos
-        // TODO: Chamar API /api/public/classes/{id}/schedules
-        // Por enquanto, mock
-        setAvailableSlots([
-          'Segunda 18:00 - 19:00',
-          'Quarta 18:00 - 19:00',
-          'Sexta 18:00 - 19:00'
-        ]);
+        // Para aulas, mostrar horários semanais fixos (TODO: implementar API)
+        setAvailableSlots([]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao carregar disponibilidade:', error);
+      toast({
+        title: 'Erro ao carregar horários',
+        description: error.message || 'Não foi possível carregar os horários disponíveis',
+        variant: 'destructive',
+      });
+      setAvailableSlots([]);
     } finally {
       setLoading(false);
     }
@@ -63,6 +83,10 @@ export function AvailabilityModal({ isOpen, onClose, type, item }: AvailabilityM
   const handleReserve = () => {
     if (!selectedSlot) return;
     
+    // Encontrar o slot selecionado completo
+    const slotData = availableSlots.find(s => s.hora === selectedSlot);
+    if (!slotData) return;
+    
     // Redirecionar para login com dados da reserva
     const reserveData = {
       type,
@@ -70,6 +94,9 @@ export function AvailabilityModal({ isOpen, onClose, type, item }: AvailabilityM
       itemName: item.nome,
       date: selectedDate,
       slot: selectedSlot,
+      inicio: slotData.inicio,
+      fim: slotData.fim,
+      preco: slotData.preco,
     };
     
     // Salvar no sessionStorage para recuperar após login
@@ -169,17 +196,17 @@ export function AvailabilityModal({ isOpen, onClose, type, item }: AvailabilityM
                 {availableSlots.length > 0 ? (
                   availableSlots.map((slot) => (
                     <Button
-                      key={slot}
-                      variant={selectedSlot === slot ? 'default' : 'outline'}
+                      key={slot.hora}
+                      variant={selectedSlot === slot.hora ? 'default' : 'outline'}
                       className={`text-sm ${
-                        selectedSlot === slot
+                        selectedSlot === slot.hora
                           ? 'bg-fitway-green text-fitway-dark hover:bg-fitway-green/90'
                           : 'border-fitway-green/30 text-white hover:bg-fitway-green/20'
                       }`}
-                      onClick={() => setSelectedSlot(slot)}
+                      onClick={() => setSelectedSlot(slot.hora)}
                     >
-                      <Clock className="mr-2 h-3 w-3" />
-                      {slot}
+                      <CheckCircle2 className="mr-2 h-3 w-3" />
+                      {slot.hora}
                     </Button>
                   ))
                 ) : (
@@ -198,12 +225,15 @@ export function AvailabilityModal({ isOpen, onClose, type, item }: AvailabilityM
                 <span className="text-white/80">Horário Selecionado:</span>
                 <span className="text-fitway-green font-bold">{selectedSlot}</span>
               </div>
-              {type === 'court' && (
-                <div className="flex justify-between items-center">
-                  <span className="text-white/80">Valor:</span>
-                  <span className="text-fitway-green font-bold">{formatCurrency(item?.preco_hora || 0)}/hora</span>
-                </div>
-              )}
+              {type === 'court' && (() => {
+                const slotData = availableSlots.find(s => s.hora === selectedSlot);
+                return slotData && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-white/80">Valor:</span>
+                    <span className="text-fitway-green font-bold">{formatCurrency(slotData.preco)}/hora</span>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>

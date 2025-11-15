@@ -53,6 +53,12 @@ class AuthService {
     return response.user;
   }
 
+  async getCurrentUserPersonal(): Promise<User> {
+    const response = await apiClient.get<{ user: User }>('/personal-sessions/instructor/me');
+    localStorage.setItem('user_data', JSON.stringify(response.user));
+    return response.user;
+  }
+
   /**
    * Logout
    */
