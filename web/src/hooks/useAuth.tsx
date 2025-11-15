@@ -32,7 +32,18 @@ export function useAuth() {
       }
     };
 
+    // Ouvir evento de login para atualizar imediatamente
+    const handleLoginEvent = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      setUser(customEvent.detail);
+    };
+
+    window.addEventListener('auth:login', handleLoginEvent);
     loadUser();
+
+    return () => {
+      window.removeEventListener('auth:login', handleLoginEvent);
+    };
   }, []);
 
   const logout = async () => {

@@ -26,8 +26,16 @@ class AuthService {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     const response = await apiClient.post<AuthResponse>('/auth/login', credentials);
     
+    // Limpar dados antigos ANTES de salvar novos
+    localStorage.removeItem('user_data');
+    localStorage.removeItem('access_token');
+    
+    // Salvar novos dados
     localStorage.setItem('access_token', response.access_token);
     localStorage.setItem('user_data', JSON.stringify(response.user));
+    
+    // Disparar evento para atualizar em tempo real
+    window.dispatchEvent(new CustomEvent('auth:login', { detail: response.user }));
     
     return response;
   }
@@ -38,8 +46,16 @@ class AuthService {
   async register(data: RegisterRequest): Promise<AuthResponse> {
     const response = await apiClient.post<AuthResponse>('/auth/register', data);
     
+    // Limpar dados antigos ANTES de salvar novos
+    localStorage.removeItem('user_data');
+    localStorage.removeItem('access_token');
+    
+    // Salvar novos dados
     localStorage.setItem('access_token', response.access_token);
     localStorage.setItem('user_data', JSON.stringify(response.user));
+    
+    // Disparar evento para atualizar em tempo real
+    window.dispatchEvent(new CustomEvent('auth:login', { detail: response.user }));
     
     return response;
   }
@@ -91,7 +107,20 @@ class AuthService {
    */
   getUserFromStorage(): User | null {
     const userData = localStorage.getItem('user_data');
-    return userData ? JSON.parse(userData) : null;
+    
+    // Lidar com caso onde 'undefined' foi salvo como string
+    if (!userData || userData === 'undefined' || userData === 'null') {
+      localStorage.removeItem('user_data');
+      return null;
+    }
+    
+    try {
+      return JSON.parse(userData);
+    } catch (error) {
+      console.warn('❌ Erro ao parsear user_data:', error);
+      localStorage.removeItem('user_data');
+      return null;
+    }
   }
 }
 

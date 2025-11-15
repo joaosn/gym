@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { getErrorMessage } from '@/lib/utils';
+import { getErrorMessage, maskCurrency, sanitizeNameInput } from '@/lib/utils';
 import { ArrowLeft, Save, X, Plus, Trash2 } from 'lucide-react';
 
 const AddPlan = () => {
@@ -74,6 +74,11 @@ const AddPlan = () => {
     }));
   };
 
+  const handlePriceChange = (value: string) => {
+    const masked = maskCurrency(value);
+    setFormData(prev => ({ ...prev, price: masked }));
+  };
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex items-center gap-4 mb-6">
@@ -99,8 +104,9 @@ const AddPlan = () => {
                   <Label htmlFor="name">Nome do Plano *</Label>
                   <Input
                     id="name"
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: sanitizeNameInput(e.target.value) }))}
+                  maxLength={80}
                     placeholder="Ex: Fit Premium"
                     required
                   />
@@ -113,8 +119,8 @@ const AddPlan = () => {
                     type="number"
                     step="0.01"
                     value={formData.price}
-                    onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                    placeholder="149.90"
+                    onChange={(e) => handlePriceChange(e.target.value)}
+                    placeholder="R$ 0,00"
                     required
                   />
                 </div>

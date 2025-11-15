@@ -45,11 +45,44 @@ export function formatCurrency(value: number | string, showSymbol: boolean = tru
  * parseCurrency("1.500,50") // 1500.5
  */
 export function parseCurrency(value: string): number {
-  // Remove tudo exceto números, vírgula e ponto
+  if (!value) return 0;
+
   const cleaned = value.replace(/[^\d,.-]/g, '');
-  // Troca vírgula por ponto e converte
-  const normalized = cleaned.replace('.', '').replace(',', '.');
-  return parseFloat(normalized) || 0;
+  const normalized = cleaned.replace(/\./g, '').replace(',', '.');
+  const result = parseFloat(normalized);
+  return Number.isNaN(result) ? 0 : result;
+}
+
+/**
+ * Aplica m�scara em valor monet�rio (BRL) durante digita��o
+ * @param value - Valor digitado (com ou sem formata��o)
+ * @param showSymbol - Define se o resultado deve incluir "R$"
+ * @returns Valor formatado (ex: "R$ 150,00")
+ * 
+ * @example
+ * maskCurrency("150") // "R$ 1,50"
+ * maskCurrency("15050") // "R$ 150,50"
+ * maskCurrency("123.456,78", false) // "123.456,78"
+ */
+export function maskCurrency(value: string, showSymbol: boolean = true): string {
+  const cleaned = value.replace(/[^\d]/g, '');
+  if (!cleaned) return '';
+
+  const number = parseInt(cleaned, 10) / 100;
+  const formatted = new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+    .format(number)
+    .replace(/\u00A0/g, ' ');
+
+  if (showSymbol) {
+    return formatted;
+  }
+
+  return formatted.replace(/^R\$\s?/, '');
 }
 
 // =====================================================================
@@ -217,6 +250,26 @@ export function formatCPF(cpf: string): string {
 }
 
 /**
+ * Aplica m�scara em CPF durante digita��o
+ * @param value - Valor digitado
+ * @returns Valor parcialmente formatado (ex: "123.456.789-00")
+ */
+export function maskCPF(value: string): string {
+  const cleaned = value.replace(/[^\d]/g, '').slice(0, 11);
+  if (!cleaned) return '';
+
+  if (cleaned.length <= 3) {
+    return cleaned;
+  } else if (cleaned.length <= 6) {
+    return cleaned.replace(/(\d{3})(\d{0,3})/, '$1.$2');
+  } else if (cleaned.length <= 9) {
+    return cleaned.replace(/(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
+  }
+
+  return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+}
+
+/**
  * Formata telefone brasileiro
  * @param phone - Telefone string sem formatação
  * @returns Telefone formatado (ex: "(11) 98888-7777")
@@ -235,6 +288,48 @@ export function formatPhone(phone: string): string {
   }
   
   return phone;
+}
+
+/**
+ * Aplica m�scara em telefone brasileiro durante digita��o
+ * @param value - Valor digitado
+ * @returns Valor parcialmente formatado (ex: "(11) 98888-7777")
+ */
+export function maskPhone(value: string): string {
+  const cleaned = value.replace(/[^\d]/g, '').slice(0, 11);
+
+  if (cleaned.length <= 2) {
+    return cleaned ? `(${cleaned}` : '';
+  }
+
+  if (cleaned.length <= 6) {
+    return cleaned.replace(/(\d{2})(\d{0,4})/, '($1) $2');
+  }
+
+  if (cleaned.length <= 10) {
+    return cleaned.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+  }
+
+  return cleaned.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+}
+
+/**
+ * Aplica m�scara em CREF (123456-G/SP)
+ * @param value - Valor digitado
+ * @returns Valor parcialmente formatado
+ */
+export function maskCREF(value: string): string {
+  const cleaned = value.toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, 9);
+
+  if (cleaned.length <= 6) {
+    return cleaned;
+  }
+
+  if (cleaned.length === 7) {
+    return cleaned.replace(/(\d{6})([A-Z])/, '$1-$2');
+  }
+
+  return cleaned.replace(/(\d{6})([A-Z])([A-Z]{0,2})/, '$1-$2/$3');
 }
 
 /**
@@ -265,6 +360,25 @@ export function capitalize(text: string): string {
     .split(' ')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+}
+
+/**
+ * Remove caracteres inv�lidos em campos de nome (mant�m letras/ap�strofos)
+ * @param value - Valor digitado
+ */
+export function sanitizeNameInput(value: string): string {
+  return value
+    .replace(/[^\p{L}\s']/gu, '')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/^\s+/, '');
+}
+
+/**
+ * Remove todos os caracteres que n�o s�o d�gitos
+ * @param value - Valor mascarado
+ */
+export function stripNonDigits(value: string): string {
+  return value.replace(/[^\d]/g, '');
 }
 
 // =====================================================================

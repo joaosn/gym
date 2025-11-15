@@ -21,6 +21,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 import { apiClient } from '@/lib/api-client';
 import {
   formatTime,
@@ -63,8 +64,16 @@ interface NovaFormData {
   duracao: number; // em minutos
 }
 
+interface DisponibilidadeSlot {
+  hora: string;
+  inicio: string;
+  fim: string;
+  disponivel: boolean;
+}
+
 export default function InstructorSlots() {
   const { toast } = useToast();
+  const { user } = useAuth(); // ✨ NOVO: obter usuário logado com instructorId
   const [loading, setLoading] = useState(true);
   const [sessoes, setSessoes] = useState<Sessao[]>([]);
   const [cancelando, setCancelando] = useState<number | null>(null);
@@ -80,6 +89,9 @@ export default function InstructorSlots() {
   const [carregandoAlunos, setCarregandoAlunos] = useState(false);
   const [alunos, setAlunos] = useState<any[]>([]);
   const [criando, setCriando] = useState(false);
+  const [carregandoDisponiblidade, setCarregandoDisponiblidade] = useState(false);
+  const [slotsDisponiveis, setSlotsDisponiveis] = useState<DisponibilidadeSlot[]>([]);
+  const [buscouDisponibilidade, setBuscouDisponibilidade] = useState(false);
   const [novaFormData, setNovaFormData] = useState<NovaFormData>({
     id_usuario: 0,
     data: new Date().toISOString().split('T')[0],
@@ -98,6 +110,15 @@ export default function InstructorSlots() {
   useEffect(() => {
     if (showNovaModal) {
       loadAlunos();
+      // Resetar estados
+      setSlotsDisponiveis([]);
+      setBuscouDisponibilidade(false);
+      setNovaFormData({
+        id_usuario: 0,
+        data: new Date().toISOString().split('T')[0],
+        horaInicio: '08:00',
+        duracao: 60,
+      });
     }
   }, [showNovaModal]);
 
@@ -156,6 +177,45 @@ export default function InstructorSlots() {
     }
   };
 
+  const loadDisponibilidade = async (data: string) => {
+    try {
+      setCarregandoDisponiblidade(true);
+      setBuscouDisponibilidade(false);
+      setSlotsDisponiveis([]);
+      
+      // Buscar disponibilidade do personal para aquela data
+      const response: any = await apiClient.post('/instructor/availability-slots', {
+        data: data,
+      });
+      
+      console.log('✅ Disponibilidade carregada:', response);
+      
+      // response é { disponivel: boolean, slots: [...], ... }
+      if (response.disponivel && Array.isArray(response.slots)) {
+        // Filtrar apenas slots disponíveis
+        const livres = response.slots.filter((slot: any) => slot.disponivel === true);
+        setSlotsDisponiveis(livres);
+        // Mensagem de "sem disponibilidade" agora aparece dentro do modal
+      } else {
+        setSlotsDisponiveis([]);
+        // Mensagem de "data indisponível" agora aparece dentro do modal
+      }
+      
+      setBuscouDisponibilidade(true);
+    } catch (error: any) {
+      console.error('❌ Erro ao carregar disponibilidade:', error);
+      toast({
+        title: 'Erro ao buscar disponibilidade',
+        description: getErrorMessage(error),
+        variant: 'destructive',
+      });
+      setSlotsDisponiveis([]);
+      setBuscouDisponibilidade(true);
+    } finally {
+      setCarregandoDisponiblidade(false);
+    }
+  };
+
   const handleCriarNovaSessao = async () => {
     try {
       if (!novaFormData.id_usuario) {
@@ -167,18 +227,35 @@ export default function InstructorSlots() {
         return;
       }
 
+      if (!novaFormData.horaInicio) {
+        toast({
+          title: 'Erro',
+          description: 'Selecione um horário disponível',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       setCriando(true);
 
-      const usuarioLogado = await authService.getCurrentUser();
       const inicio = `${novaFormData.data}T${novaFormData.horaInicio}:00`;
       const fim = new Date(new Date(inicio).getTime() + novaFormData.duracao * 60000).toISOString();
 
-      const response: any = await apiClient.post('/personal-sessions', {
+      console.log('📝 Criando sessão:', {
         id_usuario: novaFormData.id_usuario,
-        id_instrutor: usuarioLogado.id,
+        id_instrutor: user?.instructorId, // ✨ Usar instructorId do user logado
         inicio,
         fim,
       });
+
+      const response: any = await apiClient.post('/personal-sessions', {
+        id_usuario: novaFormData.id_usuario,
+        id_instrutor: user?.instructorId, // ✨ Usar instructorId do user logado
+        inicio,
+        fim,
+      });
+
+      console.log('✅ Sessão criada:', response);
 
       toast({
         title: '✓ Sessão criada!',
@@ -192,6 +269,8 @@ export default function InstructorSlots() {
         horaInicio: '08:00',
         duracao: 60,
       });
+      setSlotsDisponiveis([]);
+      setBuscouDisponibilidade(false);
       setShowNovaModal(false);
 
       // Recarregar sessões
@@ -590,7 +669,7 @@ export default function InstructorSlots() {
 
       {/* Modal Nova Sessão */}
       <Dialog open={showNovaModal} onOpenChange={setShowNovaModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Nova Sessão Personal</DialogTitle>
             <DialogDescription>
@@ -598,7 +677,7 @@ export default function InstructorSlots() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 flex-1 overflow-y-auto">
             {/* Seletor de Aluno */}
             <div>
               <label className="text-sm font-medium text-gray-300 mb-2 block">Aluno</label>
@@ -630,26 +709,77 @@ export default function InstructorSlots() {
               <Input
                 type="date"
                 value={novaFormData.data}
-                onChange={(e) =>
-                  setNovaFormData({ ...novaFormData, data: e.target.value })
-                }
+                min={new Date().toISOString().split('T')[0]}
+                onChange={(e) => {
+                  const novaData = e.target.value;
+                  setNovaFormData(prev => ({ 
+                    ...prev, 
+                    data: novaData,
+                    horaInicio: ''
+                  }));
+                  // 🚀 AUTO-CARREGAR horários ao selecionar data
+                  if (novaData) {
+                    loadDisponibilidade(novaData);
+                  } else {
+                    setSlotsDisponiveis([]);
+                    setBuscouDisponibilidade(false);
+                  }
+                }}
                 className="bg-gray-700 border-gray-600 text-white"
               />
             </div>
 
-            {/* Horário de Início */}
-            <div>
-              <label className="text-sm font-medium text-gray-300 mb-2 block">
-                Horário de Início
-              </label>
-              <Input
-                type="time"
-                value={novaFormData.horaInicio}
-                onChange={(e) =>
-                  setNovaFormData({ ...novaFormData, horaInicio: e.target.value })
-                }
-                className="bg-gray-700 border-gray-600 text-white"
-              />
+            {/* Horários Disponíveis */}
+            <div className="min-h-[200px] flex flex-col">
+              <label className="text-sm font-medium text-gray-300 mb-3 block">Horários Disponíveis</label>
+              {!novaFormData.data ? (
+                // Mensagem quando não tem data selecionada
+                <div className="flex-1 flex items-center justify-center text-center py-8 text-gray-400 bg-gray-700/50 rounded border border-dashed border-gray-600">
+                  <div>
+                    <Calendar className="h-10 w-10 mx-auto mb-3 text-gray-500" />
+                    <p className="font-medium text-gray-300">📅 Escolha uma data acima</p>
+                    <p className="text-xs mt-1">Os horários disponíveis serão carregados automaticamente</p>
+                  </div>
+                </div>
+              ) : carregandoDisponiblidade ? (
+                // Loading state
+                <div className="flex-1 flex items-center justify-center text-gray-400">
+                  <div className="text-center">
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
+                    <p>⏳ Carregando horários...</p>
+                  </div>
+                </div>
+              ) : slotsDisponiveis.length > 0 ? (
+                // Grade de horários
+                <div className="grid grid-cols-3 gap-2 p-3 bg-gray-600 rounded border border-gray-600 flex-1 overflow-y-auto">
+                  {slotsDisponiveis.map((slot) => (
+                    <Button
+                      key={slot.hora}
+                      type="button"
+                      variant={novaFormData.horaInicio === slot.hora ? 'default' : 'outline'}
+                      className={`text-xs py-2 ${
+                        novaFormData.horaInicio === slot.hora
+                          ? 'bg-fitway-green text-white hover:bg-fitway-green/90'
+                          : 'border-gray-500 text-white hover:bg-gray-500'
+                      }`}
+                      onClick={() =>
+                        setNovaFormData({ ...novaFormData, horaInicio: slot.hora })
+                      }
+                    >
+                      {slot.hora}
+                    </Button>
+                  ))}
+                </div>
+              ) : (
+                // Nenhum horário disponível
+                <div className="flex-1 flex items-center justify-center text-center py-6 text-gray-400 bg-gray-700 rounded border border-gray-600">
+                  <div>
+                    <AlertCircle className="h-8 w-8 mx-auto mb-2 text-red-400" />
+                    <p className="font-medium">❌ Nenhum horário disponível</p>
+                    <p className="text-xs mt-1">Escolha outra data</p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Duração */}
@@ -678,18 +808,18 @@ export default function InstructorSlots() {
             </div>
           </div>
 
-          <DialogFooter>
+          <div className="flex gap-2 pt-4 border-t border-gray-700">
             <Button
               variant="outline"
               onClick={() => setShowNovaModal(false)}
-              className="border-gray-600"
+              className="flex-1 border-gray-600"
             >
               Cancelar
             </Button>
             <Button
               onClick={handleCriarNovaSessao}
-              disabled={criando || !novaFormData.id_usuario}
-              className="bg-fitway-green hover:bg-fitway-green/90 text-white"
+              disabled={criando || !novaFormData.id_usuario || !novaFormData.data || !novaFormData.horaInicio}
+              className="flex-1 bg-fitway-green hover:bg-fitway-green/90 text-white disabled:opacity-50"
             >
               {criando ? (
                 <>
@@ -703,7 +833,7 @@ export default function InstructorSlots() {
                 </>
               )}
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

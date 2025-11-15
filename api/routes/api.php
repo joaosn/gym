@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\ReservaQuadraController;
 use App\Http\Controllers\SessaoPersonalController;
 use App\Http\Controllers\Instrutor\InstructorProfileController;
 use App\Http\Controllers\Instrutor\InstructorSessionsController;
+use App\Http\Controllers\Instrutor\DisponibilidadeInstructorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -85,8 +86,19 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/sessions/{id}/cancel', [InstructorSessionsController::class, 'cancelarSessao']);
         Route::patch('/sessions/{id}/complete', [InstructorSessionsController::class, 'concluirSessao']);
         
+        // INSTRUTOR: BUSCAR DISPONIBILIDADE PARA UM DIA
+        Route::post('/availability-slots', [InstructorSessionsController::class, 'availabilitySlots']);
+        
         // INSTRUTOR: LISTAR ALUNOS (para criar nova sessão)
         Route::get('/students', [InstructorSessionsController::class, 'getStudents']);
+        
+        // =====================================================================
+        // INSTRUTOR: HORÁRIOS DISPONÍVEIS (CRUD)
+        // =====================================================================
+        Route::get('/availability', [DisponibilidadeInstructorController::class, 'index']);
+        Route::post('/availability', [DisponibilidadeInstructorController::class, 'store']);
+        Route::put('/availability/{id}', [DisponibilidadeInstructorController::class, 'update']);
+        Route::delete('/availability/{id}', [DisponibilidadeInstructorController::class, 'destroy']);
     });
 
     // =====================================================================
@@ -192,6 +204,7 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/', [App\Http\Controllers\PagamentoController::class, 'index']);
             Route::get('/{id}', [App\Http\Controllers\PagamentoController::class, 'show']);
             Route::post('/{id}/create-checkout', [App\Http\Controllers\PagamentoController::class, 'adminCreateCheckout']);
+            Route::post('/{id}/mark-paid', [App\Http\Controllers\PagamentoController::class, 'adminMarkAsPaid']);
             Route::post('/', [App\Http\Controllers\PagamentoController::class, 'store']);
             Route::put('/{id}', [App\Http\Controllers\PagamentoController::class, 'update']);
             Route::patch('/{id}', [App\Http\Controllers\PagamentoController::class, 'update']);

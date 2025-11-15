@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { usersService } from '@/services/users.service';
 import type { AdminUser } from '@/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { Loader2, Receipt, Search, Clock, CheckCircle, XCircle, AlertCircle, Plus, Pencil, Trash2, Link as LinkIcon } from 'lucide-react';
+import { Loader2, Receipt, Search, Clock, CheckCircle, XCircle, AlertCircle, Plus, Pencil, Trash2, Link as LinkIcon, Check as CheckIcon } from 'lucide-react';
 import { debounce } from '@/lib/utils';
 
 export default function AdminPaymentsPage() {
@@ -236,6 +236,16 @@ export default function AdminPaymentsPage() {
     }
   };
 
+  const handleMarkAsPaid = async (idCobranca: string) => {
+    try {
+      await paymentsService.adminMarkAsPaid(String(idCobranca));
+      toast({ title: 'Cobrança marcada como paga' });
+      loadPayments();
+    } catch (error: any) {
+      toast({ title: 'Erro ao marcar como paga', description: error.message, variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-6">
@@ -310,6 +320,30 @@ export default function AdminPaymentsPage() {
       </Card>
 
       {/* Estatísticas Rápidas */}
+      {(() => {
+        const toNumber = (v: any): number => {
+          if (typeof v === 'number') return v;
+          if (typeof v === 'string') {
+            // suporta "150.00" ou "150,00" e remove símbolo
+            const cleaned = v.replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.');
+            const n = parseFloat(cleaned);
+            return isNaN(n) ? 0 : n;
+          }
+          return 0;
+        };
+
+        const totalRecebido = cobrancas.reduce((sum, c) => {
+          if (c.status === 'pago') {
+            const pago = toNumber(c.valor_pago);
+            const total = toNumber(c.valor_total);
+            return sum + (pago > 0 ? pago : total);
+          }
+          if (c.status === 'parcialmente_pago') {
+            return sum + toNumber(c.valor_pago);
+          }
+          return sum;
+        }, 0);
+        return (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardHeader className="pb-2">
@@ -340,12 +374,12 @@ export default function AdminPaymentsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Recebido</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">
-              {formatCurrency(cobrancas.reduce((sum, c) => sum + c.valor_pago, 0))}
-            </p>
+            <p className="text-2xl font-bold">{formatCurrency(totalRecebido)}</p>
           </CardContent>
         </Card>
       </div>
+        );
+      })()}
 
       {/* Loading */}
       {loading ? (
@@ -389,9 +423,14 @@ export default function AdminPaymentsPage() {
                         )}
                         <div className="flex items-center gap-2 mt-3 justify-end">
                           {(cobranca.status === 'pendente' || cobranca.status === 'parcialmente_pago') && (
-                            <Button variant="secondary" size="sm" onClick={() => handleGenerateLink(String(cobranca.id_cobranca))}>
-                              <LinkIcon className="w-4 h-4 mr-1" /> Gerar Link
-                            </Button>
+                            <>
+                              <Button variant="secondary" size="sm" onClick={() => handleGenerateLink(String(cobranca.id_cobranca))}>
+                                <LinkIcon className="w-4 h-4 mr-1" /> Gerar Link
+                              </Button>
+                              <Button variant="default" size="sm" onClick={() => handleMarkAsPaid(String(cobranca.id_cobranca))}>
+                                <CheckIcon className="w-4 h-4 mr-1" /> Marcar como Pago
+                              </Button>
+                            </>
                           )}
                           <Button variant="outline" size="sm" onClick={() => openEdit(cobranca)}>
                             <Pencil className="w-4 h-4 mr-1" /> Editar

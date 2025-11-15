@@ -5,6 +5,7 @@ export interface User {
   email: string;
   phone?: string;
   role: 'admin' | 'aluno' | 'instrutor';
+  instructorId?: string; // ID do instrutor se user for instrutor
   createdAt: string;
 }
 

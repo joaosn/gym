@@ -46,6 +46,7 @@ export default function CourtBookingsPage() {
   const [users, setUsers] = useState<AdminUser[]>([]); // ← AdminUser ao invés de User
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [editingBooking, setEditingBooking] = useState<CourtBooking | null>(null);
   
   // Filtros
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -93,7 +94,7 @@ export default function CourtBookingsPage() {
   }, []);
 
   useEffect(() => {
-    loadMyBookings();
+  loadAdminBookings();
   }, [statusFilter]);
 
   const loadInitialData = async () => {
@@ -103,9 +104,9 @@ export default function CourtBookingsPage() {
         usersService.listUsers(), // ← CORRIGIDO: listUsers ao invés de getAll
       ]);
       
-      setCourts(courtsData.data || []);
-      setUsers(usersData.data || []);
-      await loadMyBookings();
+  setCourts(courtsData.data || []);
+  setUsers(usersData.data || []);
+  await loadAdminBookings();
     } catch (error: any) {
       toast({
         title: 'Erro ao carregar dados',
@@ -117,7 +118,7 @@ export default function CourtBookingsPage() {
     }
   };
 
-  const loadMyBookings = async () => {
+  const loadAdminBookings = async () => {
     try {
       setLoading(true);
       
@@ -125,7 +126,7 @@ export default function CourtBookingsPage() {
       const filters: any = {};
       if (statusFilter !== 'all') filters.status = statusFilter;
 
-      const response = await courtBookingsService.list(filters);
+      const response = await courtBookingsService.listAdmin(filters);
       setBookings(response.data || []);
     } catch (error: any) {
       toast({
@@ -138,7 +139,7 @@ export default function CourtBookingsPage() {
     }
   };
 
-  const handleCreate = async () => {
+  const handleCreateOrUpdate = async () => {
     if (!formData.id_quadra || !formData.data || !formData.horaInicio || !formData.horaFim) {
       toast({
         title: 'Campos obrigatórios',
@@ -175,7 +176,7 @@ export default function CourtBookingsPage() {
       setSubmitting(true);
       
       // Verificar disponibilidade
-      const availabilityResponse = await courtBookingsService.checkAvailability({
+  const availabilityResponse = await courtBookingsService.checkAvailabilityAdmin({
         id_quadra: parseInt(formData.id_quadra), // ← Converter para número
         inicio,
         fim,
@@ -191,28 +192,39 @@ export default function CourtBookingsPage() {
         return;
       }
 
-      // Criar reserva
-      await courtBookingsService.create({
-        id_quadra: parseInt(formData.id_quadra), // ← Converter para número
-        id_usuario: parseInt(formData.id_usuario), // ← Pegar do formData (admin escolhe)
-        inicio,
-        fim,
-        observacoes: formData.observacoes,
-      });
+      if (editingBooking) {
+        // Atualizar reserva (Admin)
+        await courtBookingsService.updateAdmin(String(editingBooking.id_reserva_quadra), {
+          id_quadra: parseInt(formData.id_quadra),
+          id_usuario: parseInt(formData.id_usuario),
+          inicio,
+          fim,
+          observacoes: formData.observacoes,
+        });
+      } else {
+        // Criar reserva (Admin)
+        await courtBookingsService.createAdmin({
+          id_quadra: parseInt(formData.id_quadra), // ← Converter para número
+          id_usuario: parseInt(formData.id_usuario), // ← Pegar do formData (admin escolhe)
+          inicio,
+          fim,
+          observacoes: formData.observacoes,
+        });
+      }
 
       toast({
-        title: 'Reserva criada!',
+        title: editingBooking ? 'Reserva atualizada!' : 'Reserva criada!',
         description: `Preço: ${formatCurrency(availabilityResponse.data.preco_total || 0)}`,
       });
       
       setCreateModalOpen(false);
       resetForm();
-      loadMyBookings();
+      loadAdminBookings();
     } catch (error: any) {
       // 🎯 Usar formatValidationErrors (NOVO!)
       const errorMessage = formatValidationErrors(error);
       toast({
-        title: 'Erro ao criar reserva',
+        title: editingBooking ? 'Erro ao atualizar reserva' : 'Erro ao criar reserva',
         description: errorMessage,
         variant: 'destructive',
       });
@@ -225,7 +237,7 @@ export default function CourtBookingsPage() {
     if (!selectedBooking) return;
 
     try {
-      const response = await courtBookingsService.cancel(selectedBooking.id_reserva_quadra);
+      const response = await courtBookingsService.cancelAdmin(selectedBooking.id_reserva_quadra);
       
       // Se cobrança foi cancelada junto, mostrar mensagem diferente
       const description = response.data?.cobranca_cancelada 
@@ -236,7 +248,7 @@ export default function CourtBookingsPage() {
       
       setCancelModalOpen(false);
       setSelectedBooking(null);
-      loadMyBookings();
+      loadAdminBookings();
     } catch (error: any) {
       toast({
         title: 'Erro ao cancelar reserva',
@@ -266,6 +278,7 @@ export default function CourtBookingsPage() {
       observacoes: '',
     });
     setSelectedBooking(null);
+  setEditingBooking(null);
   };
 
   const getStatusBadge = (status: string) => {
@@ -310,8 +323,8 @@ export default function CourtBookingsPage() {
       {/* Header */}
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Minhas Reservas</h1>
-          <p className="text-muted-foreground">Gerencie suas reservas de quadras</p>
+          <h1 className="text-3xl font-bold mb-2">Reservas de Quadra</h1>
+          <p className="text-muted-foreground">Gerencie as reservas de quadras (Admin)</p>
         </div>
         <Button onClick={() => { resetForm(); setCreateModalOpen(true); }}>
           <Plus className="mr-2 h-4 w-4" />
@@ -375,6 +388,27 @@ export default function CourtBookingsPage() {
                       <Button variant="outline" size="sm" onClick={() => openViewModal(booking)}>
                         Ver Detalhes
                       </Button>
+                      {['pendente', 'confirmada'].includes(booking.status) && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            // Preencher formulário para edição
+                            setEditingBooking(booking);
+                            setFormData({
+                              id_quadra: booking.id_quadra,
+                              id_usuario: booking.id_usuario,
+                              data: booking.inicio.split('T')[0],
+                              horaInicio: formatTime(booking.inicio),
+                              horaFim: formatTime(booking.fim),
+                              observacoes: booking.observacoes || '',
+                            });
+                            setCreateModalOpen(true);
+                          }}
+                        >
+                          Editar
+                        </Button>
+                      )}
                       {['pendente', 'confirmada'].includes(booking.status) && (
                         <Button variant="destructive" size="sm" onClick={() => openCancelModal(booking)}>
                           <X className="mr-1 h-4 w-4" />
@@ -446,7 +480,7 @@ export default function CourtBookingsPage() {
       )}
 
       {/* Modal de Criar */}
-      <Dialog open={createModalOpen} onOpenChange={(open) => {
+  <Dialog open={createModalOpen} onOpenChange={(open) => {
         if (!open) {
           setCreateModalOpen(false);
           resetForm();
@@ -454,9 +488,9 @@ export default function CourtBookingsPage() {
       }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Nova Reserva</DialogTitle>
+    <DialogTitle>{editingBooking ? 'Editar Reserva' : 'Nova Reserva'}</DialogTitle>
             <DialogDescription>
-              Preencha os dados para reservar uma quadra
+      {editingBooking ? 'Atualize os dados da reserva' : 'Preencha os dados para reservar uma quadra'}
             </DialogDescription>
           </DialogHeader>
 
@@ -558,8 +592,8 @@ export default function CourtBookingsPage() {
             >
               Cancelar
             </Button>
-            <Button onClick={handleCreate} disabled={submitting}>
-              {submitting ? 'Criando...' : 'Reservar'}
+            <Button onClick={handleCreateOrUpdate} disabled={submitting}>
+              {submitting ? (editingBooking ? 'Salvando...' : 'Criando...') : (editingBooking ? 'Salvar' : 'Reservar')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Zap, Eye, EyeOff } from 'lucide-react';
 import { authService } from '@/services/auth.service';
 import { useToast } from '@/hooks/use-toast';
-import { getErrorMessage } from '@/lib/utils';
+import { getErrorMessage, maskPhone, sanitizeNameInput, stripNonDigits } from '@/lib/utils';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -35,8 +35,14 @@ const RegisterPage = () => {
       return;
     }
 
+    const payload = {
+      ...formData,
+      name: sanitizeNameInput(formData.name).trim(),
+      phone: formData.phone ? stripNonDigits(formData.phone) : undefined,
+    };
+
     try {
-      const response = await authService.register(formData);
+      const response = await authService.register(payload);
       
       toast({
         title: 'Conta criada com sucesso!',
@@ -53,9 +59,18 @@ const RegisterPage = () => {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    let nextValue = value;
+
+    if (name === 'name') {
+      nextValue = sanitizeNameInput(value);
+    } else if (name === 'phone') {
+      nextValue = maskPhone(value);
+    }
+
     setFormData(prev => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [name]: nextValue
     }));
   };
 
@@ -88,16 +103,17 @@ const RegisterPage = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-white">Nome completo</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  type="text"
-                  placeholder="Seu nome completo"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="h-11 bg-fitway-light border-fitway-green/30 text-white placeholder:text-white/50"
-                />
+              <Input
+                id="name"
+                name="name"
+                type="text"
+                placeholder="Seu nome completo"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                maxLength={80}
+                className="h-11 bg-fitway-light border-fitway-green/30 text-white placeholder:text-white/50"
+              />
               </div>
 
               <div className="space-y-2">
@@ -120,9 +136,11 @@ const RegisterPage = () => {
                   id="phone"
                   name="phone"
                   type="tel"
+                  inputMode="numeric"
                   placeholder="(44) 99999-9999"
                   value={formData.phone}
                   onChange={handleChange}
+                  maxLength={15}
                   className="h-11 bg-fitway-light border-fitway-green/30 text-white placeholder:text-white/50"
                 />
               </div>

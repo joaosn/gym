@@ -23,7 +23,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { usersService } from '@/services/users.service';
 import { AdminUser, UserFormData } from '@/types';
-import { formatCPF, formatPhone, formatDate, getErrorMessage } from '@/lib/utils';
+import { formatCPF, formatPhone, formatDate, getErrorMessage, maskCPF, maskPhone, sanitizeNameInput, stripNonDigits } from '@/lib/utils';
 import { 
   Plus, 
   Search, 
@@ -76,6 +76,35 @@ const AdminUsers = () => {
     status: 'ativo',
   });
 
+  const handleFormChange = (field: keyof UserFormData, value: string) => {
+    let nextValue = value;
+
+    if (field === 'nome') {
+      nextValue = sanitizeNameInput(value);
+    } else if (field === 'telefone') {
+      nextValue = maskPhone(value);
+    } else if (field === 'documento') {
+      nextValue = maskCPF(value);
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      [field]: nextValue,
+    }));
+  };
+
+  const buildUserPayload = (): UserFormData => {
+    const telefone = formData.telefone ? stripNonDigits(formData.telefone) : undefined;
+    const documento = formData.documento ? stripNonDigits(formData.documento) : undefined;
+
+    return {
+      ...formData,
+      nome: sanitizeNameInput(formData.nome).trim(),
+      telefone,
+      documento,
+    };
+  };
+
   // Load users
   useEffect(() => {
     loadUsers();
@@ -125,9 +154,9 @@ const AdminUsers = () => {
     setFormData({
       nome: user.nome,
       email: user.email,
-      senha: '', // Não preencher senha ao editar
-      telefone: user.telefone || '',
-      documento: user.documento || '',
+      senha: '', // N�o preencher senha ao editar
+      telefone: user.telefone ? maskPhone(user.telefone) : '',
+      documento: user.documento ? maskCPF(user.documento) : '',
       data_nascimento: user.data_nascimento || '',
       papel: user.papel,
       status: user.status,
@@ -138,8 +167,8 @@ const AdminUsers = () => {
   const handleCreate = async () => {
     try {
       setSubmitting(true);
-      
-      await usersService.createUser(formData);
+      const payload = buildUserPayload();
+      await usersService.createUser(payload);
       
       toast({
         title: 'Usuário criado com sucesso!',
@@ -166,12 +195,12 @@ const AdminUsers = () => {
       setSubmitting(true);
       
       // Não enviar senha se estiver vazia
-      const updateData = { ...formData };
-      if (!updateData.senha) {
-        delete updateData.senha;
+      const payload = buildUserPayload();
+      if (!payload.senha) {
+        delete payload.senha;
       }
       
-      await usersService.updateUser(selectedUser.id_usuario, updateData);
+      await usersService.updateUser(selectedUser.id_usuario, payload);
       
       toast({
         title: 'Usuário atualizado com sucesso!',
@@ -451,7 +480,8 @@ const AdminUsers = () => {
                 id="create-nome"
                 placeholder="Ex: João Silva"
                 value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                onChange={(e) => handleFormChange('nome', e.target.value)}
+                maxLength={80}
               />
             </div>
 
@@ -484,9 +514,12 @@ const AdminUsers = () => {
                 <Label htmlFor="create-telefone">Telefone</Label>
                 <Input
                   id="create-telefone"
+                  type="tel"
+                  inputMode="numeric"
                   placeholder="(11) 98888-7777"
                   value={formData.telefone}
-                  onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                  onChange={(e) => handleFormChange('telefone', e.target.value)}
+                  maxLength={15}
                 />
               </div>
 
@@ -496,7 +529,9 @@ const AdminUsers = () => {
                   id="create-documento"
                   placeholder="000.000.000-00"
                   value={formData.documento}
-                  onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
+                  onChange={(e) => handleFormChange('documento', e.target.value)}
+                  inputMode="numeric"
+                  maxLength={14}
                 />
               </div>
             </div>
@@ -581,7 +616,8 @@ const AdminUsers = () => {
               <Input
                 id="edit-nome"
                 value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                onChange={(e) => handleFormChange('nome', e.target.value)}
+                maxLength={80}
               />
             </div>
 
@@ -610,22 +646,27 @@ const AdminUsers = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
-                <Label htmlFor="edit-telefone">Telefone</Label>
-                <Input
-                  id="edit-telefone"
-                  value={formData.telefone}
-                  onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                />
-              </div>
+              <Label htmlFor="edit-telefone">Telefone</Label>
+              <Input
+                id="edit-telefone"
+                type="tel"
+                inputMode="numeric"
+                value={formData.telefone}
+                onChange={(e) => handleFormChange('telefone', e.target.value)}
+                maxLength={15}
+              />
+            </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="edit-documento">CPF</Label>
-                <Input
-                  id="edit-documento"
-                  value={formData.documento}
-                  onChange={(e) => setFormData({ ...formData, documento: e.target.value })}
-                />
-              </div>
+              <Label htmlFor="edit-documento">CPF</Label>
+              <Input
+                id="edit-documento"
+                value={formData.documento}
+                onChange={(e) => handleFormChange('documento', e.target.value)}
+                inputMode="numeric"
+                maxLength={14}
+              />
+            </div>
             </div>
 
             <div className="grid gap-2">

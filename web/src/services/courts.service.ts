@@ -161,6 +161,7 @@ class CourtsService {
       id_quadra: parseInt(courtId),
       data: date,
     });
+    // ✅ response.data já contém { disponivel, motivo, slots, quadra }
     return response.data;
   }
 

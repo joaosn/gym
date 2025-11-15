@@ -376,6 +376,31 @@ class PagamentoController extends Controller
     }
 
     /**
+     * ADMIN: Marcar cobrança como paga manualmente (aprovação imediata via simulação)
+     * POST /api/admin/payments/{id}/mark-paid
+     */
+    public function adminMarkAsPaid(Request $request, $id)
+    {
+        $cobranca = Cobranca::with('parcelas')->findOrFail($id);
+
+        if (!in_array($cobranca->status, ['pendente', 'parcialmente_pago'])) {
+            return response()->json(['message' => 'Cobrança não está pendente'], 400);
+        }
+
+        // Pegar primeira parcela pendente
+        $parcela = $cobranca->parcelas->where('status', 'pendente')->sortBy('numero_parcela')->first();
+        if (!$parcela) {
+            return response()->json(['message' => 'Nenhuma parcela pendente para marcar como paga'], 400);
+        }
+
+        // Criar pagamento simulado e aprovar (reutiliza lógica centralizada: atualiza parcela/cobrança e confirma recurso)
+        $pagamento = $this->pagamentoService->criarPagamentoSimulado($parcela);
+        $this->pagamentoService->aprovarPagamentoSimulado($pagamento);
+
+        return response()->json(['data' => $cobranca->fresh(['usuario', 'parcelas.pagamentos'])], 200);
+    }
+
+    /**
      * ADMIN: Criar cobrança manual para um usuário
      * POST /api/admin/payments
      */

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -48,6 +48,13 @@ const Sidebar = ({ userRole }: SidebarProps) => {
   const { user, logout: authLogout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
+
+  // Fechar submenus quando o sidebar collapsa
+  useEffect(() => {
+    if (isCollapsed) {
+      setExpandedItems([]);
+    }
+  }, [isCollapsed]);
 
   const toggleExpanded = (title: string) => {
     setExpandedItems(prev => 

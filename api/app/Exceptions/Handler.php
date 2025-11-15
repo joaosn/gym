@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Auth\AuthenticationException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -26,5 +27,25 @@ class Handler extends ExceptionHandler
         $this->reportable(function (Throwable $e) {
             //
         });
+    }
+
+    /**
+     * Converter exceções de autenticação em respostas JSON para APIs
+     * 
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Illuminate\Auth\AuthenticationException  $exception
+     * @return \Illuminate\Http\Response
+     */
+    protected function unauthenticated($request, AuthenticationException $exception)
+    {
+        // APIs sempre retornam JSON, nunca fazem redirect
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Unauthenticated',
+                'code' => 401
+            ], 401);
+        }
+
+        return parent::unauthenticated($request, $exception);
     }
 }

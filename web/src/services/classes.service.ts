@@ -75,19 +75,27 @@ class ClassesService {
     search?: string;
     per_page?: number;
   }) {
-    // Para homepage (sem filtros ou apenas status ativo), usar rota pública
-    if (!filters || (filters.status === 'ativo' && !filters.esporte && !filters.nivel && !filters.search && !filters.per_page)) {
-      const response = await apiClient.get<{ data: any[] }>('/public/classes');
+    // Para homepage (rota pública): quando sem filtros OU apenas status ("ativo"/"ativa")
+    const onlyStatusFilter = !!filters && Object.keys(filters).every((k) => k === 'status');
+    const statusValue = (filters?.status || '').toLowerCase();
+    const isPublicStatus = statusValue === 'ativo' || statusValue === 'ativa';
+
+    if (!filters || (onlyStatusFilter && isPublicStatus)) {
+      // Enviar filtros (ex.: status=ativa) para a rota pública
+      const response = await apiClient.get<any>('/public/classes', filters);
+      const raw = Array.isArray(response) ? response : (response?.data || []);
       return {
-        data: response.data.map(normalizeAula),
+        data: raw.map(normalizeAula),
+        meta: Array.isArray(response) ? undefined : response?.meta,
       };
     }
 
     // Para admin/aluno autenticado, usar rota protegida
-    const response = await apiClient.get<{ data: any[]; meta?: any }>('/classes', filters);
+    const response = await apiClient.get<any>('/classes', filters);
+    const raw = Array.isArray(response) ? response : (response?.data || []);
     return {
-      data: response.data.map(normalizeAula),
-      meta: response.meta,
+      data: raw.map(normalizeAula),
+      meta: Array.isArray(response) ? undefined : response?.meta,
     };
   }
 

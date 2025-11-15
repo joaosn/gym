@@ -24,7 +24,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { plansService } from '@/services/plans.service';
 import { Plan, PlanFormData } from '@/types';
-import { formatCurrency, formatDate, getErrorMessage } from '@/lib/utils';
+import { formatCurrency, formatDate, getErrorMessage, maskCurrency, parseCurrency } from '@/lib/utils';
 import { 
   Plus, 
   Search, 
@@ -75,6 +75,7 @@ const AdminPlans = () => {
   
   // Benefícios como string para textarea
   const [beneficiosText, setBeneficiosText] = useState('');
+  const [priceInput, setPriceInput] = useState('');
 
   // Load plans
   useEffect(() => {
@@ -106,6 +107,15 @@ const AdminPlans = () => {
     loadPlans();
   };
 
+  const handlePriceInputChange = (value: string) => {
+    const masked = maskCurrency(value);
+    setPriceInput(masked);
+    setFormData(prev => ({
+      ...prev,
+      preco: parseCurrency(masked),
+    }));
+  };
+
   const openCreateModal = () => {
     setFormData({
       nome: '',
@@ -116,6 +126,7 @@ const AdminPlans = () => {
       status: 'ativo',
     });
     setBeneficiosText('');
+    setPriceInput('');
     setIsCreateModalOpen(true);
   };
 
@@ -130,6 +141,7 @@ const AdminPlans = () => {
       status: plan.status,
     });
     setBeneficiosText(plan.beneficios_json.join('\n'));
+    setPriceInput(formatCurrency(plan.preco));
     setIsEditModalOpen(true);
   };
 
@@ -457,12 +469,11 @@ const AdminPlans = () => {
                 <Label htmlFor="create-preco">Preço *</Label>
                 <Input
                   id="create-preco"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  value={formData.preco}
-                  onChange={(e) => setFormData({ ...formData, preco: parseFloat(e.target.value) || 0 })}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="R$ 0,00"
+                  value={priceInput}
+                  onChange={(e) => handlePriceInputChange(e.target.value)}
                 />
               </div>
 
@@ -570,12 +581,11 @@ const AdminPlans = () => {
                 <Label htmlFor="edit-preco">Preço *</Label>
                 <Input
                   id="edit-preco"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  value={formData.preco}
-                  onChange={(e) => setFormData({ ...formData, preco: parseFloat(e.target.value) || 0 })}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="R$ 0,00"
+                  value={priceInput}
+                  onChange={(e) => handlePriceInputChange(e.target.value)}
                 />
               </div>
 

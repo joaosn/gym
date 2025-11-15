@@ -29,6 +29,12 @@ class AuthController extends Controller
             ], 403);
         }
 
+        // Se for instrutor, buscar dados do instrutor também
+        $instrutor = null;
+        if ($usuario->papel === 'instrutor') {
+            $instrutor = \App\Models\Instrutor::where('id_usuario', $usuario->id_usuario)->first();
+        }
+
         // Opcionalmente, revogar tokens anteriores (single-session)
         // $usuario->tokens()->delete();
 
@@ -37,6 +43,7 @@ class AuthController extends Controller
         return response()->json([
             'user' => [
                 'id' => (string) $usuario->id_usuario,
+                'instructorId' => $instrutor ? (string) $instrutor->id_instrutor : null,
                 'name' => $usuario->nome,
                 'email' => $usuario->email,
                 'phone' => $usuario->telefone,
@@ -84,9 +91,19 @@ class AuthController extends Controller
         /** @var Usuario $usuario */
         $usuario = Auth::user();
 
+        // Se for instrutor, buscar o ID do instrutor
+        $idInstrutor = null;
+        if ($usuario->papel === 'instrutor') {
+            $instrutor = \App\Models\Instrutor::where('id_usuario', $usuario->id_usuario)->first();
+            if ($instrutor) {
+                $idInstrutor = (string) $instrutor->id_instrutor;
+            }
+        }
+
         return response()->json([
             'user' => [
                 'id' => (string) $usuario->id_usuario,
+                'instructorId' => $idInstrutor,
                 'name' => $usuario->nome,
                 'email' => $usuario->email,
                 'phone' => $usuario->telefone,

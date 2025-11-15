@@ -50,6 +50,7 @@ class CourtBookingsService {
   // Para alunos: /court-bookings (autenticado)
   // Para admin: /admin/court-bookings (admin only)
   private basePath = '/court-bookings';
+  private adminBasePath = '/admin/court-bookings';
 
   /**
    * Listar minhas reservas (do usuário logado)
@@ -74,10 +75,46 @@ class CourtBookingsService {
   }
 
   /**
+   * Listar reservas (Admin) com filtros
+   * GET /admin/court-bookings
+   */
+  async listAdmin(filters?: CourtBookingFilters & { page?: number; per_page?: number; search?: string }): Promise<{ data: CourtBooking[]; total: number }> {
+    const params = new URLSearchParams();
+    if (filters?.id_quadra) params.append('id_quadra', String(filters.id_quadra));
+    if (filters?.id_usuario) params.append('id_usuario', String(filters.id_usuario));
+    if (filters?.status && filters.status !== 'all') params.append('status', String(filters.status));
+    if (filters?.data_inicio) params.append('data_inicio', String(filters.data_inicio));
+    if (filters?.data_fim) params.append('data_fim', String(filters.data_fim));
+    if (filters?.search) params.append('search', String(filters.search));
+    if ((filters as any)?.page) params.append('page', String((filters as any).page));
+    if ((filters as any)?.per_page) params.append('per_page', String((filters as any).per_page));
+
+    const queryString = params.toString();
+    const url = queryString ? `${this.adminBasePath}?${queryString}` : `${this.adminBasePath}`;
+
+    const response = await apiClient.get<{ data: any[]; total?: number }>(url);
+    const raw = Array.isArray((response as any).data) ? (response as any).data : (Array.isArray(response) ? (response as any) : []);
+    return {
+      data: raw.map(normalizeBooking),
+      total: (response as any).total ?? raw.length,
+    };
+  }
+
+  /**
    * Buscar reserva por ID
    */
   async getById(id: string): Promise<{ data: CourtBooking }> {
     const response = await apiClient.get<{ data: any }>(`${this.basePath}/${id}`);
+    return {
+      data: normalizeBooking(response.data),
+    };
+  }
+
+  /**
+   * Buscar reserva por ID (Admin)
+   */
+  async getAdminById(id: string): Promise<{ data: CourtBooking }> {
+    const response = await apiClient.get<{ data: any }>(`${this.adminBasePath}/${id}`);
     return {
       data: normalizeBooking(response.data),
     };
@@ -89,6 +126,20 @@ class CourtBookingsService {
   async create(data: CourtBookingFormData): Promise<{ data: CourtBooking; message: string }> {
     const response = await apiClient.post<{ data: any; message: string }>(
       this.basePath,
+      data
+    );
+    return {
+      data: normalizeBooking(response.data),
+      message: response.message,
+    };
+  }
+
+  /**
+   * Criar nova reserva (Admin)
+   */
+  async createAdmin(data: CourtBookingFormData): Promise<{ data: CourtBooking; message: string }> {
+    const response = await apiClient.post<{ data: any; message: string }>(
+      this.adminBasePath,
       data
     );
     return {
@@ -112,11 +163,36 @@ class CourtBookingsService {
   }
 
   /**
+   * Atualizar reserva (Admin)
+   */
+  async updateAdmin(id: string, data: Partial<CourtBookingFormData>): Promise<{ data: CourtBooking; message: string }> {
+    const response = await apiClient.put<{ data: any; message: string }>(
+      `${this.adminBasePath}/${id}`,
+      data
+    );
+    return {
+      data: normalizeBooking(response.data),
+      message: response.message,
+    };
+  }
+
+  /**
    * Cancelar reserva (soft delete)
    */
   async cancel(id: string): Promise<{ data: any; message: string }> {
     const response = await apiClient.patch<{ data: any; message: string }>(
       `${this.basePath}/${id}/cancel`,
+      {}
+    );
+    return response;
+  }
+
+  /**
+   * Cancelar reserva (Admin) — também revoga cobrança vinculada quando aplicável
+   */
+  async cancelAdmin(id: string): Promise<{ data: any; message: string }> {
+    const response = await apiClient.patch<{ data: any; message: string }>(
+      `${this.adminBasePath}/${id}/cancel`,
       {}
     );
     return response;
@@ -137,11 +213,35 @@ class CourtBookingsService {
   }
 
   /**
+   * Confirmar reserva (Admin)
+   */
+  async confirmAdmin(id: string): Promise<{ data: CourtBooking; message: string }> {
+    const response = await apiClient.patch<{ data: any; message: string }>(
+      `${this.adminBasePath}/${id}/confirm`,
+      {}
+    );
+    return {
+      data: normalizeBooking(response.data),
+      message: response.message,
+    };
+  }
+
+  /**
    * Verificar disponibilidade
    */
   async checkAvailability(data: AvailabilityCheckRequest): Promise<{ data: AvailabilityCheckResponse }> {
     return await apiClient.post<{ data: AvailabilityCheckResponse }>(
       `${this.basePath}/check-availability`,
+      data
+    );
+  }
+
+  /**
+   * Verificar disponibilidade (Admin)
+   */
+  async checkAvailabilityAdmin(data: AvailabilityCheckRequest): Promise<{ data: AvailabilityCheckResponse }> {
+    return await apiClient.post<{ data: AvailabilityCheckResponse }>(
+      `${this.adminBasePath}/check-availability`,
       data
     );
   }

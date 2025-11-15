@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Save, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getErrorMessage } from '@/lib/utils';
+import { getErrorMessage, maskCurrency, parseCurrency, sanitizeNameInput } from '@/lib/utils';
 
 const EditPlan = () => {
   const navigate = useNavigate();
@@ -56,6 +56,7 @@ const EditPlan = () => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [priceInput, setPriceInput] = useState('');
 
   useEffect(() => {
     // Load plan data
@@ -68,8 +69,17 @@ const EditPlan = () => {
         benefits: plan.benefits,
         description: plan.description
       });
+      setPriceInput(maskCurrency(String(Math.round(plan.price * 100))));
+    } else {
+      setPriceInput('');
     }
   }, [id]);
+
+  const handlePriceInputChange = (value: string) => {
+    const masked = maskCurrency(value);
+    setPriceInput(masked);
+    setFormData(prev => ({ ...prev, price: parseCurrency(masked) }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,7 +154,8 @@ const EditPlan = () => {
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: sanitizeNameInput(e.target.value) }))}
+                  maxLength={80}
                   className="bg-dashboard-bg border-dashboard-border text-white"
                   required
                 />
@@ -154,10 +165,11 @@ const EditPlan = () => {
                 <Label htmlFor="price" className="text-white">Preço (R$)</Label>
                 <Input
                   id="price"
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) }))}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="R$ 0,00"
+                  value={priceInput}
+                  onChange={(e) => handlePriceInputChange(e.target.value)}
                   className="bg-dashboard-bg border-dashboard-border text-white"
                   required
                 />

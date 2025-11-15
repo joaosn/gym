@@ -23,6 +23,7 @@ export function AvailabilityModal({ isOpen, onClose, type, item }: AvailabilityM
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<Array<{
     hora: string;
     inicio: string;
@@ -33,12 +34,18 @@ export function AvailabilityModal({ isOpen, onClose, type, item }: AvailabilityM
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen && item) {
-      loadAvailability();
+    if (!isOpen) {
+      // Resetar estado ao fechar o modal
+      setAvailableSlots([]);
+      setSelectedSlot(null);
+      setLoading(false);
+      setHasSearched(false);
     }
-  }, [isOpen, item, selectedDate]);
+  }, [isOpen]);
 
   const loadAvailability = async () => {
+    if (!item) return;
+    
     setLoading(true);
     setSelectedSlot(null);
     try {
@@ -49,10 +56,20 @@ export function AvailabilityModal({ isOpen, onClose, type, item }: AvailabilityM
           selectedDate
         );
         
-        if (result.disponivel) {
-          // Filtrar apenas slots disponíveis
-          const slotsDisponiveis = result.slots.filter(slot => slot.disponivel);
+        setHasSearched(true);
+        
+        if (result.disponivel && result.slots && Array.isArray(result.slots)) {
+          // Filtrar apenas slots disponíveis (onde disponivel === true)
+          const slotsDisponiveis = result.slots.filter((slot: any) => slot.disponivel === true);
           setAvailableSlots(slotsDisponiveis);
+          
+          if (slotsDisponiveis.length === 0) {
+            toast({
+              title: 'Nenhum horário disponível',
+              description: 'Todos os horários estão reservados nesta data. Escolha outra data.',
+              variant: 'default',
+            });
+          }
         } else {
           setAvailableSlots([]);
           if (result.motivo) {
@@ -66,6 +83,7 @@ export function AvailabilityModal({ isOpen, onClose, type, item }: AvailabilityM
       } else {
         // Para aulas, mostrar horários semanais fixos (TODO: implementar API)
         setAvailableSlots([]);
+        setHasSearched(true);
       }
     } catch (error: any) {
       console.error('Erro ao carregar disponibilidade:', error);
@@ -75,6 +93,7 @@ export function AvailabilityModal({ isOpen, onClose, type, item }: AvailabilityM
         variant: 'destructive',
       });
       setAvailableSlots([]);
+      setHasSearched(true);
     } finally {
       setLoading(false);
     }
@@ -167,56 +186,85 @@ export function AvailabilityModal({ isOpen, onClose, type, item }: AvailabilityM
 
           {/* Seletor de Data (só para quadras) */}
           {type === 'court' && (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label htmlFor="date" className="text-white">Data da Reserva</Label>
-              <Input
-                id="date"
-                type="date"
-                value={selectedDate}
-                onChange={(e) => {
-                  setSelectedDate(e.target.value);
-                  setSelectedSlot(null);
-                }}
-                min={getMinDate()}
-                max={getMaxDate()}
-                className="bg-white/10 border-fitway-green/30 text-white"
-              />
+              <div className="flex gap-2">
+                <Input
+                  id="date"
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => {
+                    setSelectedDate(e.target.value);
+                    setSelectedSlot(null);
+                    setAvailableSlots([]);
+                    setHasSearched(false);
+                  }}
+                  min={getMinDate()}
+                  max={getMaxDate()}
+                  className="flex-1 bg-white/10 border-fitway-green/30 text-white"
+                />
+                <Button
+                  onClick={loadAvailability}
+                  disabled={loading}
+                  className="bg-fitway-green hover:bg-fitway-green/90 text-fitway-dark font-semibold"
+                >
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Carregando...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Buscar Horários
+                    </span>
+                  )}
+                </Button>
+              </div>
             </div>
           )}
 
           {/* Horários Disponíveis */}
-          <div className="space-y-2">
-            <Label className="text-white">
-              {type === 'court' ? 'Horários Disponíveis' : 'Horários Semanais'}
-            </Label>
-            {loading ? (
-              <CardSkeleton />
-            ) : (
-              <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto p-2 bg-white/5 rounded-lg border border-fitway-green/30">
-                {availableSlots.length > 0 ? (
-                  availableSlots.map((slot) => (
-                    <Button
-                      key={slot.hora}
-                      variant={selectedSlot === slot.hora ? 'default' : 'outline'}
-                      className={`text-sm ${
-                        selectedSlot === slot.hora
-                          ? 'bg-fitway-green text-fitway-dark hover:bg-fitway-green/90'
-                          : 'border-fitway-green/30 text-white hover:bg-fitway-green/20'
-                      }`}
-                      onClick={() => setSelectedSlot(slot.hora)}
-                    >
-                      <CheckCircle2 className="mr-2 h-3 w-3" />
-                      {slot.hora}
-                    </Button>
-                  ))
-                ) : (
-                  <p className="text-white/50 col-span-3 text-center py-4">
-                    Nenhum horário disponível nesta data
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+          {hasSearched && (
+            <div className="space-y-2">
+              <Label className="text-white">
+                {type === 'court' ? 'Horários Disponíveis' : 'Horários Semanais'}
+              </Label>
+              {loading ? (
+                <div className="space-y-2">
+                  <CardSkeleton />
+                  <CardSkeleton />
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto p-2 bg-white/5 rounded-lg border border-fitway-green/30">
+                  {availableSlots.length > 0 ? (
+                    availableSlots.map((slot) => (
+                      <Button
+                        key={slot.hora}
+                        variant={selectedSlot === slot.hora ? 'default' : 'outline'}
+                        className={`text-sm ${
+                          selectedSlot === slot.hora
+                            ? 'bg-fitway-green text-fitway-dark hover:bg-fitway-green/90'
+                            : 'border-fitway-green/30 text-white hover:bg-fitway-green/20'
+                        }`}
+                        onClick={() => setSelectedSlot(slot.hora)}
+                      >
+                        <CheckCircle2 className="mr-2 h-3 w-3" />
+                        {slot.hora}
+                      </Button>
+                    ))
+                  ) : (
+                    <p className="text-white/50 col-span-3 text-center py-4">
+                      Nenhum horário disponível nesta data
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Resumo e Ação */}
           {selectedSlot && (

@@ -191,4 +191,135 @@ class InstructorSessionsController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Buscar horários disponíveis do instrutor para um dia específico
+     * POST /instructor/availability-slots
+     * Body: { data: "YYYY-MM-DD" }
+     */
+    public function availabilitySlots(Request $request)
+    {
+        try {
+            $request->validate([
+                'data' => 'required|date_format:Y-m-d',
+            ]);
+
+            $user = auth()->user();
+            
+            // Buscar instrutor
+            $instructor = \App\Models\Instrutor::where('id_usuario', $user->id_usuario)
+                ->where('status', '!=', 'excluido')
+                ->first();
+
+            if (!$instructor) {
+                return response()->json([
+                    'disponivel' => false,
+                    'motivo' => 'Instrutor não encontrado',
+                    'slots' => [],
+                ]);
+            }
+
+            $data = $request->data;
+            $diaSemana = \Carbon\Carbon::createFromFormat('Y-m-d', $data)->dayOfWeekIso; // 1=seg, 7=dom
+
+            // Buscar disponibilidades do instrutor para este dia da semana
+            $disponibilidades = \App\Models\DisponibilidadeInstrutor::where('id_instrutor', $instructor->id_instrutor)
+                ->where('dia_semana', $diaSemana)
+                ->get();
+
+            if ($disponibilidades->isEmpty()) {
+                return response()->json([
+                    'disponivel' => false,
+                    'motivo' => 'Você não tem disponibilidade neste dia da semana',
+                    'slots' => [],
+                ]);
+            }
+
+            // Gerar slots de 1 hora para cada disponibilidade
+            $slots = [];
+            $sessoes = \App\Models\SessaoPersonal::where('id_instrutor', $instructor->id_instrutor)
+                ->where('status', '!=', 'excluido')
+                ->whereBetween('inicio', [
+                    \Carbon\Carbon::createFromFormat('Y-m-d', $data)->startOfDay(),
+                    \Carbon\Carbon::createFromFormat('Y-m-d', $data)->endOfDay(),
+                ])
+                ->get();
+
+            foreach ($disponibilidades as $disp) {
+                try {
+                    // Fazer parse com H:i:s pois o banco armazena com segundos
+                    $horaInicio = \Carbon\Carbon::createFromFormat('H:i:s', trim($disp->hora_inicio));
+                    $horaFim = \Carbon\Carbon::createFromFormat('H:i:s', trim($disp->hora_fim));
+
+                    // Gerar slots de 1 hora
+                    $current = $horaInicio->clone();
+                    while ($current->copy()->addHours(1) <= $horaFim) {
+                        $slotInicio = \Carbon\Carbon::createFromFormat('Y-m-d H:i:s', "$data {$current->format('H:i')}:00");
+                        $slotFim = $slotInicio->clone()->addHours(1);
+
+                        // Verificar se há conflito com sessões existentes
+                        $temConflito = $sessoes->some(function ($sessao) use ($slotInicio, $slotFim) {
+                            return !($slotFim <= $sessao->inicio || $slotInicio >= $sessao->fim);
+                        });
+
+                        $slots[] = [
+                            'hora' => $current->format('H:i'),
+                            'inicio' => $slotInicio->toIso8601String(),
+                            'fim' => $slotFim->toIso8601String(),
+                            'disponivel' => !$temConflito,
+                        ];
+
+                        $current = $current->addHours(1);
+                    }
+                } catch (\Exception $slotError) {
+                    \Log::error('❌ Erro ao processar horário de disponibilidade:', [
+                        'hora_inicio' => $disp->hora_inicio,
+                        'hora_fim' => $disp->hora_fim,
+                        'error' => $slotError->getMessage(),
+                    ]);
+                    // Continuar processando outras disponibilidades
+                    continue;
+                }
+            }
+
+            // Filtrar apenas slots disponíveis
+            $slotsDisponiveis = array_filter($slots, fn($s) => $s['disponivel']);
+
+            return response()->json([
+                'disponivel' => !empty($slotsDisponiveis),
+                'motivo' => empty($slotsDisponiveis) ? 'Todos os horários estão ocupados neste dia' : null,
+                'slots' => array_values($slots), // array_values para reindexar
+                'instrutor' => [
+                    'id_instrutor' => $instructor->id_instrutor,
+                    'nome' => $instructor->nome,
+                ],
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'disponivel' => false,
+                'motivo' => 'Data inválida',
+                'slots' => [],
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('❌ Erro ao buscar disponibilidade:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'disponivel' => false,
+                'motivo' => 'Erro ao buscar disponibilidade: ' . $e->getMessage(),
+                'slots' => [],
+                'error_debug' => [
+                    'message' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                ]
+            ], 500);
+        }
+    }
 }

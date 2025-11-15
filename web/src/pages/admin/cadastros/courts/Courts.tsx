@@ -23,7 +23,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 import { courtsService } from '@/services/courts.service';
 import { Court, CourtFormData } from '@/types';
-import { formatCurrency, formatDate, getErrorMessage } from '@/lib/utils';
+import { formatCurrency, formatDate, getErrorMessage, maskCurrency, parseCurrency, sanitizeNameInput } from '@/lib/utils';
 import { 
   Plus, 
   Search, 
@@ -73,6 +73,17 @@ const AdminCourts = () => {
     caracteristicas_json: {},
     status: 'ativa',
   });
+  const [priceInput, setPriceInput] = useState('');
+
+  const handleNameChange = (value: string) => {
+    setFormData(prev => ({ ...prev, nome: sanitizeNameInput(value) }));
+  };
+
+  const handlePriceInputChange = (value: string) => {
+    const masked = maskCurrency(value);
+    setPriceInput(masked);
+    setFormData(prev => ({ ...prev, preco_hora: parseCurrency(masked) }));
+  };
 
   // Load courts
   useEffect(() => {
@@ -204,6 +215,7 @@ const AdminCourts = () => {
       caracteristicas_json: court.caracteristicas_json || {},
       status: court.status,
     });
+    setPriceInput(formatCurrency(court.preco_hora));
     setIsEditModalOpen(true);
   };
 
@@ -221,6 +233,7 @@ const AdminCourts = () => {
       caracteristicas_json: {},
       status: 'ativa',
     });
+    setPriceInput('');
   };
 
   const filteredCourts = courts.filter(court =>
@@ -239,7 +252,7 @@ const AdminCourts = () => {
         </div>
         <Button 
           className="bg-fitway-green hover:bg-fitway-green/90 text-white"
-          onClick={() => setIsCreateModalOpen(true)}
+          onClick={() => { resetForm(); setIsCreateModalOpen(true); }}
         >
           <Plus className="mr-2 h-4 w-4" />
           Nova Quadra
@@ -425,7 +438,8 @@ const AdminCourts = () => {
                   <Input
                     id="nome"
                     value={formData.nome}
-                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    maxLength={80}
                     className="bg-white/5 border-white/20 text-white"
                     required
                   />
@@ -456,13 +470,13 @@ const AdminCourts = () => {
                 </div>
                 <div>
                   <Label htmlFor="preco_hora">Preço/Hora (R$) *</Label>
-                  <Input
+                                    <Input
                     id="preco_hora"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.preco_hora}
-                    onChange={(e) => setFormData({ ...formData, preco_hora: parseFloat(e.target.value) })}
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="R$ 0,00"
+                    value={priceInput}
+                    onChange={(e) => handlePriceInputChange(e.target.value)}
                     className="bg-white/5 border-white/20 text-white"
                     required
                   />
@@ -520,7 +534,8 @@ const AdminCourts = () => {
                   <Input
                     id="edit-nome"
                     value={formData.nome}
-                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    maxLength={80}
                     className="bg-white/5 border-white/20 text-white"
                     required
                   />
@@ -551,13 +566,13 @@ const AdminCourts = () => {
                 </div>
                 <div>
                   <Label htmlFor="edit-preco_hora">Preço/Hora (R$) *</Label>
-                  <Input
+                                    <Input
                     id="edit-preco_hora"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.preco_hora}
-                    onChange={(e) => setFormData({ ...formData, preco_hora: parseFloat(e.target.value) })}
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="R$ 0,00"
+                    value={priceInput}
+                    onChange={(e) => handlePriceInputChange(e.target.value)}
                     className="bg-white/5 border-white/20 text-white"
                     required
                   />

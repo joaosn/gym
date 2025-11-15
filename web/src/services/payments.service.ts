@@ -128,6 +128,17 @@ export class PaymentsService {
   }
 
   /**
+   * ADMIN: marcar cobrança como paga (aprovação imediata via simulação)
+   */
+  async adminMarkAsPaid(idCobranca: string): Promise<Cobranca> {
+    const response = await apiClient.post<{ data: Cobranca }>(
+      `/admin/payments/${idCobranca}/mark-paid`,
+      {}
+    );
+    return response.data;
+  }
+
+  /**
    * ADMIN ENDPOINTS
    */
 

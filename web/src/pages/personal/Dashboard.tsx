@@ -24,10 +24,10 @@ import { useNavigate } from 'react-router-dom';
 
 // Skeleton loader para cards de estatística
 const StatCardSkeleton = () => (
-  <Card className="animate-pulse">
+  <Card className="animate-pulse bg-gray-800 border-gray-700">
     <CardContent className="pt-6">
-      <div className="h-8 bg-gray-200 rounded w-1/3 mb-2"></div>
-      <div className="h-6 bg-gray-100 rounded w-1/2"></div>
+      <div className="h-8 bg-gray-600 rounded w-1/3 mb-2"></div>
+      <div className="h-6 bg-gray-700 rounded w-1/2"></div>
     </CardContent>
   </Card>
 );
@@ -89,46 +89,46 @@ export default function PersonalDashboard() {
       title: 'Alunos',
       value: data.alunos?.total_atendidos || 0,
       icon: User,
-      color: 'bg-blue-100 dark:bg-blue-900',
-      iconColor: 'text-blue-700 dark:text-blue-400',
-      textColor: 'text-blue-950 dark:text-blue-50',
-      titleColor: 'text-blue-800 dark:text-blue-300',
+      color: 'bg-gray-700',
+      iconColor: 'text-fitway-green',
+      textColor: 'text-white',
+      titleColor: 'text-gray-300',
     },
     {
       title: 'Sessões Hoje',
       value: data.sessoes_personal?.hoje || 0,
       icon: Calendar,
-      color: 'bg-green-100 dark:bg-green-900',
-      iconColor: 'text-green-700 dark:text-green-400',
-      textColor: 'text-green-950 dark:text-green-50',
-      titleColor: 'text-green-800 dark:text-green-300',
+      color: 'bg-gray-700',
+      iconColor: 'text-fitway-green',
+      textColor: 'text-white',
+      titleColor: 'text-gray-300',
     },
     {
       title: 'Receita do Mês',
       value: formatCurrency(data.financeiro?.receita_mes || 0, false),
       icon: DollarSign,
-      color: 'bg-purple-100 dark:bg-purple-900',
-      iconColor: 'text-purple-700 dark:text-purple-400',
-      textColor: 'text-purple-950 dark:text-purple-50',
-      titleColor: 'text-purple-800 dark:text-purple-300',
+      color: 'bg-gray-700',
+      iconColor: 'text-fitway-green',
+      textColor: 'text-white',
+      titleColor: 'text-gray-300',
     },
     {
       title: 'Turmas Ativas',
       value: data.aulas?.turmas || 0,
       icon: TrendingUp,
-      color: 'bg-orange-100 dark:bg-orange-900',
-      iconColor: 'text-orange-700 dark:text-orange-400',
-      textColor: 'text-orange-950 dark:text-orange-50',
-      titleColor: 'text-orange-800 dark:text-orange-300',
+      color: 'bg-gray-700',
+      iconColor: 'text-fitway-green',
+      textColor: 'text-white',
+      titleColor: 'text-gray-300',
     },
     {
       title: 'Valor/Hora',
       value: formatCurrency(data.financeiro?.valor_hora || 0, false),
       icon: Clock,
-      color: 'bg-red-100 dark:bg-red-900',
-      iconColor: 'text-red-700 dark:text-red-400',
-      textColor: 'text-red-950 dark:text-red-50',
-      titleColor: 'text-red-800 dark:text-red-300',
+      color: 'bg-gray-700',
+      iconColor: 'text-fitway-green',
+      textColor: 'text-white',
+      titleColor: 'text-gray-300',
     },
   ];
 
@@ -161,10 +161,10 @@ export default function PersonalDashboard() {
       {/* Próximas Sessões e Estatísticas */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Próximas Sessões (2/3) */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 bg-gray-800 border-gray-700 shadow-md hover:shadow-lg transition">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Calendar className="h-5 w-5 text-fitway-green" />
               Próximas Sessões Personal
             </CardTitle>
             <CardDescription>
@@ -181,22 +181,22 @@ export default function PersonalDashboard() {
                   return (
                     <div
                       key={sessao.id_sessao_personal}
-                      className="flex items-start justify-between p-4 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                      className="flex items-start justify-between p-4 border border-gray-600 rounded-lg bg-gray-700 hover:bg-gray-650 transition"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                          <span className="font-mono text-sm font-bold text-blue-800 dark:text-blue-200">
+                          <Clock className="h-4 w-4 text-fitway-green" />
+                          <span className="font-mono text-sm font-bold text-fitway-green">
                             {formatTime(sessao.inicio)}
                           </span>
-                          <span className="text-xs text-gray-700 dark:text-gray-300 font-medium">
+                          <span className="text-xs text-gray-400 font-medium">
                             ({minutos} min)
                           </span>
                         </div>
-                        <p className="font-semibold text-gray-900 dark:text-white mb-1 text-base">
+                        <p className="font-semibold text-white mb-1 text-base">
                           {sessao.aluno_nome}
                         </p>
-                        <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 font-medium">
+                        <p className="text-sm text-gray-400 mb-3 font-medium">
                           {formatDate(sessao.inicio, true)}
                         </p>
                         <div className="flex items-center gap-2">
@@ -206,6 +206,7 @@ export default function PersonalDashboard() {
                                 ? 'default'
                                 : 'secondary'
                             }
+                            className={sessao.status === 'confirmada' ? 'bg-fitway-green text-gray-900' : 'bg-gray-600 text-gray-300'}
                           >
                             {sessao.status === 'confirmada'
                               ? '✓ Confirmada'
@@ -213,7 +214,6 @@ export default function PersonalDashboard() {
                           </Badge>
                         </div>
                       </div>
-                      <ChevronRight className="h-5 w-5 text-gray-600 dark:text-gray-300 mt-1" />
                     </div>
                   );
                 })}
@@ -228,22 +228,14 @@ export default function PersonalDashboard() {
                 Nenhuma sessão agendada
               </p>
             )}
-            <Button
-              variant="outline"
-              className="w-full mt-4"
-              onClick={() => navigate('/instrutor/agenda')}
-            >
-              Ver Agenda Completa
-              <ChevronRight className="h-4 w-4 ml-2" />
-            </Button>
           </CardContent>
         </Card>
 
         {/* Estatísticas (1/3) */}
-        <Card>
+        <Card className="bg-gray-800 border-gray-700 shadow-md hover:shadow-lg transition">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <TrendingUp className="h-5 w-5 text-fitway-green" />
               Estatísticas
             </CardTitle>
             <CardDescription>
@@ -253,37 +245,37 @@ export default function PersonalDashboard() {
           <CardContent className="space-y-4">
             <div className="space-y-3">
               <div>
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                <p className="text-sm font-semibold text-gray-300 mb-2">
                   Sessões este mês
                 </p>
-                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                <p className="text-3xl font-bold text-fitway-green">
                   {data.sessoes_personal?.mes || 0}
                 </p>
               </div>
 
-              <div className="pt-4 border-t-2 border-gray-300 dark:border-gray-600">
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+              <div className="pt-4 border-t-2 border-gray-600">
+                <p className="text-sm font-semibold text-gray-300 mb-2">
                   Total de sessões
                 </p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                <p className="text-2xl font-bold text-fitway-green">
                   {data.sessoes_personal?.total || 0}
                 </p>
               </div>
 
-              <div className="pt-4 border-t-2 border-gray-300 dark:border-gray-600">
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+              <div className="pt-4 border-t-2 border-gray-600">
+                <p className="text-sm font-semibold text-gray-300 mb-2">
                   Aulas este mês
                 </p>
-                <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                <p className="text-2xl font-bold text-fitway-green">
                   {data.aulas?.aulas_mes || 0}
                 </p>
               </div>
 
-              <div className="pt-4 border-t-2 border-gray-300 dark:border-gray-600">
-                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+              <div className="pt-4 border-t-2 border-gray-600">
+                <p className="text-sm font-semibold text-gray-300 mb-2">
                   Horários configurados
                 </p>
-                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                <p className="text-2xl font-bold text-fitway-green">
                   {data.disponibilidade?.horarios_configurados || 0}
                 </p>
               </div>
@@ -291,7 +283,7 @@ export default function PersonalDashboard() {
 
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full border-gray-600 text-gray-300 hover:bg-gray-700"
               onClick={() => navigate('/instrutor/slots')}
             >
               Gerenciar Horários
